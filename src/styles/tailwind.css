@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body, #root { height: 100%; }
+  :root {
+    /* Light mode design tokens */
+    --color-bg-base: #ffffff;
+    --color-bg-surface: #ffffff;
+    --color-bg-surface-raised: #f5f7fa;
+    --color-border: #e2e8f0;
+    --color-border-strong: #cbd5e1;
+    --color-text: #1f2937;
+    --color-text-muted: #64748b;
+    --color-accent: #1d7fff;
+  }
+  .dark {
+    --color-bg-base: #11161d;
+    --color-bg-surface: #11161d;
+    --color-bg-surface-raised: #1a212b;
+    --color-border: #24303b;
+    --color-border-strong: #374552;
+    --color-text: #f1f5f9;
+    --color-text-muted: #94a3b8;
+    --color-accent: #1d7fff;
+  }
+  body {
+    margin: 0;
+    background: var(--color-bg-base);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+  }
+  body.dark { color: var(--color-text); }
+}
+
+/* Asegura pantalla completa en móvil y evita scroll accidental en el lienzo */
+@supports (height: 100dvh) {
+  .h-dvh { height: 100dvh; }
+}
+/* Safe areas helpers */
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-right: env(safe-area-inset-right);
+  --safe-bottom: env(safe-area-inset-bottom);
+  --safe-left: env(safe-area-inset-left);
+}
+
+/* Scrollbar sutil */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,.18); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.28); }
+body.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); }
+body.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.4); }
+
+/* Text selection: high contrast on dark backgrounds */
+::selection { background: rgba(59,130,246,0.35); color: #ffffff; }
