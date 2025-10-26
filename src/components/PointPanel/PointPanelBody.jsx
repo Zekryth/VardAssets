@@ -1,3 +1,9 @@
+/**
+ * PointPanelBody.jsx
+ *
+ * Cuerpo del panel de punto, muestra y permite editar los detalles de un punto (nombre, categoría, inventario, archivos, etc.).
+ * Gestiona formularios, carga de datos y acciones de guardado/eliminación.
+ */
 import React, { useEffect, useMemo, useState } from 'react'
 import { Building, Calendar, MapPin, Upload, FileText, Trash2, X } from 'lucide-react'
 import { pointService, companyService, objectService, fileService } from '../../services/api'

@@ -1,3 +1,9 @@
+/**
+ * PointPanel.jsx
+ *
+ * Panel lateral o flotante para mostrar y editar información de un punto seleccionado.
+ * Permite cambiar entre pestañas, actualizar o eliminar el punto.
+ */
 import React, { useState } from 'react';
 import { X, MapPin } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';

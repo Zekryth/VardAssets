@@ -1,3 +1,9 @@
+/**
+ * MapModule.jsx
+ *
+ * Módulo de mapa basado en Leaflet para renderizar tiles e interactuar con puntos.
+ * Permite a administradores expandir el mapa y gestiona la visualización de marcadores y cuadrantes.
+ */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import * as L from 'leaflet'
 import { tileService } from '../../services/api'

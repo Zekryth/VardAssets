@@ -1,3 +1,9 @@
+/**
+ * MapVueWrapper.jsx
+ *
+ * Componente wrapper para integrar el Web Component <mapshade-map> (Vue) en la app React.
+ * Permite exponer controles y refrescar el componente embebido.
+ */
 import { useEffect, useRef, useState } from 'react'
 import { tileService } from '../../services/api'
 

@@ -1,3 +1,9 @@
+/**
+ * ErrorBoundary.jsx
+ *
+ * Componente de React para capturar y mostrar errores de renderizado en la UI.
+ * Proporciona una interfaz amigable cuando ocurre un error inesperado en la aplicación.
+ */
 import React from 'react'
 
 export default class ErrorBoundary extends React.Component {

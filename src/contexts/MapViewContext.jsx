@@ -1,3 +1,9 @@
+/**
+ * MapViewContext.jsx
+ *
+ * Contexto para transformar coordenadas entre el espacio de pantalla y el espacio del tablero/mapa.
+ * Proporciona utilidades y estado para la visualización y manipulación del mapa.
+ */
 import React, { createContext, useContext } from 'react'
 
 // Provides coordinate transforms between screen (client) and board (map) space

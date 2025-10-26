@@ -1,3 +1,10 @@
+/**
+ * Layout.jsx
+ *
+ * Componente de layout principal que define la estructura de la aplicación (sidebar, header, contenido).
+ * Gestiona la navegación, el tema (claro/oscuro), y el acceso a rutas según el rol del usuario (admin/usuario).
+ * Incluye el panel de cuenta y controles de UI responsivos.
+ */
 import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLocation, useNavigate } from 'react-router-dom'

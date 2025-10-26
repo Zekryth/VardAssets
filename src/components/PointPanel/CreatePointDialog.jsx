@@ -1,3 +1,10 @@
+/**
+ * CreatePointDialog.jsx
+ *
+ * Diálogo/modal para crear un nuevo punto en el mapa.
+ * Permite ingresar nombre, categoría, compañía, inventario y adjuntar archivos (fotos/documentos).
+ * Gestiona el estado del formulario y validaciones.
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { companyService, objectService } from '../../services/api'
 

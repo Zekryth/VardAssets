@@ -1,3 +1,10 @@
+/**
+ * AccountPanel.jsx
+ *
+ * Componente de panel de cuenta de usuario.
+ * Muestra información del usuario autenticado, avatar, y opciones de cierre de sesión.
+ * Utiliza AuthContext e i18n para internacionalización.
+ */
 import React, { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next';
 import '../../i18n';

@@ -1,3 +1,5 @@
+// App.jsx
+// Componente raíz de la aplicación. Define rutas, proveedores de contexto y el layout general de la app.
 import React from 'react'
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';

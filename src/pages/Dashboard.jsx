@@ -1,3 +1,11 @@
+/**
+ * Dashboard.jsx
+ *
+ * Este archivo define la página principal de administración (Dashboard) para usuarios administradores.
+ * Permite visualizar, restaurar y eliminar definitivamente puntos borrados, así como navegar entre diferentes secciones del panel (borrador, estadísticas, auditoría).
+ * Incluye filtros, ordenamiento, previsualización de registros eliminados y acciones de restauración/purga.
+ * Utiliza i18n para internacionalización y componentes de UI modernos.
+ */
 import React, { useEffect, useState } from 'react'
 import { deletedPointsService, fileService, companyService } from '../services/api'
 import { Image, FileText, File, FileSpreadsheet, Download, RotateCcw, Trash2 } from 'lucide-react'

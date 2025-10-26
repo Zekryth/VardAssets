@@ -1,3 +1,9 @@
+/**
+ * PointPanelsDock.jsx
+ *
+ * Dock flotante para mostrar accesos rápidos a paneles de puntos minimizados.
+ * Permite restaurar paneles minimizados desde la esquina inferior de la pantalla.
+ */
 import React from 'react'
 import { MapPin } from 'lucide-react'
 import { usePointPanels } from '../../contexts/PointPanelsContext'

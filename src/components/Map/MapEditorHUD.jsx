@@ -1,3 +1,10 @@
+/**
+ * MapEditorHUD.jsx
+ *
+ * HUD (Head-Up Display) para edición avanzada del mapa.
+ * Permite a administradores agregar tiles (cuadrantes) al mapa, mostrando controles en los bordes del área visible.
+ * Gestiona la carga de imágenes y la actualización dinámica de tiles.
+ */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { tileService } from '../../services/api'

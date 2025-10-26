@@ -1,3 +1,9 @@
+/**
+ * MapPointsOverlay.jsx
+ *
+ * Componente overlay para renderizar los puntos sobre el mapa.
+ * Calcula posiciones en pantalla y permite interacción con los puntos.
+ */
 import React from 'react'
 import { useMapView } from '../../contexts/MapViewContext'
 

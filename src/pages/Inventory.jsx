@@ -1,3 +1,10 @@
+/**
+ * Inventory.jsx
+ *
+ * Página de inventario para gestionar objetos y puntos de inventario.
+ * Permite listar, buscar, crear, editar y eliminar objetos, así como asociarlos a puntos.
+ * Incluye paginación, formularios y utiliza servicios de API y componentes de UI personalizados.
+ */
 import React, { useEffect, useMemo, useState } from 'react'
 import { Search, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { pointService, objectService } from '../services/api'

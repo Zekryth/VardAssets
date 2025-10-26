@@ -1,3 +1,9 @@
+/**
+ * FloatingFilters.jsx
+ *
+ * Componente de filtros flotantes para el mapa o listados.
+ * Permite filtrar por compañía y categoría desde un panel flotante en la interfaz.
+ */
 import React, { useMemo, useState } from 'react'
 import { SlidersHorizontal, X } from 'lucide-react'
 

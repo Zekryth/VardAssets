@@ -1,3 +1,5 @@
+// i18n.js
+// Configuración de internacionalización (i18n) para la app. Define los recursos de traducción y la inicialización de i18next con react-i18next.
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 

@@ -1,3 +1,9 @@
+/**
+ * MapActionModeContext.jsx
+ *
+ * Contexto global para gestionar el modo de acción actual en el mapa (idle, adding, editing, etc.).
+ * Permite a los componentes del mapa coordinar el estado de interacción y acciones del usuario.
+ */
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react'
 
 // action modes: idle | adding | editing | moving | deleting

@@ -1,3 +1,10 @@
+/**
+ * Users.jsx
+ *
+ * Página de gestión de usuarios, accesible solo para administradores.
+ * Permite crear, editar, eliminar usuarios y cambiar sus roles (usuario/admin) desde la interfaz.
+ * Utiliza un servicio simulado (userService) y soporta internacionalización (i18n).
+ */
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';

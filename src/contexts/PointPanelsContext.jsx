@@ -1,3 +1,9 @@
+/**
+ * PointPanelsContext.jsx
+ *
+ * Contexto global para gestionar los paneles flotantes de puntos en el mapa.
+ * Permite abrir, cerrar, mover y administrar múltiples paneles de información de puntos.
+ */
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 import { pointService } from '../services/api'
 

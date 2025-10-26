@@ -1,3 +1,5 @@
+// main.jsx
+// Punto de entrada principal de la aplicación React. Monta el componente App dentro de BrowserRouter y SearchProvider.
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";

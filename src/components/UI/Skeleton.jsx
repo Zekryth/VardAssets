@@ -1,3 +1,9 @@
+/**
+ * Skeleton.jsx
+ *
+ * Componente de esqueleto (placeholder) para mostrar cargas en la UI.
+ * Permite personalizar el radio de borde y las clases de estilo.
+ */
 import React from 'react'
 
 // Tiny utility to merge class names without pulling an external dependency

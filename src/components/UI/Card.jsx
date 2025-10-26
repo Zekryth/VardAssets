@@ -1,3 +1,9 @@
+/**
+ * Card.jsx
+ *
+ * Componente de tarjeta (card) reutilizable para agrupar contenido con estilos consistentes.
+ * Permite personalizar padding y clases adicionales.
+ */
 import React from 'react'
 
 const cx = (...p) => p.filter(Boolean).join(' ')

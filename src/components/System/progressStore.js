@@ -1,3 +1,9 @@
+/**
+ * progressStore.js
+ *
+ * Módulo simple para gestionar el estado de progreso global (cargas, operaciones en curso).
+ * Permite incrementar, decrementar y suscribirse a cambios en el contador de operaciones activas.
+ */
 let listeners = new Set()
 let active = 0
 

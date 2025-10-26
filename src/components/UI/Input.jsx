@@ -1,3 +1,9 @@
+/**
+ * Input.jsx
+ *
+ * Componente de input reutilizable con estilos consistentes y soporte para validación.
+ * Permite forwardRef y personalización de clases.
+ */
 import React, { forwardRef } from 'react'
 
 const cx = (...p) => p.filter(Boolean).join(' ')

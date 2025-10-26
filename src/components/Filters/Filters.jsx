@@ -1,3 +1,10 @@
+/**
+ * Filters.jsx
+ *
+ * Componente de filtros avanzados para búsquedas y listados.
+ * Permite filtrar por texto, categoría, compañía y rango de fechas.
+ * Incluye UI para abrir/cerrar filtros y limpiar valores.
+ */
 import React, { useState } from 'react';
 import { Search, X, SlidersHorizontal } from 'lucide-react';
 

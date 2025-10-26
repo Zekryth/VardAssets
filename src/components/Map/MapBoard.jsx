@@ -1,3 +1,10 @@
+/**
+ * MapBoard.jsx
+ *
+ * Componente que renderiza el tablero del mapa y gestiona los tiles (cuadrantes) y puntos.
+ * Permite interacción de usuario/admin para mover, seleccionar y eliminar puntos.
+ * Utiliza almacenamiento local para persistir tiles y vista del mapa.
+ */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 const TILE_SIZE = 512 // px por cuadrante

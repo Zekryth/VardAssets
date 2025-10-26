@@ -1,3 +1,10 @@
+/**
+ * MapComponent.jsx
+ *
+ * Componente principal del mapa interactivo.
+ * Orquesta la visualización del tablero de mapa y gestiona modos de acción (tiling, deleting, etc.).
+ * Recibe puntos, callbacks y estado de usuario/admin.
+ */
 import React from 'react'
 import MapBoard from './MapBoard.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'

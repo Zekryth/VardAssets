@@ -1,3 +1,10 @@
+/**
+ * Companies.jsx
+ *
+ * Página para la gestión de compañías/empresas en la aplicación.
+ * Permite listar, buscar, crear, editar y eliminar compañías, con paginación y formulario modal.
+ * Utiliza servicios de API y componentes de UI personalizados.
+ */
 import React, { useEffect, useMemo, useState } from 'react'
 import { Building2, Plus, Search, ChevronLeft, ChevronRight, Pencil, Trash2, X } from 'lucide-react'
 import { companyService } from '../services/api'

@@ -1,3 +1,5 @@
+// userService.js
+// Servicio simulado para la gestión CRUD de usuarios en el frontend (listado, creación, edición, eliminación, cambio de roles).
 // Servicio simulado para gestión de usuarios
 const usersDB = [
   { id: 1, nombre: 'Administratod', email: 'admin@VarddAssets.com', rol: 'admin' },

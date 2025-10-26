@@ -1,3 +1,9 @@
+/**
+ * TopProgressBar.jsx
+ *
+ * Barra de progreso superior global para indicar operaciones en curso.
+ * Se muestra automáticamente cuando hay operaciones activas en el sistema.
+ */
 import React, { useEffect, useState } from 'react'
 import { subscribe, getActive } from './progressStore'
 

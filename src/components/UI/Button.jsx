@@ -1,3 +1,9 @@
+/**
+ * Button.jsx
+ *
+ * Componente de botón reutilizable con variantes de estilo y tamaño.
+ * Permite forwardRef y personalización para diferentes usos en la UI.
+ */
 import React, { forwardRef } from 'react'
 
 const cx = (...p) => p.filter(Boolean).join(' ')

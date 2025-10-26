@@ -1,3 +1,9 @@
+/**
+ * MapInteractionLayer.jsx
+ *
+ * Capa de interacción sobre el mapa que captura eventos según el modo de acción (agregar, mover, etc.).
+ * Permite crear nuevos puntos y gestiona la interacción avanzada del usuario sobre el mapa.
+ */
 import React, { useMemo, useRef, useState } from 'react'
 import { useMapActionMode } from '../../contexts/MapActionModeContext.jsx'
 import { useMapView } from '../../contexts/MapViewContext.jsx'

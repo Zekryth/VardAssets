@@ -1,3 +1,9 @@
+/**
+ * SearchContext.jsx
+ *
+ * Contexto global para la búsqueda rápida en la aplicación.
+ * Gestiona el estado de la búsqueda, sugerencias, historial y resultados para puntos, compañías y objetos.
+ */
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import api from '../services/api'
 

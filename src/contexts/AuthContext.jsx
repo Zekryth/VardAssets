@@ -1,3 +1,10 @@
+/**
+ * AuthContext.jsx
+ *
+ * Contexto de autenticación global para la aplicación.
+ * Proporciona el usuario actual, funciones de login/logout y utilidades para verificar el rol (admin/usuario).
+ * Permite proteger rutas y componentes según permisos.
+ */
 import React, { createContext, useState, useContext, useEffect } from 'react'
 
 const AuthContext = createContext()

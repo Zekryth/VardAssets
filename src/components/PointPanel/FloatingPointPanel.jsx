@@ -1,3 +1,9 @@
+/**
+ * FloatingPointPanel.jsx
+ *
+ * Panel flotante para mostrar información y acciones de un punto seleccionado en el mapa.
+ * Permite mover, minimizar, cerrar y cambiar el tamaño del panel.
+ */
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Minus, X, GripVertical } from 'lucide-react'
 import PointPanelBody from './PointPanelBody'

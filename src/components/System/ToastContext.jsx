@@ -1,3 +1,9 @@
+/**
+ * ToastContext.jsx
+ *
+ * Contexto global para mostrar notificaciones tipo toast en la aplicación.
+ * Permite a cualquier componente disparar mensajes de éxito, error o información.
+ */
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
 const ToastContext = createContext(null)

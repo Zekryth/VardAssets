@@ -1,3 +1,10 @@
+/**
+ * MapPage.jsx
+ *
+ * Página principal del mapa interactivo de la aplicación.
+ * Orquesta la visualización del mapa, paneles de puntos, filtros, acciones de administrador y notificaciones.
+ * Utiliza múltiples contextos y componentes para la experiencia de usuario en el mapa.
+ */
 import React, { useEffect, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 import MapComponent from '../components/Map/MapComponent.jsx'

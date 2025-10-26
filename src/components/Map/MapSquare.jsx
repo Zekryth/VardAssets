@@ -1,3 +1,9 @@
+/**
+ * MapSquare.jsx
+ *
+ * Componente para renderizar un cuadrante (tile) individual del mapa.
+ * Permite detectar clics y resalta si contiene puntos.
+ */
 import React from 'react';
 import { MAP_CONFIG } from '../../utils/constants';
 

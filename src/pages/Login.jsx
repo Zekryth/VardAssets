@@ -1,3 +1,10 @@
+/**
+ * Login.jsx
+ *
+ * Página de inicio de sesión para la aplicación MapShade.
+ * Incluye animación de introducción, formulario de login, soporte para recordar sesión y validación de usuario.
+ * Utiliza AuthContext para autenticación y react-i18next para internacionalización.
+ */
 
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from 'react-i18next';

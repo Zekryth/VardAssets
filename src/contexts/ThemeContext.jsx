@@ -1,3 +1,9 @@
+/**
+ * ThemeContext.jsx
+ *
+ * Contexto global para la gestión del tema (claro/oscuro) de la aplicación.
+ * Permite alternar y persistir la preferencia de tema del usuario.
+ */
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 
 const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {}, setTheme: () => {} })
