@@ -2,6 +2,7 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+<<<<<<< HEAD
 			"label": "Dev: Deepsek frontend",
 			"type": "shell",
 			"command": "npm",
@@ -12,10 +13,18 @@
 			"isBackground": false,
 			"problemMatcher": [
 				"$eslint-stylish"
+=======
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"problemMatcher": [
+				"$tsc"
+>>>>>>> 5cd87e37f736da43efb8785374ea3d8238943cd0
 			],
 			"group": "build"
 		},
 		{
+<<<<<<< HEAD
 			"label": "build-frontend",
 			"type": "shell",
 			"command": "npm run build",
@@ -25,6 +34,172 @@
 				"$eslint-stylish"
 			],
 			"group": "build"
+=======
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Build frontend (vite)",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend build",
+			"group": "build"
+		},
+		{
+			"label": "Restart backend (nodemon)",
+			"type": "shell",
+			"command": "npm run -s --workspace backend start",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "Run frontend dev",
+			"type": "shell",
+			"command": "npm run -s --workspace frontend dev",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "Restart backend (nodemon)",
+			"type": "shell",
+			"command": "npm run -s --workspace backend start",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "Restart backend (nodemon)",
+			"type": "shell",
+			"command": "npm run -s --workspace backend start",
+			"isBackground": true,
+			"group": "build"
+>>>>>>> 5cd87e37f736da43efb8785374ea3d8238943cd0
 		}
 	]
 }

@@ -1,0 +1,22 @@
+{
+  "name": "mapshade-vue-mfe",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "postbuild": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"New-Item -ItemType Directory -Force ..\\frontend\\public\\mf; Copy-Item -Force dist\\mapshade-map.es.js ..\\frontend\\public\\mf\\mapshade-map.es.js\""
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@types/leaflet": "^1.9.7",
+    "typescript": "^5.4.0",
+    "vite": "^5.0.0"
+  }
+}
