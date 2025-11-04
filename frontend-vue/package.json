@@ -1,5 +1,5 @@
 {
-  "name": "mapshade-vue-mfe",
+  "name": "vard-assets-vue-mfe",
   "private": true,
   "type": "module",
   "version": "0.1.0",
@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "postbuild": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"New-Item -ItemType Directory -Force ..\\frontend\\public\\mf; Copy-Item -Force dist\\mapshade-map.es.js ..\\frontend\\public\\mf\\mapshade-map.es.js\""
+    "postbuild": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Write-Output 'postbuild skipped: output is already in ..\\frontend\\public\\mf'\""
   },
   "dependencies": {
     "leaflet": "^1.9.4",
