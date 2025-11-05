@@ -5,9 +5,9 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview",
-    "postbuild": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Write-Output 'postbuild skipped: output is already in ..\\frontend\\public\\mf'\""
+    "postbuild": "node -e \"console.log('postbuild skipped: output is already in ../public/mf')\""
   },
   "dependencies": {
     "leaflet": "^1.9.4",
