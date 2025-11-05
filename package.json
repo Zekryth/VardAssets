@@ -2,9 +2,8 @@
   "name": "vard-assets-root",
   "private": true,
   "scripts": {
-    "prebuild": "npm --prefix ./frontend-vue install --no-audit --no-fund && node ./frontend-vue/build.mjs",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview"
   },
   "engines": {
     "node": ">=18"
