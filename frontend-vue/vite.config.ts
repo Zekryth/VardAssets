@@ -9,7 +9,7 @@ export default defineConfig({
       formats: ['es'],
       fileName: () => 'vard-assets-map.es.js'
     },
-    outDir: '../public/mf',
+    outDir: '../frontend/public/mf',
     emptyOutDir: false
   }
 })

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "node ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview",
-    "postbuild": "node -e \"console.log('postbuild skipped: output is already in ../public/mf')\""
+    "postbuild": "node -e \"console.log('postbuild skipped: output is already in ../frontend/public/mf')\""
   },
   "dependencies": {
     "leaflet": "^1.9.4",
