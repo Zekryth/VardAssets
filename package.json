@@ -2,7 +2,11 @@
   "name": "vard-assets-root",
   "private": true,
   "scripts": {
-    "build": "npm --prefix frontend install --no-audit --no-fund && npm --prefix frontend run build",
-    "vercel-build": "npm --prefix frontend install --no-audit --no-fund && npm --prefix frontend run build"
+    "prebuild": "npm --prefix ./frontend-vue install --no-audit --no-fund && npm --prefix ./frontend-vue run build",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
