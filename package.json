@@ -2,7 +2,7 @@
   "name": "vard-assets-root",
   "private": true,
   "scripts": {
-    "build": "npm --prefix frontend ci --no-audit --no-fund && npm --prefix frontend run build",
-    "vercel-build": "npm --prefix frontend ci --no-audit --no-fund && npm --prefix frontend run build"
+    "build": "npm --prefix frontend install --no-audit --no-fund && npm --prefix frontend run build",
+    "vercel-build": "npm --prefix frontend install --no-audit --no-fund && npm --prefix frontend run build"
   }
 }
