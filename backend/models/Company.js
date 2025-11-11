@@ -1,38 +1,63 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
 
-const companySchema = new mongoose.Schema({
-  nombre: {
-    type: String,
-    required: [true, 'El nombre de la compañía es requerido'],
-    trim: true,
-    maxlength: [100, 'El nombre no puede exceder 100 caracteres']
-  },
-  personaContacto: {
-    type: String,
-    required: [true, 'La persona de contacto es requerida'],
-    trim: true
-  },
-  telefono: {
-    type: String,
-    required: [true, 'El teléfono es requerido'],
-    trim: true,
-    match: [/^[+]?[\d\s\-()]+$/, 'Por favor ingresa un teléfono válido']
-  },
-  email: {
-    type: String,
-    lowercase: true,
-    trim: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Por favor ingresa un email válido']
-  },
-  activo: {
-    type: Boolean,
-    default: true
-  }
-}, {
-  timestamps: true
-});
+export default (sequelize) => {
+  const Company = sequelize.define('Company', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    nombre: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'El nombre de la compañía es requerido' },
+        len: { args: [1, 100], msg: 'El nombre no puede exceder 100 caracteres' }
+      }
+    },
+    personaContacto: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'La persona de contacto es requerida' }
+      }
+    },
+    telefono: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'El teléfono es requerido' },
+        is: { args: /^[+]?[\d\s\-()]+$/, msg: 'Por favor ingresa un teléfono válido' }
+      }
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        isEmail: { msg: 'Por favor ingresa un email válido' }
+      },
+      set(value) {
+        this.setDataValue('email', value ? value.toLowerCase().trim() : null);
+      }
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    }
+  }, {
+    tableName: 'companies',
+    timestamps: true,
+    indexes: [
+      {
+        name: 'idx_company_name',
+        fields: ['nombre']
+      },
+      {
+        name: 'idx_company_active',
+        fields: ['activo']
+      }
+    ]
+  });
 
-// Índice para búsquedas eficientes
-companySchema.index({ nombre: 'text', personaContacto: 'text' });
-
-export default mongoose.model('Company', companySchema);
+  return Company;
+};

@@ -1,56 +1,86 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
 import bcrypt from 'bcryptjs';
 
-const userSchema = new mongoose.Schema({
-  nombre: {
-    type: String,
-    required: [true, 'El nombre es requerido'],
-    trim: true,
-    maxlength: [100, 'El nombre no puede exceder 100 caracteres']
-  },
-  email: {
-    type: String,
-    required: [true, 'El email es requerido'],
-    unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Por favor ingresa un email válido']
-  },
-  password: {
-    type: String,
-    required: [true, 'La contraseña es requerida'],
-    minlength: [6, 'La contraseña debe tener al menos 6 caracteres']
-  },
-  rol: {
-    type: String,
-    enum: ['admin', 'usuario'],
-    default: 'usuario'
-  },
-  activo: {
-    type: Boolean,
-    default: true
-  }
-}, {
-  timestamps: true
-});
+export default (sequelize) => {
+  const User = sequelize.define('User', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    nombre: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'El nombre es requerido' },
+        len: { args: [1, 100], msg: 'El nombre no puede exceder 100 caracteres' }
+      }
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: { msg: 'Por favor ingresa un email válido' }
+      },
+      set(value) {
+        this.setDataValue('email', value.toLowerCase().trim());
+      }
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        len: { args: [6, 255], msg: 'La contraseña debe tener al menos 6 caracteres' }
+      }
+    },
+    rol: {
+      type: DataTypes.ENUM('admin', 'usuario'),
+      defaultValue: 'usuario'
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    }
+  }, {
+    tableName: 'users',
+    timestamps: true,
+    indexes: [
+      {
+        name: 'idx_user_email',
+        fields: ['email'],
+        unique: true
+      },
+      {
+        name: 'idx_user_active',
+        fields: ['activo']
+      }
+    ],
+    hooks: {
+      beforeCreate: async (user) => {
+        if (user.password) {
+          user.password = await bcrypt.hash(user.password, 12);
+        }
+      },
+      beforeUpdate: async (user) => {
+        if (user.changed('password')) {
+          user.password = await bcrypt.hash(user.password, 12);
+        }
+      }
+    }
+  });
 
-// Hash password antes de guardar
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
-});
+  // Método para comparar passwords
+  User.prototype.comparePassword = async function(candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+  };
 
-// Método para comparar passwords
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  // Ocultar password en JSON
+  User.prototype.toJSON = function() {
+    const values = { ...this.get() };
+    delete values.password;
+    return values;
+  };
+
+  return User;
 };
-
-// Ocultar password en responses
-userSchema.methods.toJSON = function() {
-  const user = this.toObject();
-  delete user.password;
-  return user;
-};
-
-export default mongoose.model('User', userSchema);

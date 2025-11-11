@@ -13,9 +13,9 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Import routes
 import authRoutes from './routes/auth.js';
-import userRoutes from './routes/users.js';
-import companyRoutes from './routes/companies.js';
-import objectRoutes from './routes/objects.js';
+import userRoutes from './routes/users-postgres.js'; // UPDATED: PostgreSQL
+import companyRoutes from './routes/companies-postgres.js'; // UPDATED: PostgreSQL
+import objectRoutes from './routes/objects-postgres.js'; // UPDATED: PostgreSQL
 import pointRoutes from './routes/points-postgres.js'; // UPDATED: PostgreSQL endpoints
 import searchRoutes from './routes/search.js';
 import tilesRoutes from './routes/tiles.js';
@@ -50,9 +50,15 @@ sequelize.authenticate()
 
 // Importar modelos
 import pointModelDefinition from './models/Point.js';
+import companyModelDefinition from './models/Company.js';
+import objectModelDefinition from './models/Object.js';
+import userModelDefinition from './models/User.js';
 
 // Inicializar modelos
 const Point = pointModelDefinition(sequelize);
+const Company = companyModelDefinition(sequelize);
+const ObjectModel = objectModelDefinition(sequelize);
+const User = userModelDefinition(sequelize);
 
 // Sincronizar modelos con la base de datos (crear tablas si no existen)
 sequelize.sync({ alter: true })
@@ -60,7 +66,7 @@ sequelize.sync({ alter: true })
   .catch(err => console.error('❌ Error sincronizando modelos:', err));
 
 // Exportar modelos para uso en controladores
-export { Point };
+export { Point, Company, ObjectModel as Object, User };
 
 
 // Rutas

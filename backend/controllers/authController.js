@@ -1,4 +1,4 @@
-import User from '../models/User.js';
+import { User } from '../server.js';
 import jwt from 'jsonwebtoken';
 
 /**
@@ -14,7 +14,7 @@ export const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email, activo: true });
+    const user = await User.findOne({ where: { email: email.toLowerCase(), activo: true } });
     if (!user) {
       return res.status(401).json({ 
         message: 'Credenciales inválidas.' 
@@ -29,7 +29,7 @@ export const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email, rol: user.rol },
+      { id: user.id, email: user.email, rol: user.rol },
       process.env.JWT_SECRET || 'mapshade_secret',
       { expiresIn: '24h' }
     );
@@ -38,7 +38,7 @@ export const login = async (req, res) => {
       message: '¡Bienvenido a MapShade!',
       token,
       user: {
-        id: user._id,
+        id: user.id,
         nombre: user.nombre,
         email: user.email,
         rol: user.rol
@@ -59,7 +59,9 @@ export const login = async (req, res) => {
  */
 export const verifyToken = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ['password'] }
+    });
     res.json({ user });
   } catch (error) {
     res.status(500).json({ 
