@@ -34,16 +34,22 @@ app.use(express.urlencoded({ extended: true }));
 // Importar modelos desde archivo central
 import { sequelize } from './models/index.js';
 
-// Test database connection
-sequelize.authenticate()
-  .then(() => console.log('✅ Conectado a Neon PostgreSQL (Alemania)'))
-  .catch(err => console.error('❌ Error conectando a PostgreSQL:', err));
+// Test database connection y sincronizar modelos
+async function initDatabase() {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Conectado a Neon PostgreSQL (Alemania)');
+    
+    await sequelize.sync({ alter: true });
+    console.log('📊 Modelos sincronizados con PostgreSQL');
+  } catch (err) {
+    console.error('❌ Error con la base de datos:', err);
+    process.exit(1);
+  }
+}
 
-// Sincronizar modelos con la base de datos (crear tablas si no existen)
-sequelize.sync({ alter: true })
-  .then(() => console.log('📊 Modelos sincronizados con PostgreSQL'))
-  .catch(err => console.error('❌ Error sincronizando modelos:', err));
-
+// Inicializar base de datos antes de levantar el servidor
+initDatabase();
 
 // Rutas
 app.use('/api/auth', authRoutes);
