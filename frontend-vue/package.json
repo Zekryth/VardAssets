@@ -12,6 +12,7 @@
   "dependencies": {
     "leaflet": "^1.9.4",
     "vard-assets-frontend": "file:../frontend",
+    "vard-assets-root": "file:..",
     "vue": "^3.4.0"
   },
   "devDependencies": {

@@ -1,1 +1,5 @@
+dist/
+node_modules/
+public/mf/*
+!public/mf/.gitkeep
 node_modules
