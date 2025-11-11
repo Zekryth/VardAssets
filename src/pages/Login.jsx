@@ -20,10 +20,26 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
+  const [langMenu, setLangMenu] = useState(false);
   const loginBoxRef = useRef(null);
+  const langBtnRef = useRef(null);
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+
+  const LANGS = [
+    { code: 'en', label: 'EN', name: 'English', flag: '🇬🇧' },
+    { code: 'es', label: 'ES', name: 'Español', flag: '🇪🇸' },
+  ];
+
+  const currentLang = i18n.language || 'en';
+  const current = LANGS.find(l => l.code === currentLang) || LANGS[0];
+
+  const handleLang = (code) => {
+    i18n.changeLanguage(code);
+    localStorage.setItem('language', code);
+    setLangMenu(false);
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -32,6 +48,18 @@ const Login = () => {
       navigate("/");
     }
   }, [user, navigate]);
+
+  // Close language menu when clicking outside
+  useEffect(() => {
+    if (!langMenu) return;
+    const handleClickOutside = (e) => {
+      if (langBtnRef.current && !langBtnRef.current.contains(e.target)) {
+        setLangMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [langMenu]);
 
   // Animación splash de entrada
   useEffect(() => {
@@ -124,6 +152,95 @@ const Login = () => {
       {/* Partículas de fondo */}
       <div className="particles" id="particles" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }} />
 
+      {/* Language Selector - Top Right */}
+      {showLogin && (
+        <div ref={langBtnRef} style={{ position: 'fixed', top: 20, right: 20, zIndex: 50 }}>
+          <button
+            type="button"
+            aria-label="Select language"
+            className="lang-selector-btn"
+            onClick={() => setLangMenu(v => !v)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 16px',
+              borderRadius: 8,
+              background: 'rgba(255,255,255,0.05)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255,0,51,0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+            }}
+          >
+            <span role="img" aria-label="Language" style={{ fontSize: 18 }}>🌐</span>
+            <span>{current.label}</span>
+          </button>
+          {langMenu && (
+            <div
+              className="lang-menu"
+              style={{
+                position: 'absolute',
+                right: 0,
+                marginTop: 8,
+                minWidth: 140,
+                background: 'rgba(10,10,22,0.95)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8,
+                boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
+                overflow: 'hidden',
+                animation: 'fadeIn 0.2s ease',
+              }}
+            >
+              {LANGS.map(l => (
+                <button
+                  key={l.code}
+                  className="lang-option"
+                  onClick={() => handleLang(l.code)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '10px 16px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: l.code === currentLang ? '#ff0033' : '#fff',
+                    fontSize: 13,
+                    fontWeight: l.code === currentLang ? 700 : 400,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <span>{l.flag}</span>
+                  <span>{l.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Glow effects */}
       <div className="glow-effect" style={{ top: '30%', left: '30%' }} />
       <div className="glow-effect" style={{ top: '60%', right: '30%', animationDelay: '1s' }} />
@@ -146,12 +263,12 @@ const Login = () => {
         }}
       >
         <div className="login-header">
-          <h2 className="login-title">{t('login.title')}</h2>
-          <p className="login-subtitle">{t('login.subtitle')}</p>
+          <h2 className="login-title">{t('auth.title')}</h2>
+          <p className="login-subtitle">{t('auth.subtitle')}</p>
         </div>
         <form id="loginForm" onSubmit={handleSubmit} autoComplete="on">
           <div className="input-group">
-            <label className="input-label" htmlFor="username">{t('login.user')}</label>
+            <label className="input-label" htmlFor="username">{t('auth.user')}</label>
             <input
               id="username"
               type="text"
@@ -164,7 +281,7 @@ const Login = () => {
             />
           </div>
           <div className="input-group" style={{ position: 'relative' }}>
-            <label className="input-label" htmlFor="password">{t('login.password')}</label>
+            <label className="input-label" htmlFor="password">{t('auth.password')}</label>
             <input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -194,16 +311,16 @@ const Login = () => {
                 checked={remember}
                 onChange={e => setRemember(e.target.checked)}
               />
-              {t('login.remember')}
+              {t('auth.remember')}
             </label>
-            <a href="#" className="forgot-password" tabIndex={0} onClick={e => e.preventDefault()}>{t('login.forgot')}</a>
+            <a href="#" className="forgot-password" tabIndex={0} onClick={e => e.preventDefault()}>{t('auth.forgot')}</a>
           </div>
           <button type="submit" className="login-button" disabled={loading}>
-            {loading ? t('login.verifying') : t('login.button')}
+            {loading ? t('auth.verifying') : t('auth.button')}
             <div className="button-glow"></div>
           </button>
           <div className="register-link">
-            {t('login.register').split(/(\<a\>.*?\<\/a\>)/g).map((part, i) =>
+            {t('auth.register').split(/(\<a\>.*?\<\/a\>)/g).map((part, i) =>
               part.startsWith('<a>') ? <a key={i} href="#" tabIndex={0} onClick={e => e.preventDefault()}>{part.replace(/<\/?a>/g, '')}</a> : part
             )}
           </div>

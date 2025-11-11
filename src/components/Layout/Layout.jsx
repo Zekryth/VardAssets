@@ -15,6 +15,8 @@ import {
 import { useTheme } from '../../contexts/ThemeContext'
 import AccountPanel from '../Account/AccountPanel.jsx'
 import { Button } from '../UI/Button.jsx'
+import { useTranslation } from 'react-i18next'
+import '../../i18n'
 
 const cx = (...p) => p.filter(Boolean).join(' ')
 
@@ -26,30 +28,31 @@ const Layout = ({ children }) => {
   const location = useLocation()
   const { theme, toggleTheme } = useTheme()
   const profileRef = useRef(null)
+  const { t } = useTranslation()
 
   const routes = [
-    { to: '/', label: 'Mapa Principal', icon: MapPin },
-    ...(isAdmin() ? [{ to: '/dashboard', label: 'Dashboard', icon: BarChart3 }] : []),
+    { to: '/', label: t('nav.map'), icon: MapPin },
+    ...(isAdmin() ? [{ to: '/dashboard', label: t('nav.dashboard'), icon: BarChart3 }] : []),
     ...(isAdmin() ? [
-      { to: '/companies', label: 'Compañías', icon: Building2 },
-      { to: '/inventory', label: 'Inventario', icon: Package },
+      { to: '/companies', label: t('nav.companies'), icon: Building2 },
+      { to: '/inventory', label: t('nav.inventory'), icon: Package },
     ] : []),
     // Solo el admin ve el enlace de usuarios
-    ...(isAdmin() ? [{ to: '/users', label: 'Usuarios', icon: Users }] : []),
+    ...(isAdmin() ? [{ to: '/users', label: t('nav.users'), icon: Users }] : []),
     { to: '/settings', label: 'Configuración', icon: Settings },
     { to: '/help', label: 'Ayuda & Soporte', icon: HelpCircle }
   ]
 
   const titleMap = {
-    '/': 'Mapa Principal',
-    '/dashboard': 'Dashboard',
-    '/companies': 'Compañías',
-    '/inventory': 'Inventario',
-    '/users': 'Usuarios',
+    '/': t('nav.map'),
+    '/dashboard': t('nav.dashboard'),
+    '/companies': t('nav.companies'),
+    '/inventory': t('nav.inventory'),
+    '/users': t('nav.users'),
     '/settings': 'Configuración',
     '/help': 'Ayuda & Soporte'
   }
-  const currentTitle = titleMap[location.pathname] || 'Mapa Principal'
+  const currentTitle = titleMap[location.pathname] || t('nav.map')
   const CurrentIcon = (routes.find(r => r.to === location.pathname)?.icon) || MapPin
 
   useEffect(() => {

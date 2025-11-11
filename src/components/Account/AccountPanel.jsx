@@ -26,10 +26,8 @@ const Avatar = ({ name }) => {
 
 
 const LANGS = [
-  { code: 'es', label: 'ES', name: 'Español', flag: '🇪🇸' },
   { code: 'en', label: 'EN', name: 'English', flag: '🇬🇧' },
-  { code: 'ro', label: 'RO', name: 'Română', flag: '🇷🇴' },
-  { code: 'it', label: 'IT', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'es', label: 'ES', name: 'Español', flag: '��' },
 ];
 
 const AccountPanel = () => {
@@ -40,8 +38,8 @@ const AccountPanel = () => {
   const langBtnRef = useRef();
   if (!user) return null;
 
-  // Idioma actual
-  const currentLang = i18n.language || 'es';
+  // Idioma actual (default to 'en' if not set)
+  const currentLang = i18n.language || 'en';
   const current = LANGS.find(l => l.code === currentLang) || LANGS[0];
 
   // Cierra el menú si se hace click fuera
@@ -57,7 +55,7 @@ const AccountPanel = () => {
   // Cambia idioma global y guarda en localStorage
   const handleLang = (code) => {
     i18n.changeLanguage(code);
-    localStorage.setItem('lang', code);
+    localStorage.setItem('language', code);
     setLangMenu(false);
   };
 
@@ -103,7 +101,9 @@ const AccountPanel = () => {
           <p className="text-xs text-gray-500 dark:text-gray-400 truncate" title={user?.email}>{user?.email}</p>
           <div className="flex items-center gap-2 mt-1">
             <span className="w-2 h-2 rounded-full bg-green-500"></span>
-            <span className="text-gray-600 dark:text-gray-300 text-xs capitalize">{t('admin')}</span>
+            <span className="text-gray-600 dark:text-gray-300 text-xs capitalize">
+              {user?.rol === 'admin' ? t('common.role') + ': Admin' : t('common.role') + ': User'}
+            </span>
           </div>
         </div>
       </div>
@@ -111,10 +111,10 @@ const AccountPanel = () => {
         <button
           type="button"
           onClick={logout}
-          aria-label={t('logout')}
+          aria-label={t('nav.logout')}
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/20 dark:text-red-300 dark:hover:bg-red-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
         >
-          {t('logout')}
+          {t('nav.logout')}
         </button>
       </div>
     </div>
