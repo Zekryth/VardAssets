@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "prebuild": "npm --prefix frontend-vue install --no-audit --no-fund && node frontend-vue/build.mjs",
-    "build": "npx vite build",
+    "build": "node node_modules/vite/bin/vite.js build",
     "dev": "vite",
     "preview": "vite preview"
   },
