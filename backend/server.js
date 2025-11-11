@@ -48,9 +48,6 @@ async function initDatabase() {
   }
 }
 
-// Inicializar base de datos antes de levantar el servidor
-initDatabase();
-
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -79,9 +76,16 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Algo salió mal en el servidor' });
 });
 
+// Inicializar base de datos y luego levantar el servidor
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🎯 Servidor corriendo en puerto ${PORT}`);
-  console.log(`📡 URL: http://localhost:${PORT}`);
-  console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
-});
+
+async function startServer() {
+  await initDatabase();
+  app.listen(PORT, () => {
+    console.log(`🎯 Servidor corriendo en puerto ${PORT}`);
+    console.log(`📡 URL: http://localhost:${PORT}`);
+    console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
+  });
+}
+
+startServer();
