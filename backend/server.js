@@ -31,42 +31,18 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Conexión a PostgreSQL (Neon)
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: 'postgres',
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  },
-  logging: false
-});
+// Importar modelos desde archivo central
+import { sequelize } from './models/index.js';
 
 // Test database connection
 sequelize.authenticate()
   .then(() => console.log('✅ Conectado a Neon PostgreSQL (Alemania)'))
   .catch(err => console.error('❌ Error conectando a PostgreSQL:', err));
 
-// Importar modelos
-import pointModelDefinition from './models/Point.js';
-import companyModelDefinition from './models/Company.js';
-import objectModelDefinition from './models/Object.js';
-import userModelDefinition from './models/User.js';
-
-// Inicializar modelos
-const Point = pointModelDefinition(sequelize);
-const Company = companyModelDefinition(sequelize);
-const ObjectModel = objectModelDefinition(sequelize);
-const User = userModelDefinition(sequelize);
-
 // Sincronizar modelos con la base de datos (crear tablas si no existen)
 sequelize.sync({ alter: true })
   .then(() => console.log('📊 Modelos sincronizados con PostgreSQL'))
   .catch(err => console.error('❌ Error sincronizando modelos:', err));
-
-// Exportar modelos para uso en controladores
-export { Point, Company, ObjectModel as Object, User };
 
 
 // Rutas

@@ -1,5 +1,5 @@
 import express from 'express';
-import { Point } from '../server.js';
+import { Point } from '../models/index.js';
 
 const router = express.Router();
 

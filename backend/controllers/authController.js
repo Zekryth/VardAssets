@@ -1,4 +1,4 @@
-import { User } from '../server.js';
+import { User } from '../models/index.js';
 import jwt from 'jsonwebtoken';
 
 /**
