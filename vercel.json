@@ -1,10 +1,18 @@
-{{
+{{{
 
-  "rewrites": [  "version": 2,
+  "rewrites": [
 
-    {  "builds": [
+    {  "rewrites": [  "version": 2,
 
-      "source": "/(.*)",    {
+      "source": "/(.*)",
+
+      "destination": "/index.html"    {  "builds": [
+
+    }
+
+  ]      "source": "/(.*)",    {
+
+}
 
       "destination": "/index.html"      "src": "package.json",
 
