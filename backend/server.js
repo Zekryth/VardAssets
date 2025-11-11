@@ -1,34 +1,67 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
+import { Sequelize } from 'sequelize';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import dotenv from 'dotenv';
+
+// Configurar dotenv para ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Import routes
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import companyRoutes from './routes/companies.js';
 import objectRoutes from './routes/objects.js';
-import pointRoutes from './routes/points_fixed.js';
+import pointRoutes from './routes/points-postgres.js'; // UPDATED: PostgreSQL endpoints
 import searchRoutes from './routes/search.js';
 import tilesRoutes from './routes/tiles.js';
 
-dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Conexión a MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mapshade', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('✅ Conectado a MongoDB'))
-.catch(err => console.error('❌ Error conectando a MongoDB:', err));
+// Conexión a PostgreSQL (Neon)
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres',
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    }
+  },
+  logging: false
+});
+
+// Test database connection
+sequelize.authenticate()
+  .then(() => console.log('✅ Conectado a Neon PostgreSQL (Alemania)'))
+  .catch(err => console.error('❌ Error conectando a PostgreSQL:', err));
+
+// Importar modelos
+import pointModelDefinition from './models/Point.js';
+
+// Inicializar modelos
+const Point = pointModelDefinition(sequelize);
+
+// Sincronizar modelos con la base de datos (crear tablas si no existen)
+sequelize.sync({ alter: true })
+  .then(() => console.log('📊 Modelos sincronizados con PostgreSQL'))
+  .catch(err => console.error('❌ Error sincronizando modelos:', err));
+
+// Exportar modelos para uso en controladores
+export { Point };
+
 
 // Rutas
 app.use('/api/auth', authRoutes);

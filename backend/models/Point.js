@@ -1,84 +1,80 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
 
-const pointSchema = new mongoose.Schema({
-  nombre: {
-    type: String,
-    required: [true, 'El nombre del punto es requerido'],
-    trim: true,
-    maxlength: [100, 'El nombre no puede exceder 100 caracteres']
-  },
-  categoria: {
-    type: String,
-    required: [true, 'La categoría es requerida'],
-    trim: true
-  },
-  fecha: {
-    type: Date,
-    default: Date.now
-  },
-  compañia: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Company',
-    required: [true, 'La compañía asociada es requerida']
-  },
-  coordenadas: {
-    x: {
-      type: Number,
-      required: [true, 'La coordenada X es requerida'],
-      min: [0, 'La coordenada X no puede ser negativa']
+export default (sequelize) => {
+  const Point = sequelize.define('Point', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
     },
-    y: {
-      type: Number,
-      required: [true, 'La coordenada Y es requerida'],
-      min: [0, 'La coordenada Y no puede ser negativa']
-    }
-  },
-  inventario: [{
-    objeto: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Object',
-      required: true
+    nombre: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'El nombre del punto es requerido' },
+        len: { args: [1, 100], msg: 'El nombre no puede exceder 100 caracteres' }
+      }
     },
-    cantidad: {
-      type: Number,
-      required: true,
-      min: [1, 'La cantidad debe ser al menos 1']
+    categoria: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'La categoría es requerida' }
+      }
     },
-    fechaAsignacion: {
-      type: Date,
-      default: Date.now
+    fecha: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
+    },
+    compañia: {
+      type: DataTypes.UUID,
+      allowNull: true // Temporal: permitir null mientras migramos
+    },
+    coordenadas: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      validate: {
+        isValidCoordinates(value) {
+          if (!value || typeof value.x !== 'number' || typeof value.y !== 'number') {
+            throw new Error('Las coordenadas deben incluir x e y numéricos');
+          }
+          if (value.x < 0 || value.y < 0) {
+            throw new Error('Las coordenadas no pueden ser negativas');
+          }
+        }
+      }
+    },
+    inventario: {
+      type: DataTypes.JSONB,
+      defaultValue: []
+    },
+    notas: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
     }
-  }],
-  fotos: [{
-    url: String,
-    nombre: String,
-    fechaSubida: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  documentos: [{
-    url: String,
-    nombre: String,
-    tipo: String,
-    fechaSubida: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  activo: {
-    type: Boolean,
-    default: true
-  }
-}, {
-  timestamps: true
-});
+  }, {
+    tableName: 'points',
+    timestamps: true,
+    indexes: [
+      {
+        name: 'idx_point_coordinates',
+        fields: ['coordenadas'],
+        using: 'gin'
+      },
+      {
+        name: 'idx_point_company',
+        fields: ['compañia']
+      },
+      {
+        name: 'idx_point_active',
+        fields: ['activo']
+      }
+    ]
+  });
 
-// Índice compuesto para coordenadas únicas
-pointSchema.index({ 'coordenadas.x': 1, 'coordenadas.y': 1 }, { unique: true });
-pointSchema.index({ compañia: 1 });
-pointSchema.index({ categoria: 1 });
-// UPDATED: índice de texto para búsquedas por nombre/categoría
-pointSchema.index({ nombre: 'text', categoria: 'text' });
-
-export default mongoose.model('Point', pointSchema);
+  return Point;
+};
