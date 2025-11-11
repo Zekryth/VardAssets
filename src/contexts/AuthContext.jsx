@@ -28,9 +28,10 @@ export const AuthProvider = ({ children }) => {
 
     if (forceLogout) {
       localStorage.removeItem('token')
+      // Keep language preference
     }
 
-    if (!skipAuto) {
+    if (!skipAuto && !forceLogout) {
       const token = localStorage.getItem('token')
       if (token) {
         setUser({ 
@@ -73,9 +74,11 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null)
     localStorage.removeItem('token')
-    // Redirect robustly to login, skipping autologin and ensuring token cleared
+    // Keep language preference, only clear auth token
+    // Force a clean reload to login page
     if (typeof window !== 'undefined') {
-      window.location.href = '/login?logout&forcelogin'
+      // Use replace to avoid history issues
+      window.location.replace('/login?logout=1')
     }
   }
 
