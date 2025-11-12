@@ -106,24 +106,33 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
       'http://localhost:3000',
       'http://localhost:5173',
       'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
       process.env.CORS_ORIGIN
     ].filter(Boolean);
 
+console.log('🌐 CORS permitido para:', allowedOrigins);
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Permitir requests sin origin (mobile apps, Postman, etc)
-    if (!origin) return callback(null, true);
+    // Permitir requests sin origin (mobile apps, Postman, Vercel serverless, etc)
+    if (!origin) {
+      console.log('✅ CORS: Request sin origin (permitido)');
+      return callback(null, true);
+    }
     
     if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log('✅ CORS: Origin permitido -', origin);
       callback(null, true);
     } else {
-      logger.warn('CORS bloqueado', { origin, ip: this.ip });
-      callback(new Error('No permitido por CORS'));
+      console.warn('⚠️ CORS: Origin bloqueado -', origin);
+      logger.warn('CORS bloqueado', { origin });
+      callback(new Error(`CORS: Origin no permitido: ${origin}`));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
 // 🛡️ SEGURIDAD: Sanitización de inputs (prevenir NoSQL injection)
@@ -147,6 +156,7 @@ async function initDatabase() {
     
     await sequelize.sync({ alter: true });
     console.log('📊 Modelos sincronizados con PostgreSQL');
+    console.log('📋 Tablas disponibles:', Object.keys(sequelize.models));
   } catch (err) {
     console.error('❌ Error con la base de datos:', err);
     process.exit(1);
@@ -159,6 +169,18 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/objects', objectRoutes);
+app.use('/api/points', pointRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/map/tiles', tilesRoutes);
+
+console.log('✅ Rutas registradas:');
+console.log('   📍 /api/auth');
+console.log('   📍 /api/users');
+console.log('   📍 /api/companies');
+console.log('   📍 /api/objects');
+console.log('   📍 /api/points');
+console.log('   📍 /api/search');
+console.log('   📍 /api/map/tiles');
 app.use('/api/points', pointRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/map/tiles', tilesRoutes);

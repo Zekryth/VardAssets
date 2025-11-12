@@ -35,12 +35,49 @@ router.get('/:id', async (req, res) => {
 // POST /api/points - Crear un nuevo punto
 router.post('/', async (req, res) => {
   try {
-    const newPoint = await Point.create(req.body);
-    console.log('✅ Punto creado en Neon:', newPoint.id);
+    console.log('📥 POST /api/points - Body:', JSON.stringify(req.body));
+    
+    const { nombre, categoria, compañia, coordenadas, inventario, fotos, documentos } = req.body;
+    
+    // Validación
+    if (!nombre || nombre.trim() === '') {
+      console.warn('⚠️ Validación fallida: nombre vacío');
+      return res.status(400).json({ 
+        message: 'El nombre del punto es obligatorio' 
+      });
+    }
+    
+    if (!coordenadas || typeof coordenadas.x !== 'number' || typeof coordenadas.y !== 'number') {
+      console.warn('⚠️ Validación fallida: coordenadas inválidas');
+      return res.status(400).json({ 
+        message: 'Las coordenadas son obligatorias (x, y)' 
+      });
+    }
+    
+    const newPoint = await Point.create({
+      nombre: nombre.trim(),
+      categoria: categoria || 'General',
+      compañia: compañia || null,
+      coordenadas,
+      inventario: inventario || [],
+      fotos: fotos || [],
+      documentos: documentos || [],
+      activo: true
+    });
+    
+    console.log('✅ Punto creado en Neon:', { id: newPoint.id, nombre: newPoint.nombre });
     res.status(201).json(newPoint);
   } catch (error) {
-    console.error('Error creando punto:', error);
-    res.status(400).json({ message: 'Error creando punto', error: error.message });
+    console.error('❌ Error creando punto:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
+    res.status(400).json({ 
+      message: 'No se pudo crear el punto', 
+      error: error.message,
+      details: error.name 
+    });
   }
 });
 

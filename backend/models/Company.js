@@ -17,17 +17,13 @@ export default (sequelize) => {
     },
     personaContacto: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: { msg: 'La persona de contacto es requerida' }
-      }
+      allowNull: true
     },
     telefono: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       validate: {
-        notEmpty: { msg: 'El teléfono es requerido' },
-        is: { args: /^[+]?[\d\s\-()]+$/, msg: 'Por favor ingresa un teléfono válido' }
+        is: { args: /^[+]?[\d\s\-()]*$/, msg: 'Por favor ingresa un teléfono válido' }
       }
     },
     email: {
@@ -39,6 +35,10 @@ export default (sequelize) => {
       set(value) {
         this.setDataValue('email', value ? value.toLowerCase().trim() : null);
       }
+    },
+    direccion: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     activo: {
       type: DataTypes.BOOLEAN,

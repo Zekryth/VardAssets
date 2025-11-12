@@ -41,12 +41,41 @@ router.get('/:id', async (req, res) => {
 // POST /api/objects - Crear un nuevo objeto
 router.post('/', async (req, res) => {
   try {
-    const newObject = await Object.create(req.body);
-    console.log('✅ Objeto creado en Neon:', newObject.id);
+    console.log('📥 POST /api/objects - Body:', JSON.stringify(req.body));
+    
+    const { nombre, categoria, unidad, precio, descripcion, icono } = req.body;
+    
+    // Validación
+    if (!nombre || nombre.trim() === '') {
+      console.warn('⚠️ Validación fallida: nombre vacío');
+      return res.status(400).json({ 
+        message: 'El nombre del objeto es obligatorio' 
+      });
+    }
+    
+    const newObject = await Object.create({
+      nombre: nombre.trim(),
+      categoria: categoria?.trim() || 'General',
+      unidad: unidad?.trim() || 'unidad',
+      precio: precio || 0,
+      descripcion: descripcion?.trim() || null,
+      icono: icono || null,
+      activo: true
+    });
+    
+    console.log('✅ Objeto creado en Neon:', { id: newObject.id, nombre: newObject.nombre });
     res.status(201).json(newObject);
   } catch (error) {
-    console.error('Error creando objeto:', error);
-    res.status(400).json({ message: 'Error creando objeto', error: error.message });
+    console.error('❌ Error creando objeto:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
+    res.status(400).json({ 
+      message: 'No se pudo crear el objeto', 
+      error: error.message,
+      details: error.name 
+    });
   }
 });
 

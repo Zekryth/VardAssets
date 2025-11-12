@@ -48,6 +48,14 @@ export default (sequelize) => {
       type: DataTypes.JSONB,
       defaultValue: []
     },
+    fotos: {
+      type: DataTypes.JSONB,
+      defaultValue: []
+    },
+    documentos: {
+      type: DataTypes.JSONB,
+      defaultValue: []
+    },
     notas: {
       type: DataTypes.TEXT,
       allowNull: true

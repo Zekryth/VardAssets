@@ -18,9 +18,20 @@ export default (sequelize) => {
     categoria: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: 'General',
       validate: {
         notEmpty: { msg: 'La categoría es requerida' }
       }
+    },
+    unidad: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'unidad'
+    },
+    precio: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      defaultValue: 0
     },
     icono: {
       type: DataTypes.STRING,
@@ -32,11 +43,8 @@ export default (sequelize) => {
     },
     numeroInventario: {
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-      validate: {
-        notEmpty: { msg: 'El número de inventario es requerido' }
-      }
+      allowNull: true,
+      unique: true
     },
     nickname: {
       type: DataTypes.STRING,
