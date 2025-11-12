@@ -21,15 +21,15 @@ export const auth = async (req, res, next) => {
       req.user = {
         _id: isAdmin ? 'demo-admin' : 'demo-user',
         id: isAdmin ? 'demo-admin' : 'demo-user',
-        nombre: isAdmin ? 'Administrator MapShade' : 'User Demo',
-        email: isAdmin ? 'admin@mapshade.com' : 'user@mapshade.com',
+        nombre: isAdmin ? 'Administrator VardAssets' : 'User VardAssets',
+        email: isAdmin ? 'admin@VardAssets.com' : 'user@VardAssets.com',
         rol: isAdmin ? 'admin' : 'usuario',
         activo: true,
       }
       return next()
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'mapshade_secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'VardAssets_secret');
     const user = await User.findById(decoded.id).select('-password');
     
     if (!user || !user.activo) {

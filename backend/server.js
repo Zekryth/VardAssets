@@ -5,31 +5,136 @@ import { Sequelize } from 'sequelize';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
+import winston from 'winston';
 
 // Configurar dotenv para ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+// Configurar Winston Logger para seguridad
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: path.join(__dirname, 'logs', 'error.log'), level: 'error' }),
+    new winston.transports.File({ filename: path.join(__dirname, 'logs', 'security.log'), level: 'warn' }),
+    new winston.transports.File({ filename: path.join(__dirname, 'logs', 'combined.log') }),
+  ],
+});
+
+// En desarrollo, también loguear a consola
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.simple(),
+  }));
+}
+
 // Import routes
 import authRoutes from './routes/auth.js';
-import userRoutes from './routes/users-postgres.js'; // UPDATED: PostgreSQL
-import companyRoutes from './routes/companies-postgres.js'; // UPDATED: PostgreSQL
-import objectRoutes from './routes/objects-postgres.js'; // UPDATED: PostgreSQL
-import pointRoutes from './routes/points-postgres.js'; // UPDATED: PostgreSQL endpoints
+import userRoutes from './routes/users-postgres.js';
+import companyRoutes from './routes/companies-postgres.js';
+import objectRoutes from './routes/objects-postgres.js';
+import pointRoutes from './routes/points-postgres.js';
 import searchRoutes from './routes/search.js';
 import tilesRoutes from './routes/tiles.js';
 
 
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true
+// 🛡️ SEGURIDAD: Helmet - Headers de seguridad HTTP
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'", "https://ep-proud-bread-agcgtmlo-pooler.c-2.eu-central-1.aws.neon.tech"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// 🛡️ SEGURIDAD: Rate Limiting para prevenir ataques de fuerza bruta
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // 5 intentos
+  message: { 
+    error: 'Demasiados intentos de login. Intenta de nuevo en 15 minutos.',
+    code: 'RATE_LIMIT_EXCEEDED'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    logger.warn('Rate limit excedido en login', {
+      ip: req.ip,
+      email: req.body?.email,
+      userAgent: req.headers['user-agent']
+    });
+    res.status(429).json({
+      error: 'Demasiados intentos de login. Intenta de nuevo en 15 minutos.'
+    });
+  }
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // 100 peticiones por IP
+  message: { 
+    error: 'Demasiadas peticiones. Intenta de nuevo más tarde.',
+    code: 'RATE_LIMIT_EXCEEDED'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 🛡️ SEGURIDAD: CORS configurado según ambiente
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [
+      'https://vard-assets.vercel.app',
+      process.env.CORS_ORIGIN
+    ].filter(Boolean)
+  : [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      process.env.CORS_ORIGIN
+    ].filter(Boolean);
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (mobile apps, Postman, etc)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      logger.warn('CORS bloqueado', { origin, ip: this.ip });
+      callback(new Error('No permitido por CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// 🛡️ SEGURIDAD: Sanitización de inputs (prevenir NoSQL injection)
+app.use(mongoSanitize());
+
+// Middleware estándar
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Aplicar rate limiter general a todas las rutas API
+app.use('/api/', apiLimiter);
 
 // Importar modelos desde archivo central
 import { sequelize } from './models/index.js';
@@ -49,6 +154,7 @@ async function initDatabase() {
 }
 
 // Rutas
+app.use('/api/auth/login', loginLimiter); // Rate limit específico para login
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/companies', companyRoutes);
@@ -64,16 +170,32 @@ app.use('/tiles', express.static(tilesPath));
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
   res.json({ 
-    message: '🚀 MapShade Backend funcionando correctamente', 
+    message: '🚀 VardAssets Backend funcionando correctamente', 
     timestamp: new Date(),
     version: '1.0.0'
   });
 });
 
-// Manejo de errores
+// Manejo de errores mejorado con logging
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Algo salió mal en el servidor' });
+  logger.error('Error en servidor', {
+    error: err.message,
+    stack: err.stack,
+    ip: req.ip,
+    method: req.method,
+    path: req.path,
+    userAgent: req.headers['user-agent']
+  });
+  
+  // No exponer detalles del error en producción
+  const message = process.env.NODE_ENV === 'production' 
+    ? 'Error interno del servidor' 
+    : err.message;
+  
+  res.status(err.status || 500).json({ 
+    error: message,
+    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+  });
 });
 
 // Inicializar base de datos y luego levantar el servidor

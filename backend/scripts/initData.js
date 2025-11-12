@@ -10,11 +10,11 @@ import Point from '../models/Point.js';
 dotenv.config();
 
 /**
- * Script de inicialización de datos de ejemplo para MapShade
+ * Script de inicialización de datos de ejemplo para VardAssets
  */
 const initData = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mapshade');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/VardAssets');
     console.log('✅ Conectado a MongoDB');
 
     // Limpiar datos existentes
@@ -26,8 +26,8 @@ const initData = async () => {
 
     // Crear usuario administrador
     const adminUser = await User.create({
-      nombre: 'Administrador MapShade',
-      email: 'admin@mapshade.com',
+      nombre: 'Administrador VardAssets',
+      email: 'admin@VardAssets.com',
       password: '123456',
       rol: 'admin'
     });
@@ -36,7 +36,7 @@ const initData = async () => {
     // Crear usuario regular
     const regularUser = await User.create({
       nombre: 'Usuario Regular',
-      email: 'usuario@mapshade.com',
+      email: 'usuario@VardAssets.com',
       password: '123456',
       rol: 'usuario'
     });
@@ -113,8 +113,8 @@ const initData = async () => {
 
     console.log('\n🎉 Datos de inicialización completados!');
     console.log('\n🔑 Credenciales de acceso:');
-    console.log('   Admin: admin@mapshade.com / 123456');
-    console.log('   Usuario: usuario@mapshade.com / 123456');
+    console.log('   Admin: admin@VardAssets.com / 123456');
+    console.log('   Usuario: usuario@VardAssets.com / 123456');
 
   } catch (error) {
     console.error('❌ Error inicializando datos:', error);
