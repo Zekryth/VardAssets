@@ -3,11 +3,15 @@ import jwt from 'jsonwebtoken';
 import { getPool } from './_lib/db.js';
 import { handleCors } from './_lib/cors.js';
 import { handleError } from './_lib/errors.js';
+import { initializeDatabase } from './_lib/init.js';
 
 export default async function handler(req, res) {
   console.log('📥 /api/auth ->', req.method, req.url);
   
   if (handleCors(req, res)) return;
+
+  // Inicializar base de datos en la primera llamada
+  await initializeDatabase();
 
   const pool = getPool();
 
@@ -19,11 +23,12 @@ export default async function handler(req, res) {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return res.status(400).json({ error: 'Email y contraseña requeridos' });
+        return res.status(400).json({ error: 'Email/username y contraseña requeridos' });
       }
 
+      // Buscar por email O username
       const { rows } = await pool.query(
-        'SELECT * FROM users WHERE email = $1',
+        'SELECT * FROM users WHERE email = $1 OR username = $1',
         [email.toLowerCase().trim()]
       );
 
@@ -52,7 +57,7 @@ export default async function handler(req, res) {
         { expiresIn: '7d' } // 7 días
       );
 
-      console.log('✅ Login exitoso:', email, '- Token expira en 7d');
+      console.log('✅ Login exitoso:', user.email, '(username:', user.username, ') - Token expira en 7d');
 
       return res.status(200).json({
         token,
