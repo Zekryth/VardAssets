@@ -11,6 +11,7 @@ import MapPage from './pages/MapPage'
 import Inventory from './pages/Inventory'
 import Dashboard from './pages/Dashboard'
 import Companies from './pages/Companies'
+import Setup from './pages/Setup'
 // Inventory page now implemented
 const Users = () => <div className="p-8">Usuarios (próximamente)</div>
 const Settings = () => <div className="p-8">Configuración (próximamente)</div>
@@ -82,6 +83,10 @@ function App() {
             <TopProgressBar />
             <ErrorBoundary>
               <Routes>
+                {/* Ruta de setup (sin autenticación) */}
+                <Route path="/setup" element={<Setup />} />
+                
+                {/* Ruta pública (Login) */}
                 <Route path="/login" element={
                   <PublicRoute>
                     <Login />
