@@ -1,8 +1,9 @@
-const { Pool } = require('pg');
+import pg from 'pg';
+const { Pool } = pg;
 
 let pool;
 
-function getPool() {
+export function getPool() {
   if (!pool) {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
@@ -11,8 +12,10 @@ function getPool() {
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,
     });
+
+    pool.on('error', (err) => {
+      console.error('❌ Error inesperado en pool de PostgreSQL:', err);
+    });
   }
   return pool;
 }
-
-module.exports = { getPool };

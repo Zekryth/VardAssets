@@ -1,12 +1,20 @@
-function handleError(error, res) {
-  console.error('❌ Error:', error);
+export function handleError(error, res) {
+  console.error('❌ Error:', {
+    message: error.message,
+    stack: error.stack,
+    code: error.code
+  });
 
   if (error.message === 'NO_TOKEN') {
     return res.status(401).json({ error: 'Token no proporcionado' });
   }
   
   if (error.message === 'INVALID_TOKEN') {
-    return res.status(401).json({ error: 'Token inválido o expirado' });
+    return res.status(401).json({ error: 'Token inválido' });
+  }
+
+  if (error.message === 'TOKEN_EXPIRED') {
+    return res.status(401).json({ error: 'Token expirado' });
   }
   
   if (error.message === 'FORBIDDEN') {
@@ -21,10 +29,12 @@ function handleError(error, res) {
     return res.status(400).json({ error: 'Referencia inválida a otro registro' });
   }
 
+  if (error.code === '42P01') { // Table doesn't exist
+    return res.status(500).json({ error: 'Tabla no encontrada en base de datos' });
+  }
+
   return res.status(500).json({ 
     error: 'Error del servidor',
-    details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    details: error.message
   });
 }
-
-module.exports = { handleError };

@@ -1,10 +1,12 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { getPool } = require('./_lib/db');
-const { handleCors } = require('./_lib/cors');
-const { handleError } = require('./_lib/errors');
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { getPool } from './_lib/db.js';
+import { handleCors } from './_lib/cors.js';
+import { handleError } from './_lib/errors.js';
 
 export default async function handler(req, res) {
+  console.log('📥 Request a /api/auth:', req.method);
+  
   if (handleCors(req, res)) return;
 
   const pool = getPool();

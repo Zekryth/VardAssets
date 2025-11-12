@@ -1,16 +1,18 @@
-const { getPool } = require('./_lib/db');
-const { authenticateToken } = require('./_lib/auth');
-const { handleCors } = require('./_lib/cors');
-const { handleError } = require('./_lib/errors');
+import { getPool } from './_lib/db.js';
+import { authenticateToken } from './_lib/auth.js';
+import { handleCors } from './_lib/cors.js';
+import { handleError } from './_lib/errors.js';
 
 export default async function handler(req, res) {
+  console.log('📥 Request a /api/companies:', req.method, req.url);
+  
   if (handleCors(req, res)) return;
 
   const pool = getPool();
 
   try {
     const user = authenticateToken(req);
-    console.log('👤 Usuario autenticado:', user.email);
+    console.log('✅ Usuario autenticado:', user.email);
 
     // GET /api/companies - Listar compañías
     if (req.method === 'GET') {
