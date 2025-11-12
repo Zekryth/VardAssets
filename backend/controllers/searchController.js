@@ -1,6 +1,5 @@
-import Point from '../models/Point.js'
-import Company from '../models/Company.js'
-import ObjModel from '../models/Object.js'
+import { Point, Company, Object as ObjModel } from '../models/index.js';
+import { Op } from 'sequelize';
 
 const sanitizeQ = (q) => {
   if (!q || typeof q !== 'string') return ''
@@ -15,23 +14,43 @@ export const search = async (req, res) => {
       return res.json({ points: [], companies: [], objects: [] })
     }
 
-    // Prefer $text search when available; fallback to regex (case-insensitive)
-    const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+    // Usar ILIKE para búsqueda case-insensitive en PostgreSQL
+    const searchPattern = `%${q}%`;
 
     const [points, companies, objects] = await Promise.all([
-      Point.find({ $or: [{ nombre: regex }, { categoria: regex }] })
-        .select('nombre categoria coordenadas compañia')
-        .populate({ path: 'compañia', select: 'nombre' })
-        .limit(5)
-        .lean(),
-      Company.find({ $or: [{ nombre: regex }, { personaContacto: regex }] })
-        .select('nombre')
-        .limit(5)
-        .lean(),
-      ObjModel.find({ $or: [{ nombre: regex }, { categoria: regex }, { numeroInventario: regex }, { nickname: regex }] })
-        .select('nombre numeroInventario categoria icono')
-        .limit(5)
-        .lean()
+      Point.findAll({
+        where: {
+          [Op.or]: [
+            { nombre: { [Op.iLike]: searchPattern } },
+            { categoria: { [Op.iLike]: searchPattern } }
+          ],
+          activo: true
+        },
+        attributes: ['id', 'nombre', 'categoria', 'coordenadas', 'compañia'],
+        limit: 5
+      }),
+      Company.findAll({
+        where: {
+          [Op.or]: [
+            { nombre: { [Op.iLike]: searchPattern } },
+            { personaContacto: { [Op.iLike]: searchPattern } }
+          ]
+        },
+        attributes: ['id', 'nombre'],
+        limit: 5
+      }),
+      ObjModel.findAll({
+        where: {
+          [Op.or]: [
+            { nombre: { [Op.iLike]: searchPattern } },
+            { categoria: { [Op.iLike]: searchPattern } },
+            { numeroInventario: { [Op.iLike]: searchPattern } },
+            { nickname: { [Op.iLike]: searchPattern } }
+          ]
+        },
+        attributes: ['id', 'nombre', 'numeroInventario', 'categoria', 'icono'],
+        limit: 5
+      })
     ])
 
     return res.json({ points, companies, objects })

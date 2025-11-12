@@ -2,7 +2,6 @@
 
 Sistema web completo para la gestión de inventario, compañías y puntos de ubicación con un mapa modular interactivo.
 
-> Anteriormente llamado MapShade
 
 ## 🚀 Características Principales
 
