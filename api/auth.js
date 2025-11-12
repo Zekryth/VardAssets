@@ -6,44 +6,61 @@ import { handleError } from './_lib/errors.js';
 import { initializeDatabase } from './_lib/init.js';
 
 export default async function handler(req, res) {
-  console.log('📥 /api/auth ->', req.method, req.url);
+  console.log('📥 [AUTH] Request:', req.method, req.url);
   
   if (handleCors(req, res)) return;
 
-  // Inicializar base de datos en la primera llamada
-  await initializeDatabase();
+  // ========================================
+  // INICIALIZACIÓN AUTOMÁTICA DE BASE DE DATOS
+  // ========================================
+  try {
+    await initializeDatabase();
+  } catch (initError) {
+    console.error('💥 [AUTH] Inicialización fallida:', initError.message);
+    return res.status(500).json({ 
+      error: 'Error inicializando base de datos',
+      details: process.env.NODE_ENV === 'development' ? initError.message : undefined
+    });
+  }
 
   const pool = getPool();
 
   try {
     // POST /api/auth - Login
     if (req.method === 'POST' && !req.url?.includes('/register')) {
-      console.log('🔐 Login attempt:', req.body?.email);
-      
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return res.status(400).json({ error: 'Email/username y contraseña requeridos' });
+        return res.status(400).json({ 
+          error: 'Email/username y contraseña son obligatorios' 
+        });
       }
 
-      // Buscar por email O username
+      console.log('🔐 [AUTH] Intento de login:', email);
+
+      // Buscar por email O username (case-insensitive)
       const { rows } = await pool.query(
-        'SELECT * FROM users WHERE email = $1 OR username = $1',
-        [email.toLowerCase().trim()]
+        `SELECT * FROM users 
+         WHERE LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($1)`,
+        [email.trim()]
       );
 
       if (rows.length === 0) {
-        console.warn('⚠️ Usuario no encontrado:', email);
+        console.warn('⚠️ [AUTH] Usuario no encontrado:', email);
         return res.status(401).json({ error: 'Credenciales inválidas' });
       }
 
       const user = rows[0];
+      console.log('👤 [AUTH] Usuario encontrado:', user.username, '/', user.email);
+
       const isValidPassword = await bcrypt.compare(password, user.password);
       
       if (!isValidPassword) {
-        console.warn('⚠️ Contraseña incorrecta:', email);
+        console.warn('⚠️ [AUTH] Contraseña incorrecta para:', email);
         return res.status(401).json({ error: 'Credenciales inválidas' });
       }
+
+      console.log('🔑 [AUTH] Contraseña verificada correctamente');
 
       // Generar JWT con expiración de 7 días
       const token = jwt.sign(
@@ -54,10 +71,10 @@ export default async function handler(req, res) {
           role: user.role 
         },
         process.env.JWT_SECRET,
-        { expiresIn: '7d' } // 7 días
+        { expiresIn: '7d' }
       );
 
-      console.log('✅ Login exitoso:', user.email, '(username:', user.username, ') - Token expira en 7d');
+      console.log('✅ [AUTH] Login exitoso:', user.email, '- Token generado (expira en 7d)');
 
       return res.status(200).json({
         token,
