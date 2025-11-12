@@ -85,8 +85,8 @@ export default function MapModule({ points = [], onPointSelect, tileSize = 256, 
       try {
         const z = map.getZoom()
         const c = map.getCenter()
-        localStorage.setItem('mapshade:zoom', String(z))
-        localStorage.setItem('mapshade:center', JSON.stringify([c.lat, c.lng]))
+        localStorage.setItem('VardAssets:zoom', String(z))
+        localStorage.setItem('VardAssets:center', JSON.stringify([c.lat, c.lng]))
       } catch {}
     }
     map.on('moveend', persist)
@@ -156,8 +156,8 @@ export default function MapModule({ points = [], onPointSelect, tileSize = 256, 
 
     // Fit or restore view
     try {
-      const zStr = localStorage.getItem('mapshade:zoom')
-      const cStr = localStorage.getItem('mapshade:center')
+      const zStr = localStorage.getItem('VardAssets:zoom')
+      const cStr = localStorage.getItem('VardAssets:center')
       if (zStr && cStr) {
         const zV = Number(zStr)
         const cV = JSON.parse(cStr)

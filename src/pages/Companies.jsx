@@ -10,8 +10,11 @@ import { Building2, Plus, Search, ChevronLeft, ChevronRight, Pencil, Trash2, X }
 import { companyService } from '../services/api'
 import Button from '../components/UI/Button.jsx'
 import Input from '../components/UI/Input.jsx'
+import { useTranslation } from 'react-i18next'
+import '../i18n'
 
 export default function Companies() {
+  const { t } = useTranslation()
   const [companies, setCompanies] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
@@ -92,21 +95,21 @@ export default function Companies() {
         <div className="flex items-center justify-between gap-3 md:gap-4">
           <div className="flex items-center gap-2 text-gray-800 dark:text-gray-100">
             <Building2 size={18} />
-            <h2 className="text-sm font-semibold">Compañías</h2>
+            <h2 className="text-sm font-semibold">{t('companies.title')}</h2>
           </div>
           <div className="flex items-center gap-3 flex-1 max-w-lg ml-auto">
-            <div className="flex items-center flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-surface-raised/80 backdrop-blur px-3 py-2 shadow-sm" role="search" aria-label="Buscar compañías">
+            <div className="flex items-center flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-surface-raised/80 backdrop-blur px-3 py-2 shadow-sm" role="search" aria-label={t('search.company')}>
               <Search size={16} className="text-gray-500 dark:text-gray-400 mr-2" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => { setPage(1); setQuery(e.target.value) }}
-                placeholder="Buscar por nombre, responsable, teléfono o email"
+                placeholder={t('search.placeholder')}
                 className="w-full bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
-                aria-label="Buscar compañías"
+                aria-label={t('search.company')}
               />
             </div>
-            <Button onClick={() => setOpen(true)} className="gap-2 whitespace-nowrap"><Plus size={16} /> Agregar</Button>
+            <Button onClick={() => setOpen(true)} className="gap-2 whitespace-nowrap"><Plus size={16} /> {t('companies.addCompany')}</Button>
           </div>
         </div>
       </div>

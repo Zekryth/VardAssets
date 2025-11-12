@@ -110,7 +110,7 @@ const Layout = ({ children }) => {
                 <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-200 leading-tight">
                   {currentTitle}
                 </h1>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">MapShade</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">VardAssets</p>
               </div>
             )}
           </div>
@@ -193,7 +193,7 @@ const Layout = ({ children }) => {
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800">
               <div className="flex items-center gap-2">
                 <MapPin size={22} className="text-primary-600 dark:text-primary-300" />
-                <span className="text-base font-semibold text-gray-800 dark:text-gray-200">MapShade</span>
+                <span className="text-base font-semibold text-gray-800 dark:text-gray-200">VardAssets</span>
               </div>
               <Button variant="icon" size="icon" onClick={() => setSidebarOpen(false)} aria-label="Cerrar menú">
                 <X size={18} />

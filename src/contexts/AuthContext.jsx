@@ -35,8 +35,8 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token')
       if (token) {
         setUser({ 
-          nombre: 'Administrator MapShade', 
-          email: 'admin@mapshade.com', 
+          nombre: 'Administrator VardAssets', 
+          email: 'admin@VardAssets.com', 
           rol: 'admin' 
         })
       }
@@ -50,8 +50,8 @@ export const AuthProvider = ({ children }) => {
     
     if (username === 'admin' && password === '123456') {
       const userData = {
-        nombre: 'Administrator MapShade',
-        email: 'admin@mapshade.com',
+        nombre: 'Administrator VardAssets',
+        email: 'admin@VardAssets.com',
         rol: 'admin'
       }
       setUser(userData)
@@ -59,8 +59,8 @@ export const AuthProvider = ({ children }) => {
       return { success: true, message: 'Access granted' }
     } else if (username === 'user' && password === '123456') {
       const userData = {
-        nombre: 'User Demo',
-        email: 'user@mapshade.com',
+        nombre: 'User VardAssets',
+        email: 'user@VardAssets.com',
         rol: 'usuario'
       }
       setUser(userData)

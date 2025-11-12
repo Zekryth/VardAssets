@@ -10,8 +10,11 @@ import { Search, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight } from 'luci
 import { pointService, objectService } from '../services/api'
 import Button from '../components/UI/Button.jsx'
 import Input from '../components/UI/Input.jsx'
+import { useTranslation } from 'react-i18next'
+import '../i18n'
 
 export default function Inventory() {
+  const { t } = useTranslation()
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState('items') // 'items' | 'companies'
@@ -134,12 +137,12 @@ export default function Inventory() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={mode === 'items' ? 'Buscar por objeto (e.g., silla, mesa)' : 'Buscar por compañía u objeto'}
+              placeholder={mode === 'items' ? t('search.object') : t('search.placeholder')}
               className="w-full bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
-              aria-label="Buscar inventario"
+              aria-label={t('inventory.title')}
             />
           </div>
-          <Button onClick={() => { setEditing(null); setOpen(true) }} className="gap-2 whitespace-nowrap"><Plus size={16} /> Crear objeto</Button>
+          <Button onClick={() => { setEditing(null); setOpen(true) }} className="gap-2 whitespace-nowrap"><Plus size={16} /> {t('inventory.addObject')}</Button>
           <div className="flex items-center rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
             <button
               type="button"
@@ -217,7 +220,7 @@ export default function Inventory() {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-surface-raised/80 backdrop-blur px-3 py-2 shadow-sm">
                     <Search size={16} className="text-gray-500 dark:text-gray-400 mr-2" />
-                    <input value={objQuery} onChange={(e)=>{ setObjPage(1); setObjQuery(e.target.value) }} placeholder="Buscar objetos por nombre, categoría o código" className="w-full bg-transparent text-sm" />
+                    <input value={objQuery} onChange={(e)=>{ setObjPage(1); setObjQuery(e.target.value) }} placeholder={t('search.object')} className="w-full bg-transparent text-sm" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

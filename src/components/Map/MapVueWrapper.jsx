@@ -1,7 +1,7 @@
 /**
  * MapVueWrapper.jsx
  *
- * Componente wrapper para integrar el Web Component <mapshade-map> (Vue) en la app React.
+ * Componente wrapper para integrar el Web Component <VardAssets-map> (Vue) en la app React.
  * Permite exponer controles y refrescar el componente embebido.
  */
 import { useEffect, useRef, useState } from 'react'
@@ -20,8 +20,8 @@ export default function MapVueWrapper({
 
   // Avisar si el CE no está cargado
   useEffect(() => {
-    if (!customElements.get('mapshade-map')) {
-      console.error('mapshade-map no cargado. Verifica <script type="module" src="/mf/mapshade-map.es.js"> en index.html')
+    if (!customElements.get('VardAssets-map')) {
+      console.error('VardAssets-map no cargado. Verifica <script type="module" src="/mf/VardAssets-map.es.js"> en index.html')
     }
   }, [])
 
@@ -59,7 +59,7 @@ export default function MapVueWrapper({
       }
       input.click()
     }
-    const onReady = () => console.info('map-ready from <mapshade-map>')
+    const onReady = () => console.info('map-ready from <VardAssets-map>')
     const onError = (e) => console.error('map-error', e.detail)
     el.addEventListener('tile-clicked', onTile)
     el.addEventListener('map-ready', onReady)
@@ -72,7 +72,7 @@ export default function MapVueWrapper({
   }, [isAdmin])
 
   return (
-    <mapshade-map
+    <VardAssets-map
       ref={elRef}
       style={{ display: 'block', position: 'relative', width: '100%', height: '100%', zIndex: 0 }}
     />

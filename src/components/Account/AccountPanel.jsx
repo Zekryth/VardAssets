@@ -27,7 +27,8 @@ const Avatar = ({ name }) => {
 
 const LANGS = [
   { code: 'en', label: 'EN', name: 'English', flag: '🇬🇧' },
-  { code: 'es', label: 'ES', name: 'Español', flag: '��' },
+  { code: 'es', label: 'ES', name: 'Español', flag: '🇪🇸' },
+  { code: 'ro', label: 'RO', name: 'Română', flag: '🇷🇴' },
 ];
 
 const AccountPanel = () => {

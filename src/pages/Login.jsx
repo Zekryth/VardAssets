@@ -1,7 +1,7 @@
 /**
  * Login.jsx
  *
- * Página de inicio de sesión para la aplicación MapShade.
+ * Página de inicio de sesión para la aplicación VardAssets.
  * Incluye animación de introducción, formulario de login, soporte para recordar sesión y validación de usuario.
  * Utiliza AuthContext para autenticación y react-i18next para internacionalización.
  */
@@ -30,6 +30,7 @@ const Login = () => {
   const LANGS = [
     { code: 'en', label: 'EN', name: 'English', flag: '🇬🇧' },
     { code: 'es', label: 'ES', name: 'Español', flag: '🇪🇸' },
+    { code: 'ro', label: 'RO', name: 'Română', flag: '🇷🇴' },
   ];
 
   const currentLang = i18n.language || 'en';
