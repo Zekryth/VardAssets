@@ -23,7 +23,7 @@ const Login = () => {
   const [langMenu, setLangMenu] = useState(false);
   const loginBoxRef = useRef(null);
   const langBtnRef = useRef(null);
-  const { login, user } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
@@ -43,12 +43,11 @@ const Login = () => {
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const forceLogin = params.has("forcelogin");
-    if (user && !forceLogin) {
-      navigate("/");
+    if (isAuthenticated) {
+      console.log('✅ Usuario ya autenticado, redirigiendo...');
+      navigate("/dashboard");
     }
-  }, [user, navigate]);
+  }, [isAuthenticated, navigate]);
 
   // Close language menu when clicking outside
   useEffect(() => {
@@ -83,11 +82,19 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Si la lógica de "recordar sesión" existe, puedes usar el valor de remember aquí
-    const result = await login(username, password, remember);
+    
+    // Usar email en lugar de username
+    const result = await login(username, password);
+    
     if (result.success) {
-      setTimeout(() => navigate("/"), 500);
+      console.log('✅ Navegando a dashboard...');
+      setTimeout(() => navigate("/dashboard"), 500);
+    } else {
+      console.error('❌ Login fallido:', result.error);
+      // Aquí podrías mostrar un toast o mensaje de error
+      alert(result.error || 'Credenciales inválidas');
     }
+    
     setLoading(false);
   };
 

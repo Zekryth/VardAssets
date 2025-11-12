@@ -5,7 +5,7 @@ import { handleCors } from './_lib/cors.js';
 import { handleError } from './_lib/errors.js';
 
 export default async function handler(req, res) {
-  console.log('📥 Request a /api/auth:', req.method);
+  console.log('📥 /api/auth ->', req.method, req.url);
   
   if (handleCors(req, res)) return;
 
@@ -13,16 +13,15 @@ export default async function handler(req, res) {
 
   try {
     // POST /api/auth - Login
-    if (req.method === 'POST' && !req.url.includes('/register')) {
-      console.log('🔐 POST /api/auth - Login attempt');
+    if (req.method === 'POST' && !req.url?.includes('/register')) {
+      console.log('🔐 Login attempt:', req.body?.email);
       
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return res.status(400).json({ error: 'Email y contraseña son requeridos' });
+        return res.status(400).json({ error: 'Email y contraseña requeridos' });
       }
 
-      // Buscar usuario
       const { rows } = await pool.query(
         'SELECT * FROM users WHERE email = $1',
         [email.toLowerCase().trim()]
@@ -34,54 +33,50 @@ export default async function handler(req, res) {
       }
 
       const user = rows[0];
-
-      // Verificar contraseña
       const isValidPassword = await bcrypt.compare(password, user.password);
       
       if (!isValidPassword) {
-        console.warn('⚠️ Contraseña incorrecta para:', email);
+        console.warn('⚠️ Contraseña incorrecta:', email);
         return res.status(401).json({ error: 'Credenciales inválidas' });
       }
 
-      // Generar JWT
+      // Generar JWT con expiración de 7 días
       const token = jwt.sign(
         { 
           id: user.id, 
           email: user.email, 
-          username: user.username,
+          username: user.username, 
           role: user.role 
         },
         process.env.JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: '7d' } // 7 días
       );
 
-      console.log('✅ Login exitoso:', email);
+      console.log('✅ Login exitoso:', email, '- Token expira en 7d');
 
       return res.status(200).json({
         token,
-        user: {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          role: user.role
+        user: { 
+          id: user.id, 
+          email: user.email, 
+          username: user.username, 
+          role: user.role 
         }
       });
     }
 
     // POST /api/auth/register - Registro
-    if (req.method === 'POST' && req.url.includes('/register')) {
-      console.log('📝 POST /api/auth/register');
+    if (req.method === 'POST' && req.url?.includes('/register')) {
+      console.log('📝 Registro de nuevo usuario');
       
       const { email, password, username, role } = req.body;
 
       if (!email || !password || !username) {
-        return res.status(400).json({ error: 'Email, password y username son requeridos' });
+        return res.status(400).json({ error: 'Email, password y username requeridos' });
       }
 
-      // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Crear usuario
       const { rows } = await pool.query(
         `INSERT INTO users (id, email, password, username, role, created_at, updated_at)
          VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW(), NOW())
@@ -90,27 +85,53 @@ export default async function handler(req, res) {
       );
 
       console.log('✅ Usuario registrado:', rows[0].email);
-
       return res.status(201).json(rows[0]);
     }
 
     // GET /api/auth/verify - Verificar token
     if (req.method === 'GET') {
-      const authHeader = req.headers['authorization'];
+      console.log('🔍 Verificando token...');
+      
+      const authHeader = req.headers['authorization'] || req.headers['Authorization'];
       const token = authHeader && authHeader.split(' ')[1];
 
       if (!token) {
-        return res.status(401).json({ error: 'Token no proporcionado' });
+        console.warn('⚠️ Token no proporcionado en headers');
+        return res.status(401).json({ 
+          valid: false,
+          error: 'Token no proporcionado' 
+        });
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
-      return res.status(200).json({ valid: true, user: decoded });
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('✅ Token válido:', decoded.email);
+        
+        return res.status(200).json({ 
+          valid: true, 
+          user: decoded 
+        });
+      } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+          console.warn('⚠️ Token expirado');
+          return res.status(401).json({ 
+            valid: false,
+            error: 'Token expirado' 
+          });
+        }
+        
+        console.warn('⚠️ Token inválido:', error.message);
+        return res.status(401).json({ 
+          valid: false,
+          error: 'Token inválido' 
+        });
+      }
     }
 
     return res.status(405).json({ error: 'Método no permitido' });
 
   } catch (error) {
+    console.error('💥 Error en /api/auth:', error);
     return handleError(error, res);
   }
 }

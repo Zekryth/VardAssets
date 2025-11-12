@@ -21,17 +21,55 @@ import TopProgressBar from './components/System/TopProgressBar'
 
 // Componente para rutas protegidas
 const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth()
-  
+  const { isAuthenticated, loading } = useAuth()
+
+  console.log('🔒 ProtectedRoute:', { isAuthenticated, loading })
+
+  // Mientras verifica el token, mostrar loading
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-white text-xl">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          Verificando sesión...
+        </div>
       </div>
     )
   }
-  
-  return user ? children : <Navigate to="/login" />
+
+  // Si no está autenticado, redirigir a login
+  if (!isAuthenticated) {
+    console.log('❌ No autenticado, redirigiendo a /login')
+    return <Navigate to="/login" replace />
+  }
+
+  // Si está autenticado, mostrar contenido
+  return children
+}
+
+// Componente para ruta de login (solo accesible si NO está autenticado)
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth()
+
+  console.log('🌐 PublicRoute (Login):', { isAuthenticated, loading })
+
+  // Mientras verifica, mostrar loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-white">Cargando...</div>
+      </div>
+    )
+  }
+
+  // Si ya está autenticado, redirigir a dashboard
+  if (isAuthenticated) {
+    console.log('✅ Ya autenticado, redirigiendo a /dashboard')
+    return <Navigate to="/dashboard" replace />
+  }
+
+  // Si no está autenticado, mostrar login
+  return children
 }
 
 
@@ -44,7 +82,11 @@ function App() {
             <TopProgressBar />
             <ErrorBoundary>
               <Routes>
-                <Route path="/login" element={<Login />} />
+                <Route path="/login" element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                } />
                 <Route path="/" element={
                   <ProtectedRoute>
                     <Layout>

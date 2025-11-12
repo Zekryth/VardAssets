@@ -6,6 +6,7 @@
  * Permite proteger rutas y componentes según permisos.
  */
 import React, { createContext, useState, useContext, useEffect } from 'react'
+import api from '../services/api'
 
 const AuthContext = createContext()
 
@@ -20,78 +21,98 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const forceLogout = params.has('logout')
-    const skipAuto = params.has('forcelogin') || params.has('nologin')
-
-    if (forceLogout) {
-      localStorage.removeItem('token')
-      // Keep language preference
-    }
-
-    if (!skipAuto && !forceLogout) {
-      const token = localStorage.getItem('token')
-      if (token) {
-        setUser({ 
-          nombre: 'Administrator VardAssets', 
-          email: 'admin@VardAssets.com', 
-          rol: 'admin' 
-        })
-      }
-    }
-    setLoading(false)
+    verifyToken()
   }, [])
 
-  const login = async (username, password) => {
-    // Simular delay de red
-    await new Promise(resolve => setTimeout(resolve, 1000))
+  const verifyToken = async () => {
+    console.log('🔍 Verificando token almacenado...')
     
-    if (username === 'admin' && password === '123456') {
-      const userData = {
-        nombre: 'Administrator VardAssets',
-        email: 'admin@VardAssets.com',
-        rol: 'admin'
+    const token = localStorage.getItem('token')
+    
+    if (!token) {
+      console.log('⚠️ No hay token almacenado')
+      setLoading(false)
+      setIsAuthenticated(false)
+      return
+    }
+
+    try {
+      console.log('📡 Verificando token con backend...')
+      const response = await api.get('/auth/verify')
+      
+      if (response.data.valid) {
+        console.log('✅ Token válido:', response.data.user.email)
+        setUser(response.data.user)
+        setIsAuthenticated(true)
+      } else {
+        console.warn('⚠️ Token inválido')
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setIsAuthenticated(false)
       }
-      setUser(userData)
-      localStorage.setItem('token', 'admin-token-2024')
-      return { success: true, message: 'Access granted' }
-    } else if (username === 'user' && password === '123456') {
-      const userData = {
-        nombre: 'User VardAssets',
-        email: 'user@VardAssets.com',
-        rol: 'usuario'
+    } catch (error) {
+      console.error('❌ Error verificando token:', error.response?.status, error.message)
+      
+      // Solo limpiar si es 401 (no autorizado)
+      if (error.response?.status === 401) {
+        console.log('🗑️ Limpiando token inválido/expirado')
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setIsAuthenticated(false)
       }
-      setUser(userData)
-      localStorage.setItem('token', 'user-token-2024')
-      return { success: true, message: 'Access granted' }
-    } else {
-      return { success: false, message: 'Invalid credentials' }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const login = async (email, password) => {
+    try {
+      console.log('🔐 Intentando login:', email)
+      const response = await api.post('/auth', { email, password })
+      
+      const { token, user } = response.data
+      
+      console.log('✅ Login exitoso, guardando token...')
+      localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      setUser(user)
+      setIsAuthenticated(true)
+      
+      return { success: true }
+    } catch (error) {
+      console.error('❌ Error en login:', error.response?.data || error.message)
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Error al iniciar sesión',
+        message: error.response?.data?.error || 'Error al iniciar sesión'
+      }
     }
   }
 
   const logout = () => {
-    setUser(null)
+    console.log('🚪 Cerrando sesión...')
     localStorage.removeItem('token')
-    // Keep language preference, only clear auth token
-    // Force a clean reload to login page
-    if (typeof window !== 'undefined') {
-      // Use replace to avoid history issues
-      window.location.replace('/login?logout=1')
-    }
+    localStorage.removeItem('user')
+    setUser(null)
+    setIsAuthenticated(false)
   }
 
   const isAdmin = () => {
-    return user?.rol === 'admin'
+    return user?.role === 'admin'
   }
 
   const value = {
     user,
     loading,
+    isAuthenticated,
     login,
     logout,
-    isAdmin
+    isAdmin,
+    verifyToken
   }
 
   return (

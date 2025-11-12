@@ -23,26 +23,57 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000
 })
 
+// Interceptor para agregar token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  console.log(`📡 ${config.method.toUpperCase()} ${config.url}`)
   inc()
   return config
-}, (error) => { return Promise.reject(error) })
-
-api.interceptors.response.use((response) => {
-  dec()
-  return response
 }, (error) => {
-  dec()
-  if (error.response?.status === 401) {
-    localStorage.removeItem('token')
-    window.location.href = '/login'
-  }
+  console.error('❌ Error en request interceptor:', error)
   return Promise.reject(error)
 })
+
+// Interceptor para manejar respuestas
+api.interceptors.response.use(
+  (response) => {
+    console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url} - ${response.status}`)
+    dec()
+    return response
+  },
+  (error) => {
+    const status = error.response?.status
+    const url = error.config?.url
+    
+    console.error(`❌ ${error.config?.method?.toUpperCase()} ${url} - ${status}`, {
+      data: error.response?.data,
+      message: error.message
+    })
+    
+    dec()
+    
+    // IMPORTANTE: Solo limpiar token si es un endpoint que NO sea /auth/verify
+    // Y si el error es 401
+    if (status === 401 && !url?.includes('/auth')) {
+      console.log('🗑️ Error 401 en endpoint protegido, limpiando sesión...')
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      
+      // Redirigir a login solo si no estamos ya en /login
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login'
+      }
+    }
+    
+    return Promise.reject(error)
+  }
+)
 
 export const authService = {
   login: (email, password) => api.post('/auth', { email, password }),
