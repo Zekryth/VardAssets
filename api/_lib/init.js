@@ -13,7 +13,21 @@ export async function initializeDatabase() {
   try {
     console.log('🔍 Verificando inicialización de base de datos...');
 
-    // Verificar si existe usuario admin
+    // PASO 1: Crear tabla users si no existe
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        username VARCHAR(100) UNIQUE NOT NULL,
+        role VARCHAR(50) DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    console.log('✅ Tabla users verificada/creada');
+
+    // PASO 2: Verificar si existe usuario admin
     const { rows } = await pool.query(
       "SELECT COUNT(*) as count FROM users WHERE username = 'admin' OR email = 'admin@vardassets.com'"
     );
@@ -49,7 +63,13 @@ export async function initializeDatabase() {
       return;
     }
 
-    console.error('❌ Error en inicialización:', error.message);
+    console.error('❌ Error en inicialización:', error);
+    console.error('   Mensaje:', error.message);
+    console.error('   Code:', error.code);
+    console.error('   Stack:', error.stack);
+    
     // No lanzar error para no bloquear la aplicación
+    // pero marcar como no inicializado para reintentar
+    initialized = false;
   }
 }

@@ -137,6 +137,9 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('💥 Error en /api/auth:', error);
+    console.error('   Mensaje:', error.message);
+    console.error('   Code:', error.code);
+    console.error('   Stack:', error.stack);
     return handleError(error, res);
   }
 }
