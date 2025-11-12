@@ -1,7 +1,22 @@
 import axios from 'axios'
 import { inc, dec } from '../components/System/progressStore'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+// Auto-detect API base URL based on environment
+const getBaseURL = () => {
+  // Production (Vercel)
+  if (window.location.hostname.includes('vercel.app')) {
+    return '/api'
+  }
+  // Local development
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  }
+  // Default to relative path for any other deployment
+  return '/api'
+}
+
+const API_BASE_URL = getBaseURL()
+console.log('🌐 API configurada:', API_BASE_URL)
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -30,7 +45,7 @@ api.interceptors.response.use((response) => {
 })
 
 export const authService = {
-  login: (email, password) => api.post('/auth/login', { email, password }),
+  login: (email, password) => api.post('/auth', { email, password }),
   verifyToken: () => api.get('/auth/verify'),
 }
 
@@ -42,23 +57,22 @@ export const userService = {
 export const companyService = {
   getCompanies: (config = {}) => api.get('/companies', config),
   createCompany: (companyData) => api.post('/companies', companyData),
-  updateCompany: (id, data) => api.patch(`/companies/${id}`, data),
-  deleteCompany: (id) => api.delete(`/companies/${id}`),
+  updateCompany: (id, data) => api.put(`/companies?id=${id}`, data),
+  deleteCompany: (id) => api.delete(`/companies?id=${id}`),
 }
 
 export const objectService = {
   getObjects: (params = {}) => api.get('/objects', { params }),
-  createObject: (formData) => api.post('/objects', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
-  updateObject: (id, data) => api.patch(`/objects/${id}`, data),
-  deleteObject: (id) => api.delete(`/objects/${id}`),
+  createObject: (objectData) => api.post('/objects', objectData),
+  updateObject: (id, data) => api.put(`/objects?id=${id}`, data),
+  deleteObject: (id) => api.delete(`/objects?id=${id}`),
 }
 
 export const pointService = {
   getPoints: (params = {}) => api.get('/points', { params }),
   createPoint: (pointData) => api.post('/points', pointData),
-  updatePoint: (id, data) => api.patch(`/points/${id}`, data),
-  // Accept optional meta payload: { reason, context }
-  deletePoint: (id, meta) => api.delete(`/points/${id}`, meta ? { data: meta } : undefined),
+  updatePoint: (id, data) => api.put(`/points?id=${id}`, data),
+  deletePoint: (id) => api.delete(`/points?id=${id}`),
   uploadFiles: (id, files) => {
     const fd = new FormData()
     for (const f of files?.fotos || []) fd.append('fotos', f)
@@ -68,9 +82,9 @@ export const pointService = {
 }
 
 export const deletedPointsService = {
-  list: () => api.get('/points/deleted/list'),
-  restore: (id) => api.post(`/points/deleted/${id}/restore`),
-  purge: (id) => api.delete(`/points/deleted/${id}`),
+  list: () => api.get('/deleted-points'),
+  restore: (id) => api.post(`/deleted-points/restore?id=${id}`),
+  purge: (id) => api.delete(`/deleted-points?id=${id}`),
 }
 
 export const fileService = {
