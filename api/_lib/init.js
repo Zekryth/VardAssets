@@ -120,7 +120,7 @@ export async function initializeDatabase() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS companies (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name VARCHAR(255) NOT NULL,
+        nombre VARCHAR(255) NOT NULL,
         persona_contacto VARCHAR(255),
         telefono VARCHAR(50),
         email VARCHAR(255),
@@ -151,7 +151,7 @@ export async function initializeDatabase() {
       CREATE TABLE IF NOT EXISTS points (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         nombre VARCHAR(255) NOT NULL,
-        company_id UUID REFERENCES companies(id) ON DELETE SET NULL,
+        compañia UUID REFERENCES companies(id) ON DELETE SET NULL,
         coordenadas JSONB NOT NULL,
         inventario JSONB DEFAULT '[]'::jsonb,
         fotos JSONB DEFAULT '[]'::jsonb,
@@ -168,7 +168,7 @@ export async function initializeDatabase() {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         original_id UUID NOT NULL,
         nombre VARCHAR(255) NOT NULL,
-        company_id UUID,
+        compañia UUID,
         coordenadas JSONB NOT NULL,
         inventario JSONB DEFAULT '[]'::jsonb,
         fotos JSONB DEFAULT '[]'::jsonb,
