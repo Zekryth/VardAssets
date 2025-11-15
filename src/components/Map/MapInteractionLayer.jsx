@@ -72,7 +72,9 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
 
   const handleConfirm = async (payload) => {
     try {
-      // payload: { nombre, categoria, companiaId, inventario[], files? }
+      // payload: { nombre, categoria, companiaId, inventario[], fotos[], documentos[] }
+      console.log('🎯 [CREATE POINT] Coordenadas guardadas:', { x: coords.x, y: coords.y })
+      
       const body = {
         nombre: payload?.nombre,
         categoria: payload?.categoria,
@@ -80,16 +82,18 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
         coordenadas: { x: coords.x, y: coords.y },
         inventario: Array.isArray(payload?.inventario)
           ? payload.inventario.map(it => ({ objeto: it?.objeto?._id || it?.objeto || it?.id, cantidad: Number(it?.cantidad) || 1 }))
-          : []
+          : [],
+        fotos: payload?.fotos || [],
+        documentos: payload?.documentos || []
       }
+      
+      console.log('📤 [CREATE POINT] Enviando al API:', body)
+      
       const created = await pointService.createPoint(body)
-      const pointId = created?.data?._id || created?.id
-      if (pointId && payload?.files && (payload.files.fotos?.length || payload.files.documentos?.length)) {
-        await pointService.uploadFiles(pointId, {
-          fotos: payload.files.fotos || [],
-          documentos: payload.files.documentos || []
-        })
-      }
+      const pointId = created?.data?._id || created?.data?.id || created?.id
+      
+      console.log('✅ [CREATE POINT] Punto creado:', pointId)
+      
       // Refrescar puntos, cerrar diálogo y permanecer en adding para seguir creando
       onChanged?.()
       setCreateOpen(false)
