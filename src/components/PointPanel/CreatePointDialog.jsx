@@ -7,6 +7,8 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { companyService, objectService } from '../../services/api'
+import PhotoUpload from './PhotoUpload'
+import DocumentUpload from './DocumentUpload'
 
 const cx = (...p) => p.filter(Boolean).join(' ')
 
@@ -16,6 +18,8 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   const [categoria, setCategoria] = useState('')
   const [companiaId, setCompaniaId] = useState('')
   const [inventario, setInventario] = useState([]) // [{ objeto, cantidad }]
+  const [fotos, setFotos] = useState([]) // URLs de fotos subidas
+  const [documentos, setDocumentos] = useState([]) // URLs/metadata de documentos subidos
   const [files, setFiles] = useState({ fotos: [], documentos: [] })
   const [openTick, setOpenTick] = useState(0) // fuerza remount de inputs file
 
@@ -23,7 +27,6 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   const [companyFilter, setCompanyFilter] = useState('')
   const [objectsFilter, setObjectsFilter] = useState('')
   const [touched, setTouched] = useState({ nombre: false, categoria: false })
-  const [fotoThumbs, setFotoThumbs] = useState([]) // [{url, name}]
 
   // focus/aria
   const modalRef = useRef(null)
@@ -43,13 +46,14 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     setCategoria('')
     setCompaniaId('')
     setInventario([])
+    setFotos([])
+    setDocumentos([])
     setFiles({ fotos: [], documentos: [] })
     setErrMsg('')
     setOpenTick(t => t + 1)
     setCompanyFilter('')
     setObjectsFilter('')
     setTouched({ nombre: false, categoria: false })
-    setFotoThumbs([])
 
     // cargar catálogos
     let ignore = false
@@ -151,29 +155,6 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     setInventario((rows) => rows.filter((_, i) => i !== idx))
   }
 
-  const handleFotos = (e) => {
-    setFiles((prev) => ({ ...prev, fotos: Array.from(e.target.files || []) }))
-  }
-  const handleDocs = (e) => {
-    setFiles((prev) => ({ ...prev, documentos: Array.from(e.target.files || []) }))
-  }
-
-  // Derivar thumbnails (câteva) pentru imagini selectate
-  useEffect(() => {
-    // cleanup urls anterioare
-    fotoThumbs.forEach((t) => URL.revokeObjectURL(t.url))
-    if (!files?.fotos?.length) {
-      setFotoThumbs([])
-      return
-    }
-    const thumbs = files.fotos.slice(0, 6).map((f) => ({ url: URL.createObjectURL(f), name: f.name }))
-    setFotoThumbs(thumbs)
-    return () => {
-      thumbs.forEach((t) => URL.revokeObjectURL(t.url))
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [files?.fotos, openTick])
-
   const canSave = Boolean(nombre && categoria)
   const nombreError = !nombre && touched.nombre ? 'Requerido' : ''
   const categoriaError = !categoria && touched.categoria ? 'Requerido' : ''
@@ -221,7 +202,8 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
       categoria,
       compañia: companiaId || null,
       inventario: inv,
-      files
+      fotos,
+      documentos
     })
   }
 
@@ -391,52 +373,18 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
           </div>
 
           {/* Archivos */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm mb-1 text-gray-700 dark:text-gray-300">Fotos</label>
-              <input
-                key={`fotos-${openTick}`}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFotos}
-                className="block w-full text-sm text-gray-700 dark:text-gray-200"
-              />
-              {!!files?.fotos?.length && (
-                <div className="mt-2 text-xs text-gray-600 dark:text-gray-300">
-                  {files.fotos.length} foto(s) seleccionada(s)
-                </div>
-              )}
-              {!!fotoThumbs.length && (
-                <div className="mt-2 grid grid-cols-6 gap-2">
-                  {fotoThumbs.map((t, i) => (
-                    <div key={i} className="w-16 h-16 rounded overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700">
-                      <img src={t.url} alt={t.name} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm mb-1 text-gray-700 dark:text-gray-300">Documentos</label>
-              <input
-                key={`docs-${openTick}`}
-                type="file"
-                multiple
-                onChange={handleDocs}
-                className="block w-full text-sm text-gray-700 dark:text-gray-200"
-              />
-              {!!files?.documentos?.length && (
-                <div className="mt-2 max-h-20 overflow-auto text-xs text-gray-600 dark:text-gray-300">
-                  {files.documentos.slice(0, 5).map((f, i) => (
-                    <div key={i} className="truncate">{f.name}</div>
-                  ))}
-                  {files.documentos.length > 5 ? (
-                    <div className="text-[11px] text-gray-500 dark:text-gray-400">+{files.documentos.length - 5} más…</div>
-                  ) : null}
-                </div>
-              )}
-            </div>
+          <div className="space-y-6">
+            <PhotoUpload
+              pointId="temp"
+              photos={fotos}
+              onPhotosChange={setFotos}
+            />
+            
+            <DocumentUpload
+              pointId="temp"
+              documents={documentos}
+              onDocumentsChange={setDocumentos}
+            />
           </div>
         </div>
 
