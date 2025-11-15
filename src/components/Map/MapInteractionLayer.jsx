@@ -4,7 +4,7 @@
  * Capa de interacción sobre el mapa que captura eventos según el modo de acción (agregar, mover, etc.).
  * Permite crear nuevos puntos y gestiona la interacción avanzada del usuario sobre el mapa.
  */
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useMapActionMode } from '../../contexts/MapActionModeContext.jsx'
 import { useMapView } from '../../contexts/MapViewContext.jsx'
 import { pointService } from '../../services/api.js'
@@ -13,7 +13,7 @@ import CreatePointDialog from '../PointPanel/CreatePointDialog.jsx'
 // Esta capa está encima del mapa. Solo captura eventos cuando el modo lo requiere.
 export default function MapInteractionLayer({ className = '', points = [], onChanged }) {
   const { mode } = useMapActionMode()
-  const { view } = useMapView() // { scale, offset, tileSize, minX, minY, ...}
+  const { screenToBoard } = useMapView()
   const overlayRef = useRef(null)
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -21,50 +21,23 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
   const [openTick, setOpenTick] = useState(0) // para forzar reset de inputs de archivo
 
   const isAdding = mode === 'adding'
-  const isTiling = mode === 'tiling'
-
-  const ready = useMemo(() => {
-    return view &&
-      typeof view.scale === 'number' &&
-      view.offset && typeof view.offset.x === 'number' &&
-      typeof view.tileSize === 'number' &&
-      typeof view.minX === 'number' && typeof view.minY === 'number'
-  }, [view])
-
-  const screenToPixels = (clientX, clientY) => {
-    const el = overlayRef.current
-    if (!el) return null
-    const rect = el.getBoundingClientRect()
-    const sx = clientX - rect.left
-    const sy = clientY - rect.top
-    const scale = view?.scale || 1
-    const offset = view?.offset || { x: 0, y: 0 }
-    const tileSize = view?.tileSize || 512
-    const minX = view?.minX || 0
-    const minY = view?.minY || 0
-    const bx = (sx - offset.x) / (scale || 1)
-    const by = (sy - offset.y) / (scale || 1)
-    const px = Math.round(bx + minX * tileSize)
-    const py = Math.round(by + minY * tileSize)
-    if (!Number.isFinite(px) || !Number.isFinite(py)) return null
-    return { x: px, y: py }
-  }
 
   const handleMapClick = (e) => {
     if (!isAdding || createOpen) return
-    if (!ready) {
-      // fallback: permitir un primer clic aunque la vista tarde; intentamos calcular igualmente
-      const pFallback = screenToPixels(e.clientX, e.clientY)
-      if (!pFallback) return
-      setCoords(pFallback)
-      setCreateOpen(true)
-      setOpenTick(t => t + 1)
-      e.stopPropagation()
+    
+    const el = overlayRef.current
+    if (!el) return
+    
+    // Use screenToBoard from context to get board coordinates
+    const boardCoords = screenToBoard(e.clientX, e.clientY)
+    console.log('🗺️ [MAP CLICK] Board coordinates:', boardCoords)
+    
+    if (!Number.isFinite(boardCoords.x) || !Number.isFinite(boardCoords.y)) {
+      console.warn('⚠️ Invalid coordinates:', boardCoords)
       return
     }
-    const p = screenToPixels(e.clientX, e.clientY)
-    if (!p) return
-    setCoords(p)
+    
+    setCoords(boardCoords)
     setCreateOpen(true)
     setOpenTick(t => t + 1) // resetea inputs de archivo
     e.stopPropagation()
@@ -73,7 +46,7 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
   const handleConfirm = async (payload) => {
     try {
       // payload: { nombre, categoria, companiaId, inventario[], fotos[], documentos[] }
-      console.log('🎯 [CREATE POINT] Coordenadas guardadas:', { x: coords.x, y: coords.y })
+      console.log('🎯 [CREATE POINT] Board coordinates:', coords)
       
       const body = {
         nombre: payload?.nombre,
@@ -87,12 +60,12 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
         documentos: payload?.documentos || []
       }
       
-      console.log('📤 [CREATE POINT] Enviando al API:', body)
+      console.log('📤 [CREATE POINT] Sending to API:', body)
       
       const created = await pointService.createPoint(body)
       const pointId = created?.data?._id || created?.data?.id || created?.id
       
-      console.log('✅ [CREATE POINT] Punto creado:', pointId)
+      console.log('✅ [CREATE POINT] Point created:', pointId)
       
       // Refrescar puntos, cerrar diálogo y permanecer en adding para seguir creando
       onChanged?.()
@@ -116,7 +89,7 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
       style={{
         position: 'absolute',
         inset: 0,
-        // pointer-events: solo cuando adding; en tiling no interceptamos (el board maneja ctrl+click)
+        // pointer-events: solo cuando adding
         pointerEvents: isAdding ? 'auto' : 'none'
       }}
       onClick={handleMapClick}
@@ -143,7 +116,7 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
             pointerEvents: 'none'
           }}
         >
-          {ready ? 'Agregar: haz clic en el mapa para crear' : 'Preparando vista…'}
+          Agregar: haz clic en el mapa para crear
         </div>
       )}
 
