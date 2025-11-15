@@ -69,16 +69,14 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
             : Promise.resolve({ data: [] })
         ])
         if (ignore) return
-        const cList = Array.isArray(cRes?.data?.companies)
-          ? cRes.data.companies
+        const cList = Array.isArray(cRes?.data?.data)
+          ? cRes.data.data
           : Array.isArray(cRes?.data)
           ? cRes.data
           : Array.isArray(cRes)
           ? cRes
           : []
-        const oList = Array.isArray(oRes?.data?.objects)
-          ? oRes.data.objects
-          : Array.isArray(oRes?.data)
+        const oList = Array.isArray(oRes?.data)
           ? oRes.data
           : Array.isArray(oRes)
           ? oRes
