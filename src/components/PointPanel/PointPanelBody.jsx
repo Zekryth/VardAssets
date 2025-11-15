@@ -5,7 +5,7 @@
  * Incluye tabs para Información, Inventario, Fotos y Documentos.
  */
 import { useState, useEffect } from 'react';
-import { XMarkIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { X, Pencil, Trash2 } from 'lucide-react';
 
 export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
   const [activeTab, setActiveTab] = useState('info');
@@ -135,7 +135,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
           onClick={onClose}
           className="ml-4 p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
         >
-          <XMarkIcon className="w-6 h-6" />
+          <X className="w-6 h-6" />
         </button>
       </div>
 
@@ -461,7 +461,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             disabled={loading}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors"
           >
-            <PencilIcon className="w-5 h-5" />
+            <Pencil className="w-5 h-5" />
             Editar Punto
           </button>
           
@@ -470,7 +470,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             disabled={loading}
             className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors"
           >
-            <TrashIcon className="w-5 h-5" />
+            <Trash2 className="w-5 h-5" />
             {loading ? 'Eliminando...' : 'Eliminar'}
           </button>
         </div>

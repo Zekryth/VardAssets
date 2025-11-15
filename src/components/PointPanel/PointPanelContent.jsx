@@ -5,7 +5,7 @@
  * Muestra tabs con información, inventario, fotos y documentos.
  */
 import { useState, useEffect } from 'react';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Pencil, Trash2 } from 'lucide-react';
 
 export default function PointPanelContent({ point, onEdit, onDelete }) {
   const [activeTab, setActiveTab] = useState('info');
@@ -251,7 +251,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     disabled={loading}
                     className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-sm font-medium transition-colors"
                   >
-                    <PencilIcon className="w-4 h-4" />
+                    <Pencil className="w-4 h-4" />
                     Editar
                   </button>
                 )}
@@ -262,7 +262,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     disabled={loading}
                     className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg text-sm font-medium transition-colors"
                   >
-                    <TrashIcon className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                     {loading ? 'Eliminando...' : 'Eliminar'}
                   </button>
                 )}
