@@ -248,7 +248,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
           </div>
         ) : null}
 
-        <div className="px-5 py-4 space-y-5">
+        <div className="px-5 py-4 space-y-5 max-h-[70vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm mb-1 text-gray-700 dark:text-gray-300">Nombre <span className="text-red-600 dark:text-red-400">*</span></label>
