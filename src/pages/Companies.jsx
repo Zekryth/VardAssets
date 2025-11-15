@@ -31,12 +31,12 @@ export default function Companies() {
   const fetchCompanies = () => companyService.getCompanies({ params: { search: query, page, limit } })
     .then(res => {
       const data = res.data || {}
-      const list = Array.isArray(data) ? data : (data.companies || [])
+      const list = Array.isArray(data) ? data : (data.data || [])
       setCompanies(list)
       if (typeof data.total === 'number') setTotal(data.total)
       if (typeof data.pages === 'number') setPages(data.pages)
     })
-    .catch(() => {})
+    .catch(() => { })
 
   useEffect(() => {
     let mounted = true
