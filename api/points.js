@@ -33,16 +33,17 @@ export default async function handler(req, res) {
 
     // POST /api/points - Crear punto
     if (req.method === 'POST') {
-      const { nombre, compañia, coordenadas, inventario, fotos, documentos } = req.body;
+      const { nombre, compañia, coordenadas, pisos, inventario, fotos, documentos } = req.body;
       
       console.log('📝 [POINTS] === INICIO CREACIÓN ===');
       console.log('   Datos recibidos:', {
         nombre,
         compañia,
         coordenadas,
-        inventario: inventario?.length || 0,
-        fotos: fotos?.length || 0,
-        documentos: documentos?.length || 0
+        pisos: pisos?.length || 'no enviado',
+        inventario: inventario?.length || 'no enviado',
+        fotos: fotos?.length || 'no enviado',
+        documentos: documentos?.length || 'no enviado'
       });
 
       // Validaciones
@@ -102,17 +103,32 @@ export default async function handler(req, res) {
 
       console.log('💾 [POINTS] Insertando en base de datos...');
 
+      // Si viene 'pisos', usar nuevo formato; si no, crear piso único con datos antiguos
+      let pisosData;
+      if (pisos && Array.isArray(pisos)) {
+        pisosData = pisos;
+        console.log('✅ [POINTS] Usando nuevo formato de pisos:', pisos.length);
+      } else {
+        // Backward compatibility: convertir formato antiguo a pisos
+        pisosData = [{
+          numero: 1,
+          nombre: 'Planta Baja',
+          inventario: inventario || [],
+          fotos: fotos || [],
+          documentos: documentos || []
+        }];
+        console.log('🔄 [POINTS] Convertido formato antiguo a pisos');
+      }
+
       const { rows } = await pool.query(
-        `INSERT INTO points (nombre, compañia, coordenadas, inventario, fotos, documentos)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO points (nombre, compañia, coordenadas, pisos)
+         VALUES ($1, $2, $3, $4)
          RETURNING *`,
         [
           nombre.trim(),
           compañia || null,
           JSON.stringify(coordenadas),
-          JSON.stringify(inventario || []),
-          JSON.stringify(fotos || []),
-          JSON.stringify(documentos || [])
+          JSON.stringify(pisosData)
         ]
       );
 
@@ -139,7 +155,7 @@ export default async function handler(req, res) {
     // PUT /api/points?id=xxx - Actualizar punto
     if (req.method === 'PUT') {
       const { id } = req.query;
-      const { nombre, compañia, coordenadas, inventario, fotos, documentos } = req.body;
+      const { nombre, compañia, coordenadas, pisos, inventario, fotos, documentos } = req.body;
 
       console.log(`📝 [POINTS] Actualizando punto: ${id}`);
 
@@ -153,24 +169,37 @@ export default async function handler(req, res) {
         });
       }
 
+      // Si viene 'pisos', usar nuevo formato; si no, mantener formato antiguo
+      let pisosData;
+      if (pisos && Array.isArray(pisos)) {
+        pisosData = pisos;
+        console.log('✅ [POINTS] Actualizando con nuevo formato de pisos:', pisos.length);
+      } else if (inventario || fotos || documentos) {
+        // Backward compatibility: convertir formato antiguo a pisos
+        pisosData = [{
+          numero: 1,
+          nombre: 'Planta Baja',
+          inventario: inventario || [],
+          fotos: fotos || [],
+          documentos: documentos || []
+        }];
+        console.log('🔄 [POINTS] Convertido formato antiguo a pisos en actualización');
+      }
+
       const { rows } = await pool.query(
         `UPDATE points 
          SET nombre = COALESCE($1, nombre),
              compañia = COALESCE($2, compañia),
              coordenadas = COALESCE($3, coordenadas),
-             inventario = COALESCE($4, inventario),
-             fotos = COALESCE($5, fotos),
-             documentos = COALESCE($6, documentos),
+             pisos = COALESCE($4, pisos),
              updated_at = NOW()
-         WHERE id = $7
+         WHERE id = $5
          RETURNING *`,
         [
           nombre?.trim(),
           compañia,
           coordenadas ? JSON.stringify(coordenadas) : null,
-          inventario ? JSON.stringify(inventario) : null,
-          fotos ? JSON.stringify(fotos) : null,
-          documentos ? JSON.stringify(documentos) : null,
+          pisosData ? JSON.stringify(pisosData) : null,
           id
         ]
       );

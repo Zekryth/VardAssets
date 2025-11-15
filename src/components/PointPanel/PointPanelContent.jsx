@@ -2,13 +2,14 @@
  * PointPanelContent.jsx
  *
  * Contenido reutilizable para paneles de punto (flotante o lateral).
- * Muestra tabs con información, inventario, fotos y documentos.
+ * Muestra tabs con información, inventario, fotos y documentos POR PISO.
  */
 import { useState, useEffect } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 
 export default function PointPanelContent({ point, onEdit, onDelete }) {
   const [activeTab, setActiveTab] = useState('info');
+  const [pisoActual, setPisoActual] = useState(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -19,10 +20,10 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
       categoria: point?.categoria,
       compañia: point?.compañia_nombre || point?.compañia?.nombre,
       coordenadas: point?.coordenadas,
-      inventario: point?.inventario,
-      fotos: point?.fotos,
-      documentos: point?.documentos
+      pisos: point?.pisos
     });
+    // Resetear piso actual cuando cambia el punto
+    setPisoActual(0);
   }, [point]);
 
   if (!point) {
@@ -44,40 +45,39 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
     }
   }
 
-  // Parsear inventario si viene como string
-  let inventario = point.inventario || [];
-  if (typeof inventario === 'string') {
+  // Parsear pisos si vienen como string
+  let pisos = point.pisos || [];
+  if (typeof pisos === 'string') {
     try {
-      inventario = JSON.parse(inventario);
+      pisos = JSON.parse(pisos);
     } catch (e) {
-      console.error('Error parseando inventario:', e);
-      inventario = [];
+      console.error('Error parseando pisos:', e);
+      pisos = [];
     }
+  }
+  if (!Array.isArray(pisos) || pisos.length === 0) {
+    // Fallback: si no hay pisos, crear uno con datos antiguos si existen
+    const inventarioAntiguo = point.inventario || [];
+    const fotosAntiguas = point.fotos || [];
+    const documentosAntiguos = point.documentos || [];
+    
+    pisos = [{
+      numero: 1,
+      nombre: 'Planta Baja',
+      inventario: Array.isArray(inventarioAntiguo) ? inventarioAntiguo : 
+                  (typeof inventarioAntiguo === 'string' ? JSON.parse(inventarioAntiguo) : []),
+      fotos: Array.isArray(fotosAntiguas) ? fotosAntiguas :
+             (typeof fotosAntiguas === 'string' ? JSON.parse(fotosAntiguas) : []),
+      documentos: Array.isArray(documentosAntiguos) ? documentosAntiguos :
+                  (typeof documentosAntiguos === 'string' ? JSON.parse(documentosAntiguos) : [])
+    }];
   }
 
-  // Parsear fotos si vienen como string
-  let fotos = point.fotos || [];
-  if (typeof fotos === 'string') {
-    try {
-      fotos = JSON.parse(fotos);
-    } catch (e) {
-      console.error('Error parseando fotos:', e);
-      fotos = [];
-    }
-  }
-  if (!Array.isArray(fotos)) fotos = [];
-
-  // Parsear documentos si vienen como string
-  let documentos = point.documentos || [];
-  if (typeof documentos === 'string') {
-    try {
-      documentos = JSON.parse(documentos);
-    } catch (e) {
-      console.error('Error parseando documentos:', e);
-      documentos = [];
-    }
-  }
-  if (!Array.isArray(documentos)) documentos = [];
+  // Asegurar que pisoActual está en rango
+  const currentFloor = pisos[Math.min(pisoActual, pisos.length - 1)] || pisos[0];
+  const inventario = currentFloor.inventario || [];
+  const fotos = currentFloor.fotos || [];
+  const documentos = currentFloor.documentos || [];
 
   const tabs = [
     { id: 'info', name: 'Información', icon: '📋' },
@@ -118,6 +118,40 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Navegación de Pisos */}
+      {pisos.length > 1 && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setPisoActual(Math.max(0, pisoActual - 1))}
+              disabled={pisoActual === 0}
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded text-sm font-medium"
+            >
+              <ChevronUp className="w-4 h-4" />
+              Anterior
+            </button>
+
+            <div className="text-center">
+              <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                {currentFloor.nombre}
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Piso {pisoActual + 1} de {pisos.length}
+              </p>
+            </div>
+
+            <button
+              onClick={() => setPisoActual(Math.min(pisos.length - 1, pisoActual + 1))}
+              disabled={pisoActual === pisos.length - 1}
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded text-sm font-medium"
+            >
+              Siguiente
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
         <nav className="flex -mb-px overflow-x-auto">
@@ -277,7 +311,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                  📦 Inventario ({inventario.length})
+                  📦 Inventario - {currentFloor.nombre} ({inventario.length})
                 </h3>
                 {onEdit && (
                   <button
@@ -345,7 +379,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                  📷 Fotos ({fotos.length})
+                  📷 Fotos - {currentFloor.nombre} ({fotos.length})
                 </h3>
                 {onEdit && (
                   <button
@@ -406,7 +440,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                  📄 Documentos ({documentos.length})
+                  📄 Documentos - {currentFloor.nombre} ({documentos.length})
                 </h3>
                 {onEdit && (
                   <button

@@ -56,6 +56,45 @@ export default (sequelize) => {
       type: DataTypes.JSONB,
       defaultValue: []
     },
+    pisos: {
+      type: DataTypes.JSONB,
+      defaultValue: [
+        {
+          numero: 1,
+          nombre: 'Planta Baja',
+          inventario: [],
+          fotos: [],
+          documentos: []
+        }
+      ],
+      validate: {
+        isValidPisos(value) {
+          if (!Array.isArray(value)) {
+            throw new Error('Pisos debe ser un array');
+          }
+          if (value.length === 0) {
+            throw new Error('Debe haber al menos un piso');
+          }
+          value.forEach((piso, index) => {
+            if (!piso.numero || typeof piso.numero !== 'number') {
+              throw new Error(`Piso ${index}: número inválido`);
+            }
+            if (!piso.nombre || typeof piso.nombre !== 'string') {
+              throw new Error(`Piso ${index}: nombre inválido`);
+            }
+            if (!Array.isArray(piso.inventario)) {
+              throw new Error(`Piso ${index}: inventario debe ser un array`);
+            }
+            if (!Array.isArray(piso.fotos)) {
+              throw new Error(`Piso ${index}: fotos debe ser un array`);
+            }
+            if (!Array.isArray(piso.documentos)) {
+              throw new Error(`Piso ${index}: documentos debe ser un array`);
+            }
+          });
+        }
+      }
+    },
     notas: {
       type: DataTypes.TEXT,
       allowNull: true

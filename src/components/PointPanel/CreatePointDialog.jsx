@@ -1,11 +1,11 @@
 /**
  * CreatePointDialog.jsx
  *
- * Diálogo/modal para crear un nuevo punto en el mapa.
- * Permite ingresar nombre, categoría, compañía, inventario y adjuntar archivos (fotos/documentos).
- * Gestiona el estado del formulario y validaciones.
+ * Diálogo/modal para crear un nuevo punto en el mapa con soporte de múltiples pisos.
+ * Permite ingresar nombre, categoría, compañía, y gestionar pisos con inventario y archivos independientes.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronUp, ChevronDown, Plus, Trash2 } from 'lucide-react'
 import { companyService, objectService } from '../../services/api'
 import PhotoUpload from './PhotoUpload'
 import DocumentUpload from './DocumentUpload'
@@ -13,15 +13,20 @@ import DocumentUpload from './DocumentUpload'
 const cx = (...p) => p.filter(Boolean).join(' ')
 
 export default function CreatePointDialog({ open, coords, onCancel, onConfirm }) {
-  // form state
+  // Estado del punto (información general)
   const [nombre, setNombre] = useState('')
   const [categoria, setCategoria] = useState('')
   const [companiaId, setCompaniaId] = useState('')
-  const [inventario, setInventario] = useState([]) // [{ objeto, cantidad }]
-  const [fotos, setFotos] = useState([]) // URLs de fotos subidas
-  const [documentos, setDocumentos] = useState([]) // URLs/metadata de documentos subidos
-  const [files, setFiles] = useState({ fotos: [], documentos: [] })
-  const [openTick, setOpenTick] = useState(0) // fuerza remount de inputs file
+
+  // Estado de pisos
+  const [pisos, setPisos] = useState([{
+    numero: 1,
+    nombre: 'Planta Baja',
+    inventario: [],
+    fotos: [],
+    documentos: []
+  }])
+  const [pisoActual, setPisoActual] = useState(0)
 
   // ux state
   const [companyFilter, setCompanyFilter] = useState('')
@@ -45,12 +50,15 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     setNombre('')
     setCategoria('')
     setCompaniaId('')
-    setInventario([])
-    setFotos([])
-    setDocumentos([])
-    setFiles({ fotos: [], documentos: [] })
+    setPisos([{
+      numero: 1,
+      nombre: 'Planta Baja',
+      inventario: [],
+      fotos: [],
+      documentos: []
+    }])
+    setPisoActual(0)
     setErrMsg('')
-    setOpenTick(t => t + 1)
     setCompanyFilter('')
     setObjectsFilter('')
     setTouched({ nombre: false, categoria: false })
@@ -139,18 +147,76 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     return () => el.removeEventListener('keydown', handleKeyDown)
   }, [open, onCancel])
 
+  // Computed values
+  const currentFloor = pisos[pisoActual]
+  
+  // Handlers de Pisos
+  const handleAddFloor = () => {
+    const newNumber = pisos.length + 1
+    setPisos([
+      ...pisos,
+      {
+        numero: newNumber,
+        nombre: `Piso ${newNumber - 1}`,
+        inventario: [],
+        fotos: [],
+        documentos: []
+      }
+    ])
+    setPisoActual(pisos.length) // Cambiar al nuevo piso
+  }
+
+  const handleRemoveFloor = () => {
+    if (pisos.length === 1) {
+      alert('Debe haber al menos un piso')
+      return
+    }
+    
+    if (confirm(`¿Eliminar ${currentFloor.nombre}?`)) {
+      const newPisos = pisos.filter((_, i) => i !== pisoActual)
+      // Renumerar
+      newPisos.forEach((piso, i) => {
+        piso.numero = i + 1
+      })
+      setPisos(newPisos)
+      // Ajustar índice actual
+      if (pisoActual >= newPisos.length) {
+        setPisoActual(newPisos.length - 1)
+      }
+    }
+  }
+
+  const updateCurrentFloor = (field, value) => {
+    setPisos(prevPisos => {
+      const newPisos = [...prevPisos]
+      newPisos[pisoActual] = {
+        ...newPisos[pisoActual],
+        [field]: value
+      }
+      return newPisos
+    })
+  }
+
+  const updateCurrentFloorName = (e) => {
+    updateCurrentFloor('nombre', e.target.value)
+  }
+
+  // Handlers de Inventario del piso actual
   const handleAddInvRow = () => {
-    setInventario((rows) => [...rows, { objeto: '', cantidad: 1 }])
+    const newInv = [...currentFloor.inventario, { objeto: '', cantidad: 1 }]
+    updateCurrentFloor('inventario', newInv)
   }
 
   const handleInvChange = (idx, patch) => {
-    setInventario((rows) =>
-      rows.map((r, i) => (i === idx ? { ...r, ...patch } : r))
+    const newInv = currentFloor.inventario.map((r, i) => 
+      i === idx ? { ...r, ...patch } : r
     )
+    updateCurrentFloor('inventario', newInv)
   }
 
   const handleRemoveInvRow = (idx) => {
-    setInventario((rows) => rows.filter((_, i) => i !== idx))
+    const newInv = currentFloor.inventario.filter((_, i) => i !== idx)
+    updateCurrentFloor('inventario', newInv)
   }
 
   const canSave = Boolean(nombre && categoria)
@@ -196,23 +262,26 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
       return
     }
     
-    // normalizar inventario a { objeto, cantidad }
-    const inv = (inventario || [])
-      .map((r) => ({
-        objeto: r?.objeto?._id || r?.objeto?.id || r?.objeto || '',
-        cantidad: Number(r?.cantidad) || 1
-      }))
-      .filter((r) => r.objeto)
+    // Normalizar inventario de cada piso
+    const pisosNormalized = pisos.map(piso => ({
+      ...piso,
+      inventario: (piso.inventario || [])
+        .map(r => ({
+          objeto: r?.objeto?._id || r?.objeto?.id || r?.objeto || '',
+          cantidad: Number(r?.cantidad) || 1
+        }))
+        .filter(r => r.objeto)
+    }))
     
     const payload = {
-      nombre,
-      categoria,
+      nombre: nombre.trim(),
+      categoria: categoria.trim(),
       compañia: companiaId || null,
-      inventario: inv,
-      fotos,
-      documentos
+      coordenadas: coords,
+      pisos: pisosNormalized
     }
     
+    console.log('💾 [CREATE DIALOG] Payload con pisos:', payload)
     onConfirm?.(payload)
   }
 
@@ -310,90 +379,179 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
             </div>
           </div>
 
-          {/* Inventario inicial */}
+          {/* Gestión de Pisos */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm text-gray-700 dark:text-gray-300">Inventario inicial</label>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                🏢 Pisos ({pisos.length})
+              </label>
               <button
                 type="button"
-                className="text-sm px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100"
-                onClick={handleAddInvRow}
+                onClick={handleAddFloor}
+                className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium"
               >
-                + Agregar ítem
+                <Plus className="w-4 h-4" />
+                Agregar Piso
               </button>
             </div>
-            <div className="mb-2">
-              <input
-                type="text"
-                value={objectsFilter}
-                onChange={(e) => setObjectsFilter(e.target.value)}
-                placeholder="Buscar objetos…"
-                className="w-full px-3 py-2 rounded border text-gray-900 placeholder-gray-400 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700"
-              />
-            </div>
-            {inventario.length === 0 ? (
-              <div className="text-xs text-gray-500 dark:text-gray-400">Sin ítems. Usa “Agregar ítem”.</div>
-            ) : (
-              <div className="space-y-2">
-                {inventario.map((row, idx) => (
-                  <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                    <div className="col-span-8">
-                      <select
-                        className="w-full px-3 py-2 rounded border text-gray-900 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700"
-                        value={row?.objeto?._id || row?.objeto || ''}
-                        onChange={(e) =>
-                          handleInvChange(idx, { objeto: e.target.value })
-                        }
-                        disabled={loading}
-                      >
-                        <option value="">Seleccione objeto…</option>
-                        {objectsFiltered.map((o) => (
-                          <option key={o.id} value={o.id}>
-                            {o.name} {o.categoria ? `· ${o.categoria}` : ''}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-3">
-                      <input
-                        type="number"
-                        min={1}
-                        className="w-full px-3 py-2 rounded border text-gray-900 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700"
-                        value={row?.cantidad ?? 1}
-                        onChange={(e) =>
-                          handleInvChange(idx, { cantidad: Number(e.target.value) || 1 })
-                        }
-                      />
-                    </div>
-                    <div className="col-span-1 flex justify-end">
-                      <button
-                        className="px-2 py-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100"
-                        onClick={() => handleRemoveInvRow(idx)}
-                        title="Quitar"
-                        aria-label="Quitar"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* Archivos */}
-          <div className="space-y-6">
-            <PhotoUpload
-              pointId="temp"
-              photos={fotos}
-              onPhotosChange={setFotos}
-            />
-            
-            <DocumentUpload
-              pointId="temp"
-              documents={documentos}
-              onDocumentsChange={setDocumentos}
-            />
+            {/* Navegación entre Pisos */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  type="button"
+                  onClick={() => setPisoActual(Math.max(0, pisoActual - 1))}
+                  disabled={pisoActual === 0}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded font-medium text-sm"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                  Anterior
+                </button>
+
+                <div className="text-center">
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                    {currentFloor.nombre}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Piso {pisoActual + 1} de {pisos.length}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPisoActual(Math.min(pisos.length - 1, pisoActual + 1))}
+                  disabled={pisoActual === pisos.length - 1}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded font-medium text-sm"
+                >
+                  Siguiente
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Nombre del Piso */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={currentFloor.nombre}
+                  onChange={updateCurrentFloorName}
+                  placeholder={`Piso ${pisoActual + 1}`}
+                  className="flex-1 px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+                
+                {pisos.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveFloor}
+                    className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Eliminar
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Inventario del Piso Actual */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm text-gray-700 dark:text-gray-300">
+                  📦 Inventario - {currentFloor.nombre}
+                </label>
+                <button
+                  type="button"
+                  className="text-sm px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100"
+                  onClick={handleAddInvRow}
+                >
+                  + Agregar ítem
+                </button>
+              </div>
+              
+              {currentFloor.inventario.length > 0 && (
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    value={objectsFilter}
+                    onChange={(e) => setObjectsFilter(e.target.value)}
+                    placeholder="Buscar objetos…"
+                    className="w-full px-3 py-2 rounded border text-gray-900 placeholder-gray-400 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700 text-sm"
+                  />
+                </div>
+              )}
+              
+              {currentFloor.inventario.length === 0 ? (
+                <div className="text-xs text-gray-500 dark:text-gray-400">Sin ítems. Usa "Agregar ítem".</div>
+              ) : (
+                <div className="space-y-2">
+                  {currentFloor.inventario.map((row, idx) => (
+                    <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-8">
+                        <select
+                          className="w-full px-3 py-2 rounded border text-gray-900 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700 text-sm"
+                          value={row?.objeto?._id || row?.objeto || ''}
+                          onChange={(e) =>
+                            handleInvChange(idx, { objeto: e.target.value })
+                          }
+                          disabled={loading}
+                        >
+                          <option value="">Seleccione objeto…</option>
+                          {objectsFiltered.map((o) => (
+                            <option key={o.id} value={o.id}>
+                              {o.name} {o.categoria ? `· ${o.categoria}` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="col-span-3">
+                        <input
+                          type="number"
+                          min={1}
+                          className="w-full px-3 py-2 rounded border text-gray-900 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700 text-sm"
+                          value={row?.cantidad ?? 1}
+                          onChange={(e) =>
+                            handleInvChange(idx, { cantidad: Number(e.target.value) || 1 })
+                          }
+                        />
+                      </div>
+                      <div className="col-span-1 flex justify-end">
+                        <button
+                          className="px-2 py-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100"
+                          onClick={() => handleRemoveInvRow(idx)}
+                          title="Quitar"
+                          aria-label="Quitar"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Archivos del Piso Actual */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
+                  📷 Fotos - {currentFloor.nombre}
+                </label>
+                <PhotoUpload
+                  pointId={`temp-floor-${pisoActual}`}
+                  photos={currentFloor.fotos}
+                  onPhotosChange={(newPhotos) => updateCurrentFloor('fotos', newPhotos)}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
+                  📄 Documentos - {currentFloor.nombre}
+                </label>
+                <DocumentUpload
+                  pointId={`temp-floor-${pisoActual}`}
+                  documents={currentFloor.documentos}
+                  onDocumentsChange={(newDocs) => updateCurrentFloor('documentos', newDocs)}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
