@@ -9,6 +9,7 @@ import { useMapActionMode } from '../../contexts/MapActionModeContext.jsx'
 import { useMapView } from '../../contexts/MapViewContext.jsx'
 import { pointService } from '../../services/api.js'
 import CreatePointDialog from '../PointPanel/CreatePointDialog.jsx'
+import { MAP_CONFIG } from '../../utils/constants.js'
 
 // Esta capa está encima del mapa. Solo captura eventos cuando el modo lo requiere.
 export default function MapInteractionLayer({ className = '', points = [], onChanged }) {
@@ -28,71 +29,34 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
     const el = overlayRef.current
     if (!el) return
     
-    console.log('🗺️ [MAP CLICK] === INICIO ===')
-    console.log('   clientX/Y (window coords):', e.clientX, e.clientY)
-    
-    // Get overlay position
-    const rect = el.getBoundingClientRect()
-    console.log('📐 [MAP CLICK] Overlay rect:', {
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height
-    })
-    
-    // Calculate coordinates relative to overlay
-    const relativeX = e.clientX - rect.left
-    const relativeY = e.clientY - rect.top
-    
-    console.log('📍 [MAP CLICK] Relative to overlay:', { relativeX, relativeY })
-    
-    // Convert to board coordinates (screenToBoard expects screen coords already relative)
+    // Convert to board coordinates
     const boardCoords = screenToBoard(e.clientX, e.clientY)
-    console.log('🎯 [MAP CLICK] Board coordinates:', boardCoords)
     
     if (!Number.isFinite(boardCoords.x) || !Number.isFinite(boardCoords.y)) {
-      console.warn('⚠️ Invalid coordinates:', boardCoords)
+      console.warn('⚠️ [MAP CLICK] Invalid coordinates:', boardCoords)
       return
     }
     
-    // Create temporary visual marker for debugging
-    const marker = document.createElement('div')
-    marker.style.cssText = `
-      position: absolute;
-      left: ${relativeX}px;
-      top: ${relativeY}px;
-      width: 20px;
-      height: 20px;
-      background: red;
-      border: 3px solid white;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 9999;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    `
-    el.appendChild(marker)
-    console.log('🔴 [DEBUG] Red marker placed at:', { relativeX, relativeY })
+    // Validate coordinates are within map bounds
+    if (!MAP_CONFIG.isInsideMap(boardCoords.x, boardCoords.y)) {
+      console.warn('⚠️ [MAP CLICK] Click outside map bounds:', boardCoords, 'Max:', {
+        width: MAP_CONFIG.BOARD_WIDTH,
+        height: MAP_CONFIG.BOARD_HEIGHT
+      })
+      alert(`❌ No puedes crear un punto fuera del mapa.\n\nCoordenadas: (${Math.round(boardCoords.x)}, ${Math.round(boardCoords.y)})\nLímites del mapa: ${MAP_CONFIG.BOARD_WIDTH} x ${MAP_CONFIG.BOARD_HEIGHT} px\n\nHaz click dentro del área blanca del mapa.`)
+      return
+    }
     
-    // Remove marker after 3 seconds
-    setTimeout(() => {
-      marker.remove()
-      console.log('🔴 [DEBUG] Red marker removed')
-    }, 3000)
+    console.log('🎯 [MAP CLICK] Creating point at:', boardCoords)
     
     setCoords(boardCoords)
     setCreateOpen(true)
-    setOpenTick(t => t + 1) // resetea inputs de archivo
+    setOpenTick(t => t + 1)
     e.stopPropagation()
   }
 
   const handleConfirm = async (payload) => {
     try {
-      // payload: { nombre, categoria, companiaId, inventario[], fotos[], documentos[] }
-      console.log('💾 [CREATE POINT] === SAVING POINT ===')
-      console.log('📋 [CREATE POINT] Form data:', payload)
-      console.log('🎯 [CREATE POINT] Board coordinates to save:', coords)
-      
       const body = {
         nombre: payload?.nombre,
         categoria: payload?.categoria,
@@ -105,17 +69,12 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
         documentos: payload?.documentos || []
       }
       
-      console.log('📤 [CREATE POINT] Complete payload:', body)
-      console.log('🎯 [CREATE POINT] Coordinates in payload:', body.coordenadas)
+      console.log('💾 [CREATE POINT] Saving:', payload.nombre, 'at', body.coordenadas)
       
       const created = await pointService.createPoint(body)
       const pointId = created?.data?._id || created?.data?.id || created?.id
-      const savedCoords = created?.data?.coordenadas
       
-      console.log('✅ [CREATE POINT] Point created successfully')
-      console.log('   ID:', pointId)
-      console.log('   Coordinates saved in DB:', savedCoords)
-      console.log('   Expected:', coords)
+      console.log('✅ [CREATE POINT] Point created:', pointId)
       
       // Refrescar puntos, cerrar diálogo y permanecer en adding para seguir creando
       onChanged?.()
@@ -152,6 +111,24 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
         />
       )}
 
+      {/* Indicador visual del área válida del mapa */}
+      {isAdding && !createOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: `${MAP_CONFIG.BOARD_WIDTH}px`,
+            height: `${MAP_CONFIG.BOARD_HEIGHT}px`,
+            border: '3px solid rgba(59, 130, 246, 0.5)',
+            boxShadow: 'inset 0 0 20px rgba(59, 130, 246, 0.1)',
+            pointerEvents: 'none',
+            zIndex: 10
+          }}
+          title={`Área válida del mapa: ${MAP_CONFIG.BOARD_WIDTH} x ${MAP_CONFIG.BOARD_HEIGHT} px`}
+        />
+      )}
+
       {/* HUD sutil (no estorba): solo informativo, no bloquea */}
       {isAdding && !createOpen && (
         <div
@@ -160,13 +137,14 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
             top: 8, left: 8,
             padding: '6px 10px',
             borderRadius: 8,
-            background: 'rgba(17,24,39,.6)',
+            background: 'rgba(17,24,39,.8)',
             color: '#e5e7eb',
             fontSize: 12,
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
           }}
         >
-          Agregar: haz clic en el mapa para crear
+          📍 Haz clic dentro del área azul para crear un punto
         </div>
       )}
 

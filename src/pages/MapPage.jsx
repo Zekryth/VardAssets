@@ -423,18 +423,10 @@ function createStableMapViewValue(containerRef) {
         return { x, y }
       }
       const rect = el.getBoundingClientRect()
-      console.log('🔄 [SCREEN_TO_BOARD] Converting:', { x, y })
-      console.log('   Container rect:', { left: rect.left, top: rect.top, width: rect.width, height: rect.height })
-      console.log('   MapView state:', { offset: __mapViewRef.offset, scale: __mapViewRef.scale })
-      
       const sx = x - rect.left
       const sy = y - rect.top
-      console.log('   Screen coords (relative to container):', { sx, sy })
-      
       const bx = (sx - __mapViewRef.offset.x) / __mapViewRef.scale
       const by = (sy - __mapViewRef.offset.y) / __mapViewRef.scale
-      console.log('   Board coords (final):', { bx: Math.round(bx), by: Math.round(by) })
-      
       return { x: bx, y: by }
     },
     boardToScreen: (bx, by) => {
@@ -444,18 +436,8 @@ function createStableMapViewValue(containerRef) {
         return { x: bx, y: by }
       }
       const rect = el.getBoundingClientRect()
-      console.log('🔄 [BOARD_TO_SCREEN] Converting:', { bx, by })
-      console.log('   Container rect:', { left: rect.left, top: rect.top })
-      console.log('   MapView state:', { offset: __mapViewRef.offset, scale: __mapViewRef.scale })
-      
       const sx = __mapViewRef.offset.x + bx * __mapViewRef.scale
       const sy = __mapViewRef.offset.y + by * __mapViewRef.scale
-      console.log('   Screen coords (relative):', { sx, sy })
-      
-      const finalX = sx + rect.left
-      const finalY = sy + rect.top
-      console.log('   Screen coords (absolute):', { x: Math.round(finalX), y: Math.round(finalY) })
-      
       return { x: sx + rect.left, y: sy + rect.top }
     },
     container: null,

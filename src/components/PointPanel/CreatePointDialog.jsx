@@ -187,21 +187,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   }, [objectsOptions, objectsFilter])
 
   const submit = () => {
-    console.log('💾 [CREATE DIALOG] === SUBMIT CLICKED ===')
-    console.log('📋 [CREATE DIALOG] Form data:', {
-      nombre,
-      categoria,
-      companiaId,
-      inventario: inventario?.length || 0,
-      fotos: fotos?.length || 0,
-      documentos: documentos?.length || 0
-    })
-    console.log('🎯 [CREATE DIALOG] Coordinates:', coords)
-    
-    if (!canSave) {
-      console.warn('⚠️ [CREATE DIALOG] Cannot save - validation failed')
-      return
-    }
+    if (!canSave) return
     
     // Validate coordinates
     if (!coords || typeof coords.x !== 'number' || typeof coords.y !== 'number') {
@@ -226,9 +212,6 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
       fotos,
       documentos
     }
-    
-    console.log('📤 [CREATE DIALOG] Sending payload to parent:', payload)
-    console.log('🎯 [CREATE DIALOG] Coordinates will be added by parent:', coords)
     
     onConfirm?.(payload)
   }
