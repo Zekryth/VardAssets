@@ -109,7 +109,7 @@ export default function Companies() {
                 aria-label={t('search.company')}
               />
             </div>
-            <Button onClick={() => setOpen(true)} className="gap-2 whitespace-nowrap"><Plus size={16} /> {t('companies.addCompany')}</Button>
+            <Button onClick={() => { setForm({ nombre: '', personaContacto: '', telefono: '', email: '' }); setEditing(null); setOpen(true); }} className="gap-2 whitespace-nowrap"><Plus size={16} /> {t('companies.addCompany')}</Button>
           </div>
         </div>
       </div>
@@ -128,10 +128,10 @@ export default function Companies() {
                 <div key={c._id || c.id} className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-raised flex items-center justify-between">
                   <div>
                     <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{c.nombre}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">{c.personaContacto} · {c.telefono}{c.email ? ` · ${c.email}` : ''}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">{c.persona_contacto} · {c.telefono}{c.email ? ` · ${c.email}` : ''}</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="gap-1" onClick={() => { setEditing(c); setForm({ nombre: c.nombre||'', personaContacto: c.personaContacto||'', telefono: c.telefono||'', email: c.email||'' }); setOpen(true) }}>
+                    <Button variant="ghost" size="sm" className="gap-1" onClick={() => { setEditing(c); setForm({ nombre: c.nombre||'', personaContacto: c.persona_contacto||'', telefono: c.telefono||'', email: c.email||'' }); setOpen(true) }}>
                       <Pencil size={14} /> Editar
                     </Button>
                     <Button variant="outline" size="sm" className="gap-1" onClick={async ()=>{
