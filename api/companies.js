@@ -2,12 +2,14 @@ import { getPool } from './_lib/db.js';
 import { authenticateToken } from './_lib/auth.js';
 import { handleCors } from './_lib/cors.js';
 import { handleError } from './_lib/errors.js';
+import { initializeDatabase } from './_lib/init.js';
 
 export default async function handler(req, res) {
-  console.log('📥 Request a /api/companies:', req.method, req.url);
+  console.log('📥 [COMPANIES] Request:', req.method, req.url);
   
   if (handleCors(req, res)) return;
 
+  await initializeDatabase();
   const pool = getPool();
 
   try {
@@ -53,23 +55,68 @@ export default async function handler(req, res) {
 
     // POST /api/companies - Crear compañía
     if (req.method === 'POST') {
-      console.log('📥 POST /api/companies - Body:', req.body);
-      
       const { nombre, personaContacto, telefono, email, direccion } = req.body;
       
-      if (!nombre || nombre.trim() === '') {
-        return res.status(400).json({ error: 'El nombre es obligatorio' });
+      console.log('📝 [COMPANIES] === INICIO CREACIÓN ===');
+      console.log('   Datos recibidos:', {
+        nombre,
+        personaContacto,
+        telefono,
+        email,
+        direccion
+      });
+
+      // Validaciones
+      if (!nombre?.trim()) {
+        console.warn('⚠️ [COMPANIES] Nombre vacío o inválido');
+        return res.status(400).json({ 
+          error: 'El nombre de la compañía es obligatorio' 
+        });
       }
 
+      console.log('🔍 [COMPANIES] Verificando estructura de tabla...');
+      
+      // Verificar que la columna "nombre" existe
+      const { rows: columns } = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'companies' 
+          AND column_name = 'nombre'
+      `);
+
+      if (columns.length === 0) {
+        console.error('❌ [COMPANIES] Columna "nombre" NO existe en la tabla');
+        console.error('   Ejecuta este SQL en Neon:');
+        console.error('   ALTER TABLE companies RENAME COLUMN name TO nombre;');
+        return res.status(500).json({
+          error: 'Error de configuración de base de datos',
+          details: 'La columna "nombre" no existe. Contacta al administrador.'
+        });
+      }
+
+      console.log('✅ [COMPANIES] Columna "nombre" verificada');
+      console.log('💾 [COMPANIES] Insertando en base de datos...');
+
       const { rows } = await pool.query(
-        `INSERT INTO companies (id, nombre, persona_contacto, telefono, email, direccion, created_at, updated_at)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW())
+        `INSERT INTO companies (nombre, persona_contacto, telefono, email, direccion)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [nombre.trim(), personaContacto?.trim(), telefono?.trim(), email?.trim(), direccion?.trim()]
+        [
+          nombre.trim(),
+          personaContacto?.trim() || null,
+          telefono?.trim() || null,
+          email?.trim() || null,
+          direccion?.trim() || null
+        ]
       );
 
-      console.log('✅ Compañía creada:', rows[0].id);
-      return res.status(201).json(rows[0]);
+      const newCompany = rows[0];
+      console.log('✅ [COMPANIES] Compañía creada exitosamente:', {
+        id: newCompany.id,
+        nombre: newCompany.nombre
+      });
+
+      return res.status(201).json(newCompany);
     }
 
     // PUT /api/companies?id=xxx - Actualizar compañía
@@ -77,8 +124,16 @@ export default async function handler(req, res) {
       const { id } = req.query;
       const { nombre, personaContacto, telefono, email, direccion } = req.body;
 
+      console.log(`📝 [COMPANIES] Actualizando compañía: ${id}`);
+
       if (!id) {
         return res.status(400).json({ error: 'ID de compañía requerido' });
+      }
+
+      if (!nombre?.trim()) {
+        return res.status(400).json({ 
+          error: 'El nombre de la compañía es obligatorio' 
+        });
       }
 
       const { rows } = await pool.query(
@@ -95,16 +150,18 @@ export default async function handler(req, res) {
       );
 
       if (rows.length === 0) {
+        console.warn(`⚠️ [COMPANIES] Compañía no encontrada: ${id}`);
         return res.status(404).json({ error: 'Compañía no encontrada' });
       }
 
-      console.log('✅ Compañía actualizada:', id);
+      console.log(`✅ [COMPANIES] Compañía actualizada: ${rows[0].nombre}`);
       return res.status(200).json(rows[0]);
     }
 
     // DELETE /api/companies?id=xxx - Eliminar compañía
     if (req.method === 'DELETE') {
       const { id } = req.query;
+      console.log(`🗑️ [COMPANIES] Eliminando compañía: ${id}`);
 
       if (!id) {
         return res.status(400).json({ error: 'ID de compañía requerido' });
@@ -119,13 +176,20 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'Compañía no encontrada' });
       }
 
-      console.log('✅ Compañía eliminada:', id);
-      return res.status(200).json({ message: 'Compañía eliminada correctamente' });
+      console.log(`✅ [COMPANIES] Compañía eliminada: ${rows[0].nombre}`);
+      return res.status(200).json({ 
+        message: 'Compañía eliminada exitosamente',
+        company: rows[0]
+      });
     }
 
     return res.status(405).json({ error: 'Método no permitido' });
 
   } catch (error) {
+    console.error('💥 [COMPANIES] Error:', error);
+    console.error('   Message:', error.message);
+    console.error('   Code:', error.code);
+    console.error('   Stack:', error.stack);
     return handleError(error, res);
   }
 }
