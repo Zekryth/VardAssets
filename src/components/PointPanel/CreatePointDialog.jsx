@@ -187,7 +187,29 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   }, [objectsOptions, objectsFilter])
 
   const submit = () => {
-    if (!canSave) return
+    console.log('💾 [CREATE DIALOG] === SUBMIT CLICKED ===')
+    console.log('📋 [CREATE DIALOG] Form data:', {
+      nombre,
+      categoria,
+      companiaId,
+      inventario: inventario?.length || 0,
+      fotos: fotos?.length || 0,
+      documentos: documentos?.length || 0
+    })
+    console.log('🎯 [CREATE DIALOG] Coordinates:', coords)
+    
+    if (!canSave) {
+      console.warn('⚠️ [CREATE DIALOG] Cannot save - validation failed')
+      return
+    }
+    
+    // Validate coordinates
+    if (!coords || typeof coords.x !== 'number' || typeof coords.y !== 'number') {
+      console.error('❌ [CREATE DIALOG] Invalid coordinates:', coords)
+      alert('Coordenadas inválidas. Por favor, cierra este diálogo y haz click en el mapa de nuevo.')
+      return
+    }
+    
     // normalizar inventario a { objeto, cantidad }
     const inv = (inventario || [])
       .map((r) => ({
@@ -195,14 +217,20 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
         cantidad: Number(r?.cantidad) || 1
       }))
       .filter((r) => r.objeto)
-    onConfirm?.({
+    
+    const payload = {
       nombre,
       categoria,
       compañia: companiaId || null,
       inventario: inv,
       fotos,
       documentos
-    })
+    }
+    
+    console.log('📤 [CREATE DIALOG] Sending payload to parent:', payload)
+    console.log('🎯 [CREATE DIALOG] Coordinates will be added by parent:', coords)
+    
+    onConfirm?.(payload)
   }
 
   return (
@@ -227,7 +255,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
           <div>
             <h3 id="cpd-title" className="font-semibold text-lg">Crear punto</h3>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              X: {coords?.x ?? '-'} · Y: {coords?.y ?? '-'}
+              📍 Coordenadas: X: {coords?.x ?? '-'} px · Y: {coords?.y ?? '-'} px
             </div>
           </div>
           <button

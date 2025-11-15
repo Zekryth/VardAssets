@@ -28,14 +28,57 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
     const el = overlayRef.current
     if (!el) return
     
-    // Use screenToBoard from context to get board coordinates
+    console.log('🗺️ [MAP CLICK] === INICIO ===')
+    console.log('   clientX/Y (window coords):', e.clientX, e.clientY)
+    
+    // Get overlay position
+    const rect = el.getBoundingClientRect()
+    console.log('📐 [MAP CLICK] Overlay rect:', {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height
+    })
+    
+    // Calculate coordinates relative to overlay
+    const relativeX = e.clientX - rect.left
+    const relativeY = e.clientY - rect.top
+    
+    console.log('📍 [MAP CLICK] Relative to overlay:', { relativeX, relativeY })
+    
+    // Convert to board coordinates (screenToBoard expects screen coords already relative)
     const boardCoords = screenToBoard(e.clientX, e.clientY)
-    console.log('🗺️ [MAP CLICK] Board coordinates:', boardCoords)
+    console.log('🎯 [MAP CLICK] Board coordinates:', boardCoords)
     
     if (!Number.isFinite(boardCoords.x) || !Number.isFinite(boardCoords.y)) {
       console.warn('⚠️ Invalid coordinates:', boardCoords)
       return
     }
+    
+    // Create temporary visual marker for debugging
+    const marker = document.createElement('div')
+    marker.style.cssText = `
+      position: absolute;
+      left: ${relativeX}px;
+      top: ${relativeY}px;
+      width: 20px;
+      height: 20px;
+      background: red;
+      border: 3px solid white;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 9999;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    `
+    el.appendChild(marker)
+    console.log('🔴 [DEBUG] Red marker placed at:', { relativeX, relativeY })
+    
+    // Remove marker after 3 seconds
+    setTimeout(() => {
+      marker.remove()
+      console.log('🔴 [DEBUG] Red marker removed')
+    }, 3000)
     
     setCoords(boardCoords)
     setCreateOpen(true)
@@ -46,7 +89,9 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
   const handleConfirm = async (payload) => {
     try {
       // payload: { nombre, categoria, companiaId, inventario[], fotos[], documentos[] }
-      console.log('🎯 [CREATE POINT] Board coordinates:', coords)
+      console.log('💾 [CREATE POINT] === SAVING POINT ===')
+      console.log('📋 [CREATE POINT] Form data:', payload)
+      console.log('🎯 [CREATE POINT] Board coordinates to save:', coords)
       
       const body = {
         nombre: payload?.nombre,
@@ -60,12 +105,17 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
         documentos: payload?.documentos || []
       }
       
-      console.log('📤 [CREATE POINT] Sending to API:', body)
+      console.log('📤 [CREATE POINT] Complete payload:', body)
+      console.log('🎯 [CREATE POINT] Coordinates in payload:', body.coordenadas)
       
       const created = await pointService.createPoint(body)
       const pointId = created?.data?._id || created?.data?.id || created?.id
+      const savedCoords = created?.data?.coordenadas
       
-      console.log('✅ [CREATE POINT] Point created:', pointId)
+      console.log('✅ [CREATE POINT] Point created successfully')
+      console.log('   ID:', pointId)
+      console.log('   Coordinates saved in DB:', savedCoords)
+      console.log('   Expected:', coords)
       
       // Refrescar puntos, cerrar diálogo y permanecer en adding para seguir creando
       onChanged?.()

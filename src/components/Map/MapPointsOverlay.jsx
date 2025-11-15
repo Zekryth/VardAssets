@@ -9,13 +9,30 @@ import { useMapView } from '../../contexts/MapViewContext'
 
 export default function MapPointsOverlay({ points = [], onPointClick }) {
   const { boardToScreen } = useMapView()
+  
+  console.log('🗺️ [MAP OVERLAY] Rendering', points?.length || 0, 'points')
+  
   return (
     <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 20 }}>
       {points.map((p) => {
         const x = p?.coordenadas?.x
         const y = p?.coordenadas?.y
-        if (typeof x !== 'number' || typeof y !== 'number') return null
+        
+        if (typeof x !== 'number' || typeof y !== 'number') {
+          console.warn('⚠️ [MAP OVERLAY] Point with invalid coordinates:', {
+            id: p?._id || p?.id,
+            nombre: p?.nombre,
+            coordenadas: p?.coordenadas
+          })
+          return null
+        }
+        
         const pos = boardToScreen(x, y)
+        console.log(`📍 [MAP OVERLAY] ${p?.nombre}:`, {
+          boardCoords: { x, y },
+          screenPos: pos
+        })
+        
         const left = pos.x
         const top = pos.y
         return (
