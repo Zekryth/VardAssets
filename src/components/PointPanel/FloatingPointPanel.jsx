@@ -4,9 +4,9 @@
  * Panel flotante para mostrar información y acciones de un punto seleccionado en el mapa.
  * Permite mover, minimizar, cerrar y cambiar el tamaño del panel.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { Minus, X, GripVertical } from 'lucide-react'
-import PointPanelBody from './PointPanelBody'
+import PointPanelContent from './PointPanelContent'
 import { usePointPanels } from '../../contexts/PointPanelsContext'
 
 const cx = (...p) => p.filter(Boolean).join(' ')
@@ -17,7 +17,6 @@ export default function FloatingPointPanel({ panel }) {
   const panelRef = useRef(null)
   const dragRef = useRef({ active: false, sx: 0, sy: 0, ox: 0, oy: 0 })
   const resizeRef = useRef({ active: false, sx: 0, sy: 0, ow: 0, oh: 0 })
-  const [activeTab, setActiveTab] = useState('info')
 
   // Bring to front on mousedown anywhere
   const onMouseDown = () => bringToFront(id)
@@ -131,11 +130,18 @@ export default function FloatingPointPanel({ panel }) {
 
       {/* Body */}
       <div className="h-[calc(100%-2.5rem)] flex flex-col bg-white/60 dark:bg-gray-900/60">
-        <PointPanelBody 
-          point={point} 
-          activeTab={activeTab} 
-          onChangeTab={setActiveTab}
-          onRefresh={() => refreshPanel(id)}
+        <PointPanelContent 
+          point={point}
+          onEdit={(pt) => {
+            console.log('TODO: Implementar edición de punto desde panel flotante', pt);
+            // Aquí iría la lógica para abrir un diálogo de edición
+          }}
+          onDelete={async (pointId) => {
+            console.log('TODO: Implementar eliminación de punto desde panel flotante', pointId);
+            // Aquí iría la lógica para eliminar el punto
+            // Por ahora solo cerramos el panel
+            closePanel(id);
+          }}
         />
       </div>
 
