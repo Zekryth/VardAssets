@@ -2,8 +2,11 @@
  * /api/tiles - API endpoints para gestionar tiles del mapa
  * 
  * Endpoints:
+ * - GET /api/tiles/debug - Diagnóstico del sistema de tiles
+ * - GET /api/tiles/:tileX/:tileY/:zoom - Obtener tile específico
  * - GET /api/tiles?minX&maxX&minY&maxY&zoom - Obtener tiles en área
- * - POST /api/tiles - Crear/actualizar tile con imagen (usa query params)
+ * - POST /api/tiles/:tileX/:tileY/:zoom - Crear/actualizar tile con imagen
+ * - DELETE /api/tiles/:tileX/:tileY/:zoom - Eliminar imagen de tile
  */
 
 import { getPool } from './_lib/db.js'
@@ -31,6 +34,52 @@ export default async function handler(req, res) {
   try {
     // Extraer parámetros de ruta
     const urlParts = req.url.split('?')[0].split('/').filter(Boolean)
+    
+    // GET /api/tiles/debug - Diagnóstico
+    if (req.method === 'GET' && urlParts.length === 3 && urlParts[2] === 'debug') {
+      const tableCheck = await pool.query(
+        `SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'map_tiles'
+        )`
+      )
+
+      let tilesCount = 0
+      let tiles = []
+      let columns = []
+      
+      if (tableCheck.rows[0].exists) {
+        const countResult = await pool.query('SELECT COUNT(*) FROM map_tiles')
+        tilesCount = parseInt(countResult.rows[0].count)
+        
+        const tilesResult = await pool.query('SELECT * FROM map_tiles ORDER BY tile_x, tile_y LIMIT 10')
+        tiles = tilesResult.rows
+
+        const columnsResult = await pool.query(
+          `SELECT column_name, data_type 
+           FROM information_schema.columns 
+           WHERE table_name = 'map_tiles'
+           ORDER BY ordinal_position`
+        )
+        columns = columnsResult.rows
+      }
+
+      return res.status(200).json({
+        database: {
+          tableExists: tableCheck.rows[0].exists,
+          tilesCount: tilesCount,
+          columns: columns,
+          sampleTiles: tiles
+        },
+        environment: {
+          hasBlobToken: !!process.env.BLOB_READ_WRITE_TOKEN,
+          blobTokenLength: process.env.BLOB_READ_WRITE_TOKEN?.length || 0,
+          nodeEnv: process.env.NODE_ENV,
+          databaseUrl: process.env.DATABASE_URL ? 'configured' : 'missing'
+        },
+        timestamp: new Date().toISOString()
+      })
+    }
     
     // GET /api/tiles/:tileX/:tileY/:zoom - Obtener tile específico
     if (req.method === 'GET' && urlParts.length === 4) {
@@ -152,10 +201,42 @@ export default async function handler(req, res) {
       })
     }
 
+    // DELETE /api/tiles/:tileX/:tileY/:zoom - Eliminar imagen de tile
+    if (req.method === 'DELETE' && urlParts.length === 4) {
+      const user = authenticateToken(req)
+      if (!user) {
+        return res.status(401).json({ error: 'Authentication required' })
+      }
+
+      const tileX = parseInt(urlParts[1])
+      const tileY = parseInt(urlParts[2])
+      const zoom = parseInt(urlParts[3])
+
+      if (isNaN(tileX) || isNaN(tileY) || isNaN(zoom)) {
+        return res.status(400).json({ error: 'Invalid tile coordinates' })
+      }
+
+      const result = await pool.query(
+        `UPDATE map_tiles
+         SET background_image_url = NULL,
+             background_image_filename = NULL,
+             updated_at = NOW()
+         WHERE tile_x = $1 AND tile_y = $2 AND zoom_level = $3
+         RETURNING *`,
+        [tileX, tileY, zoom]
+      )
+
+      console.log('✅ Tile image deleted:', result.rows[0])
+      return res.status(200).json({ 
+        message: 'Imagen de tile eliminada',
+        tile: result.rows[0]
+      })
+    }
+
     // Método no permitido
     return res.status(405).json({ 
       error: 'Method not allowed',
-      allowed: ['GET', 'POST']
+      allowed: ['GET', 'POST', 'DELETE']
     })
 
   } catch (error) {
