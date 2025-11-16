@@ -451,7 +451,6 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                 <span>Mijloc Fix</span>
               </button>
             </div>
-            </div>
             
             {/* Campos de Planta Baja */}
             <div className="space-y-3">
@@ -718,8 +717,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                 </div>
               )}
             </div>
-          </div>          </div>
-
+          </div>
           {/* ==================== PISOS ADICIONALES ==================== */}
           <div>
             <button
