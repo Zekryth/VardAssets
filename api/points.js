@@ -203,18 +203,36 @@ export default async function handler(req, res) {
 
     // POST /api/points - Crear punto
     if (req.method === 'POST') {
-      const { nombre, categoria, compañia, coordenadas, pisos, inventario, fotos, documentos } = req.body;
+      const { 
+        nombre, 
+        categoria, 
+        companiaPropietaria,
+        companiaAlojada,
+        nrInventarioSAP,
+        mijlocFix,
+        coordenadas, 
+        pisosAdicionales,
+        inventario,
+        fotos,
+        documentos,
+        // Backward compatibility
+        compañia,
+        pisos
+      } = req.body;
       
       console.log('📝 [POINTS] === INICIO CREACIÓN ===');
-      console.log('   Datos recibidos:', {
+      console.log('📦 [POINTS] Datos recibidos:', {
         nombre,
         categoria,
-        compañia,
+        companiaPropietaria,
+        companiaAlojada,
+        nrInventarioSAP,
+        mijlocFix,
         coordenadas,
-        pisos: pisos?.length || 'no enviado',
-        inventario: inventario?.length || 'no enviado',
-        fotos: fotos?.length || 'no enviado',
-        documentos: documentos?.length || 'no enviado'
+        pisosAdicionales_count: Array.isArray(pisosAdicionales) ? pisosAdicionales.length : 0,
+        inventario_count: Array.isArray(inventario) ? inventario.length : 0,
+        fotos_count: Array.isArray(fotos) ? fotos.length : 0,
+        documentos_count: Array.isArray(documentos) ? documentos.length : 0
       });
 
       // Validaciones
@@ -231,23 +249,6 @@ export default async function handler(req, res) {
           error: 'Las coordenadas son obligatorias (x,y o lat,lng)' 
         });
       }
-
-      console.log('🔍 [POINTS] Verificando estructura de tabla...');
-      
-      // Verificar que la columna "compañia" existe
-      const { rows: columns } = await pool.query(`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'points' 
-          AND column_name = 'compañia'
-      `);
-
-      if (columns.length === 0) {
-        console.error('❌ [POINTS] Columna "compañia" NO existe');
-        console.error('   Ejecuta este SQL en Neon:');
-        console.error('   ALTER TABLE points RENAME COLUMN company_id TO compañia;');
-        return res.status(500).json({
-          error: 'Error de configuración de base de datos',
           details: 'La columna "compañia" no existe. Contacta al administrador.'
         });
       }
@@ -276,33 +277,49 @@ export default async function handler(req, res) {
       console.log('📦 [POINTS] Payload recibido:', { nombre, categoria, compañia, coordenadas, pisos_count: pisos?.length });
 
       // Si viene 'pisos', usar nuevo formato; si no, crear piso único con datos antiguos
-      let pisosData;
-      if (pisos && Array.isArray(pisos)) {
-        pisosData = pisos;
-        console.log('✅ [POINTS] Usando nuevo formato de pisos:', pisos.length);
-        console.log('🔍 [POINTS] Primer piso:', pisosData[0]);
-      } else {
-        // Backward compatibility: convertir formato antiguo a pisos
-        pisosData = [{
-          numero: 1,
-          nombre: 'Planta Baja',
-          inventario: inventario || [],
-          fotos: fotos || [],
-          documentos: documentos || []
-        }];
-        console.log('🔄 [POINTS] Convertido formato antiguo a pisos');
-      }
+      console.log('💾 [POINTS] Insertando en base de datos...');
+      console.log('📊 [POINTS] Datos finales:', {
+        nombre: nombre.trim(),
+        categoria: categoria?.trim() || null,
+        compania_propietaria: companiaPropietaria || compañia || null,
+        compania_alojada: companiaAlojada || null,
+        nr_inventario_sap: nrInventarioSAP?.trim() || null,
+        mijloc_fix: mijlocFix || false,
+        pisosAdicionales_count: Array.isArray(pisosAdicionales) ? pisosAdicionales.length : (Array.isArray(pisos) ? pisos.length : 0),
+        inventario_count: Array.isArray(inventario) ? inventario.length : 0
+      });
+
+      // Determinar pisos_adicionales (nueva estructura) o pisos (backward compatibility)
+      const pisosAdicionalesData = Array.isArray(pisosAdicionales) ? pisosAdicionales : (Array.isArray(pisos) ? pisos : []);
 
       const { rows } = await pool.query(
-        `INSERT INTO points (nombre, categoria, compañia, coordenadas, pisos)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO points (
+          nombre, 
+          categoria, 
+          compania_propietaria, 
+          compania_alojada, 
+          nr_inventario_sap,
+          mijloc_fix,
+          coordenadas, 
+          inventario,
+          fotos,
+          documentos,
+          pisos_adicionales
+        )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING *`,
         [
           nombre.trim(),
           categoria?.trim() || null,
-          compañia || null,
+          companiaPropietaria || compañia || null,  // Backward compatibility
+          companiaAlojada || null,
+          nrInventarioSAP?.trim() || null,
+          mijlocFix || false,
           JSON.stringify(coordenadas),
-          JSON.stringify(pisosData)
+          JSON.stringify(inventario || []),
+          JSON.stringify(fotos || []),
+          JSON.stringify(documentos || []),
+          JSON.stringify(pisosAdicionalesData)
         ]
       );
 
@@ -310,13 +327,25 @@ export default async function handler(req, res) {
       console.log('✅ [POINTS] Punto creado exitosamente:', {
         id: newPoint.id,
         nombre: newPoint.nombre,
-        compañia: newPoint.compañia
+        compania_propietaria: newPoint.compania_propietaria,
+        compania_alojada: newPoint.compania_alojada,
+        mijloc_fix: newPoint.mijloc_fix,
+        pisos_adicionales_count: Array.isArray(newPoint.pisos_adicionales) ? newPoint.pisos_adicionales.length : 0
       });
 
-      // Obtener punto con datos de compañía
+      // Obtener punto con datos de compañías
       const { rows: fullPoint } = await pool.query(`
         SELECT 
           p.*,
+          cp.nombre as compania_propietaria_nombre,
+          ca.nombre as compania_alojada_nombre
+        FROM points p
+        LEFT JOIN companies cp ON p.compania_propietaria = cp.id
+        LEFT JOIN companies ca ON p.compania_alojada = ca.id
+        WHERE p.id = $1
+      `, [newPoint.id]);
+
+      return res.status(201).json(fullPoint[0]);
           c.nombre as company_name
         FROM points p
         LEFT JOIN companies c ON p.compañia = c.id
@@ -329,54 +358,74 @@ export default async function handler(req, res) {
     // PUT /api/points?id=xxx - Actualizar punto
     if (req.method === 'PUT') {
       const { id } = req.query;
-      const { nombre, categoria, compañia, coordenadas, pisos, inventario, fotos, documentos } = req.body;
+      const { 
+        nombre, 
+        categoria, 
+        companiaPropietaria,
+        companiaAlojada,
+        nrInventarioSAP,
+        mijlocFix,
+        coordenadas, 
+        pisosAdicionales,
+        inventario,
+        fotos,
+        documentos,
+        // Backward compatibility
+        compañia,
+        pisos
+      } = req.body;
 
       console.log(`📝 [POINTS] Actualizando punto: ${id}`);
-      console.log('📦 [POINTS] Datos para actualizar:', { nombre, categoria, compañia, pisos_count: pisos?.length });
+      console.log('📦 [POINTS] Datos para actualizar:', { 
+        nombre, 
+        categoria, 
+        companiaPropietaria,
+        companiaAlojada,
+        mijlocFix,
+        pisosAdicionales_count: Array.isArray(pisosAdicionales) ? pisosAdicionales.length : (Array.isArray(pisos) ? pisos.length : undefined)
+      });
 
       if (!id) {
         return res.status(400).json({ error: 'ID de punto requerido' });
       }
 
-      if (!nombre?.trim()) {
+      if (nombre !== undefined && !nombre?.trim()) {
         return res.status(400).json({ 
           error: 'El nombre del punto es obligatorio' 
         });
       }
 
-      // Si viene 'pisos', usar nuevo formato; si no, mantener formato antiguo
-      let pisosData;
-      if (pisos && Array.isArray(pisos)) {
-        pisosData = pisos;
-        console.log('✅ [POINTS] Actualizando con nuevo formato de pisos:', pisos.length);
-      } else if (inventario || fotos || documentos) {
-        // Backward compatibility: convertir formato antiguo a pisos
-        pisosData = [{
-          numero: 1,
-          nombre: 'Planta Baja',
-          inventario: inventario || [],
-          fotos: fotos || [],
-          documentos: documentos || []
-        }];
-        console.log('🔄 [POINTS] Convertido formato antiguo a pisos en actualización');
-      }
+      // Determinar pisos_adicionales
+      const pisosAdicionalesData = Array.isArray(pisosAdicionales) ? pisosAdicionales : (Array.isArray(pisos) ? pisos : null);
 
       const { rows } = await pool.query(
         `UPDATE points 
          SET nombre = COALESCE($1, nombre),
              categoria = COALESCE($2, categoria),
-             compañia = COALESCE($3, compañia),
-             coordenadas = COALESCE($4, coordenadas),
-             pisos = COALESCE($5, pisos),
+             compania_propietaria = COALESCE($3, compania_propietaria),
+             compania_alojada = COALESCE($4, compania_alojada),
+             nr_inventario_sap = COALESCE($5, nr_inventario_sap),
+             mijloc_fix = COALESCE($6, mijloc_fix),
+             coordenadas = COALESCE($7, coordenadas),
+             inventario = COALESCE($8, inventario),
+             fotos = COALESCE($9, fotos),
+             documentos = COALESCE($10, documentos),
+             pisos_adicionales = COALESCE($11, pisos_adicionales),
              updated_at = NOW()
-         WHERE id = $6
+         WHERE id = $12
          RETURNING *`,
         [
-          nombre?.trim(),
+          nombre?.trim() || null,
           categoria?.trim() || null,
-          compañia,
+          companiaPropietaria || compañia || null,  // Backward compatibility
+          companiaAlojada || null,
+          nrInventarioSAP?.trim() || null,
+          mijlocFix !== undefined ? mijlocFix : null,
           coordenadas ? JSON.stringify(coordenadas) : null,
-          pisosData ? JSON.stringify(pisosData) : null,
+          inventario ? JSON.stringify(inventario) : null,
+          fotos ? JSON.stringify(fotos) : null,
+          documentos ? JSON.stringify(documentos) : null,
+          pisosAdicionalesData ? JSON.stringify(pisosAdicionalesData) : null,
           id
         ]
       );
