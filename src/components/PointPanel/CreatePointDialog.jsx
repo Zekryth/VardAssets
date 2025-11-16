@@ -203,8 +203,6 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     })
   }
 
-  const currentPiso = pisosAdicionales[pisoActual] || {}
-
   // === FUNCIONES AUXILIARES PARA INVENTARIO DE PLANTA BAJA ===
   const addInventoryRowPlantaBaja = () => {
     setInventarioPlantaBaja(prev => [...prev, { objeto: null, cantidad: 1, unidad: '' }])
