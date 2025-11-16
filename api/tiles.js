@@ -2,15 +2,12 @@
  * /api/tiles - API endpoints para gestionar tiles del mapa
  * 
  * Endpoints:
- * - GET /api/tiles/:tileX/:tileY/:zoom - Obtener tile específico
- * - POST /api/tiles/:tileX/:tileY/:zoom - Crear/actualizar tile con imagen
  * - GET /api/tiles?minX&maxX&minY&maxY&zoom - Obtener tiles en área
+ * - POST /api/tiles - Crear/actualizar tile con imagen (usa query params)
  */
 
-import { query } from './_lib/db.js'
-import { authenticateToken } from './_lib/auth.js'
-import { handleError } from './_lib/errors.js'
-import { initCors } from './_lib/cors.js'
+import { neon } from '@neondatabase/serverless'
+import { getAuthUser } from './_lib/auth.js'
 import { put } from '@vercel/blob'
 import busboy from 'busboy'
 
@@ -22,10 +19,16 @@ export const config = {
 
 export default async function handler(req, res) {
   // CORS
-  initCors(req, res)
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+  
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
+
+  const sql = neon(process.env.DATABASE_URL)
 
   try {
     // Extraer parámetros de ruta
@@ -41,13 +44,12 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid tile coordinates' })
       }
 
-      const result = await query(
-        `SELECT * FROM map_tiles 
-         WHERE tile_x = $1 AND tile_y = $2 AND zoom_level = $3`,
-        [tileX, tileY, zoom]
-      )
+      const result = await sql`
+        SELECT * FROM map_tiles 
+        WHERE tile_x = ${tileX} AND tile_y = ${tileY} AND zoom_level = ${zoom}
+      `
 
-      if (result.rows.length === 0) {
+      if (result.length === 0) {
         return res.status(404).json({ 
           error: 'Tile not found',
           tile_x: tileX,
@@ -56,7 +58,7 @@ export default async function handler(req, res) {
         })
       }
 
-      return res.status(200).json(result.rows[0])
+      return res.status(200).json(result[0])
     }
 
     // GET /api/tiles?minX=0&maxX=5&minY=0&maxY=5&zoom=1 - Obtener área de tiles
@@ -68,18 +70,17 @@ export default async function handler(req, res) {
       const maxY = parseInt(url.searchParams.get('maxY') || '10')
       const zoom = parseInt(url.searchParams.get('zoom') || '1')
 
-      const result = await query(
-        `SELECT * FROM map_tiles 
-         WHERE tile_x >= $1 AND tile_x <= $2 
-           AND tile_y >= $3 AND tile_y <= $4 
-           AND zoom_level = $5
-         ORDER BY tile_y, tile_x`,
-        [minX, maxX, minY, maxY, zoom]
-      )
+      const result = await sql`
+        SELECT * FROM map_tiles 
+        WHERE tile_x >= ${minX} AND tile_x <= ${maxX}
+          AND tile_y >= ${minY} AND tile_y <= ${maxY}
+          AND zoom_level = ${zoom}
+        ORDER BY tile_y, tile_x
+      `
 
       return res.status(200).json({
-        tiles: result.rows,
-        count: result.rows.length,
+        tiles: result,
+        count: result.length,
         query: { minX, maxX, minY, maxY, zoom }
       })
     }
@@ -87,7 +88,7 @@ export default async function handler(req, res) {
     // POST /api/tiles/:tileX/:tileY/:zoom - Crear/actualizar tile
     if (req.method === 'POST' && urlParts.length === 4) {
       // Autenticar
-      const user = await authenticateToken(req)
+      const user = await getAuthUser(req, sql)
       if (!user) {
         return res.status(401).json({ error: 'Authentication required' })
       }
@@ -130,25 +131,24 @@ export default async function handler(req, res) {
       }
 
       // Insertar o actualizar
-      const result = await query(
-        `INSERT INTO map_tiles 
+      const result = await sql`
+        INSERT INTO map_tiles 
           (tile_x, tile_y, zoom_level, width, height, background_image_url, background_image_filename, uploaded_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-         ON CONFLICT (tile_x, tile_y, zoom_level) 
-         DO UPDATE SET
-           width = EXCLUDED.width,
-           height = EXCLUDED.height,
-           background_image_url = COALESCE(EXCLUDED.background_image_url, map_tiles.background_image_url),
-           background_image_filename = COALESCE(EXCLUDED.background_image_filename, map_tiles.background_image_filename),
-           uploaded_by = EXCLUDED.uploaded_by,
-           updated_at = NOW()
-         RETURNING *`,
-        [tileX, tileY, zoom, width, height, imageUrl, imageFilename, user.id]
-      )
+        VALUES (${tileX}, ${tileY}, ${zoom}, ${width}, ${height}, ${imageUrl}, ${imageFilename}, ${user.id})
+        ON CONFLICT (tile_x, tile_y, zoom_level) 
+        DO UPDATE SET
+          width = EXCLUDED.width,
+          height = EXCLUDED.height,
+          background_image_url = COALESCE(EXCLUDED.background_image_url, map_tiles.background_image_url),
+          background_image_filename = COALESCE(EXCLUDED.background_image_filename, map_tiles.background_image_filename),
+          uploaded_by = EXCLUDED.uploaded_by,
+          updated_at = NOW()
+        RETURNING *
+      `
 
       return res.status(200).json({
         message: 'Tile created/updated successfully',
-        tile: result.rows[0]
+        tile: result[0]
       })
     }
 
@@ -160,7 +160,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error in /api/tiles:', error)
-    return handleError(res, error)
+    return res.status(500).json({ error: error.message })
   }
 }
 
