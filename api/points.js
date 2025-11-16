@@ -18,6 +18,103 @@ export default async function handler(req, res) {
 
     // GET /api/points - Listar puntos
     if (req.method === 'GET') {
+      const { id } = req.query;
+
+      if (id) {
+        // GET /api/points/:id - Obtener un punto específico
+        const { rows } = await pool.query(
+          `SELECT p.*, 
+                  c.nombre as company_name
+           FROM points p
+           LEFT JOIN companies c ON p.compañia = c.id
+           WHERE p.id = $1`,
+          [id]
+        );
+
+        if (rows.length === 0) {
+          return res.status(404).json({ error: 'Punto no encontrado' });
+        }
+
+        let pointData = rows[0];
+
+        console.log('📍 [GET POINT] Raw data:', {
+          id: pointData.id,
+          nombre: pointData.nombre,
+          pisos_tipo: typeof pointData.pisos,
+          pisos_es_string: typeof pointData.pisos === 'string',
+          pisos_raw: pointData.pisos
+        });
+
+        // 🔥 ARREGLO CRÍTICO: Parsear pisos si es string
+        if (typeof pointData.pisos === 'string') {
+          try {
+            pointData.pisos = JSON.parse(pointData.pisos);
+            console.log('✅ [GET POINT] Pisos parseados correctamente:', pointData.pisos);
+          } catch (e) {
+            console.error('❌ [GET POINT] Error parseando pisos:', e);
+            pointData.pisos = [];
+          }
+        }
+
+        // Asegurar que sea array
+        if (!Array.isArray(pointData.pisos)) {
+          console.warn('⚠️ [GET POINT] pisos no es array, convirtiendo:', typeof pointData.pisos);
+          pointData.pisos = [];
+        }
+
+        // Backward compatibility: migrar datos viejos
+        if (pointData.pisos.length === 0) {
+          console.log('📦 [GET POINT] Migrando datos viejos al formato de pisos');
+          
+          let inventario = pointData.inventario || [];
+          let fotos = pointData.fotos || [];
+          let documentos = pointData.documentos || [];
+
+          // Parsear si son strings
+          if (typeof inventario === 'string') {
+            try { inventario = JSON.parse(inventario); } catch (e) { inventario = []; }
+          }
+          if (typeof fotos === 'string') {
+            try { fotos = JSON.parse(fotos); } catch (e) { fotos = []; }
+          }
+          if (typeof documentos === 'string') {
+            try { documentos = JSON.parse(documentos); } catch (e) { documentos = []; }
+          }
+
+          pointData.pisos = [{
+            numero: 1,
+            nombre: pointData.nombre || 'Planta Baja',
+            categoria: pointData.categoria || '',
+            compañia: pointData.compañia || null,
+            inventario,
+            fotos,
+            documentos
+          }];
+        }
+
+        // Asegurar que cada piso tenga categoria y compañia
+        pointData.pisos = pointData.pisos.map((piso, index) => {
+          console.log(`📋 [GET POINT] Procesando piso ${index + 1}:`, {
+            nombre: piso.nombre,
+            categoria: piso.categoria,
+            compañia: piso.compañia,
+            inventario_count: piso.inventario?.length || 0
+          });
+
+          return {
+            ...piso,
+            categoria: piso.categoria || pointData.categoria || '',
+            compañia: piso.compañia || pointData.compañia || null
+          };
+        });
+
+        console.log('🏢 [GET POINT] Total pisos en respuesta:', pointData.pisos.length);
+        console.log('🔍 [GET POINT] ¿Debería mostrar navegación?', pointData.pisos.length > 1);
+
+        return res.status(200).json(pointData);
+      }
+
+      // GET /api/points - Obtener todos los puntos
       const { rows } = await pool.query(
         `SELECT p.*, 
                 c.nombre as company_name,
@@ -29,15 +126,63 @@ export default async function handler(req, res) {
 
       console.log(`✅ [GET POINTS] Puntos encontrados: ${rows.length}`);
       
+      // Parsear pisos de cada punto
+      const pointsData = rows.map(point => {
+        let pointData = { ...point };
+        
+        // Si pisos es string, parsearlo
+        if (typeof pointData.pisos === 'string') {
+          try {
+            pointData.pisos = JSON.parse(pointData.pisos);
+          } catch (e) {
+            console.error('❌ Error parseando pisos del punto', pointData.id, ':', e);
+            pointData.pisos = [];
+          }
+        }
+
+        // Asegurar array
+        if (!Array.isArray(pointData.pisos)) {
+          pointData.pisos = [];
+        }
+
+        // Backward compatibility
+        if (pointData.pisos.length === 0) {
+          let inventario = pointData.inventario || [];
+          let fotos = pointData.fotos || [];
+          let documentos = pointData.documentos || [];
+
+          if (typeof inventario === 'string') {
+            try { inventario = JSON.parse(inventario); } catch (e) { inventario = []; }
+          }
+          if (typeof fotos === 'string') {
+            try { fotos = JSON.parse(fotos); } catch (e) { fotos = []; }
+          }
+          if (typeof documentos === 'string') {
+            try { documentos = JSON.parse(documentos); } catch (e) { documentos = []; }
+          }
+
+          pointData.pisos = [{
+            numero: 1,
+            nombre: pointData.nombre || 'Planta Baja',
+            categoria: pointData.categoria || '',
+            compañia: pointData.compañia || null,
+            inventario,
+            fotos,
+            documentos
+          }];
+        }
+
+        return pointData;
+      });
+
       // Log detallado de los primeros 2 puntos para debugging
-      if (rows.length > 0) {
-        rows.slice(0, 2).forEach((point, index) => {
+      if (pointsData.length > 0) {
+        pointsData.slice(0, 2).forEach((point, index) => {
           console.log(`📍 [GET POINTS] Punto ${index + 1}:`, {
             id: point.id,
             nombre: point.nombre,
             pisos_tipo: typeof point.pisos,
             pisos_length: Array.isArray(point.pisos) ? point.pisos.length : 'N/A',
-            pisos_raw: point.pisos,
             tiene_categoria_global: !!point.categoria,
             tiene_compañia_global: !!point.compañia
           });
@@ -53,7 +198,7 @@ export default async function handler(req, res) {
         });
       }
       
-      return res.status(200).json(rows);
+      return res.status(200).json(pointsData);
     }
 
     // POST /api/points - Crear punto
