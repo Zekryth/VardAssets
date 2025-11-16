@@ -249,9 +249,6 @@ export default async function handler(req, res) {
           error: 'Las coordenadas son obligatorias (x,y o lat,lng)' 
         });
       }
-          details: 'La columna "compañia" no existe. Contacta al administrador.'
-        });
-      }
 
       console.log('✅ [POINTS] Columna "compañia" verificada');
 
@@ -341,13 +338,6 @@ export default async function handler(req, res) {
         FROM points p
         LEFT JOIN companies cp ON p.compania_propietaria = cp.id
         LEFT JOIN companies ca ON p.compania_alojada = ca.id
-        WHERE p.id = $1
-      `, [newPoint.id]);
-
-      return res.status(201).json(fullPoint[0]);
-          c.nombre as company_name
-        FROM points p
-        LEFT JOIN companies c ON p.compañia = c.id
         WHERE p.id = $1
       `, [newPoint.id]);
 
