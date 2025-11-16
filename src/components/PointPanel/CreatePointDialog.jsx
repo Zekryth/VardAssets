@@ -1089,6 +1089,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
           </div>
         </div>
 
+        {/* FOOTER */}
         <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-2">
           <button className="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100" onClick={onCancel}>
             Cancelar
