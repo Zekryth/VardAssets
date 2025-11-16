@@ -7,6 +7,8 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import MapTileLayer from './MapTileLayer'
+import MapTileGrid from './MapTileGrid'
+import TileImageManager from './TileImageManager'
 
 const TILE_SIZE = 512 // px por cuadrante
 const STORAGE_KEY = 'ms.tiles.v1'
@@ -28,6 +30,9 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
   const [tiles, setTiles] = useLocalTiles(initialImage)
   const [scale, setScale] = useState(0.5)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [showTileGrid, setShowTileGrid] = useState(false)
+  const [selectedTile, setSelectedTile] = useState(null)
+  const [tileRefreshTrigger, setTileRefreshTrigger] = useState(0)
   const dragging = useRef(null)
   const pointDrag = useRef(null)
   const containerRef = useRef(null)
@@ -251,8 +256,17 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
             y: (bbox.minY || 0) * TILE_SIZE,
             width: boardW,
             height: boardH
-          }} 
+          }}
+          refreshTrigger={tileRefreshTrigger}
         />
+
+        {/* MapTileGrid - Grid visual de tiles (solo si está activado) */}
+        {showTileGrid && (
+          <MapTileGrid
+            zoomLevel={1}
+            onTileClick={(tileX, tileY) => setSelectedTile({ tileX, tileY })}
+          />
+        )}
         
         {tiles.map(t => (
           <div
@@ -395,6 +409,31 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
           Zoom: {Math.round(scale * 100)}%
         </div>
       </div>
+
+      {/* Toggle Grid Button */}
+      {isAdmin && (
+        <button
+          onClick={() => setShowTileGrid(!showTileGrid)}
+          className="absolute top-4 left-4 z-20 px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+          title={showTileGrid ? 'Ocultar grid de tiles' : 'Mostrar grid de tiles'}
+        >
+          {showTileGrid ? '🔲 Ocultar Grid' : '⬜ Mostrar Grid'}
+        </button>
+      )}
+
+      {/* Tile Manager Modal */}
+      {selectedTile && (
+        <TileImageManager
+          tileX={selectedTile.tileX}
+          tileY={selectedTile.tileY}
+          zoomLevel={1}
+          onClose={() => setSelectedTile(null)}
+          onUpdate={() => {
+            setTileRefreshTrigger(prev => prev + 1)
+            setSelectedTile(null)
+          }}
+        />
+      )}
     </div>
   )
 }

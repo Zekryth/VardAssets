@@ -1,75 +1,38 @@
 import React, { useEffect, useState } from 'react'
-import { getVisibleTiles, tileToCoordinates } from '../../utils/mapTileCalculator'
+import { getTileGrid, tileToCoordinates } from '../../utils/mapTileCalculator'
+import api from '../../services/api'
 
 /**
  * MapTileLayer Component
  * 
- * Renderiza los tiles del mapa con sus imágenes de fondo
- * Se actualiza automáticamente cuando cambia el viewport o el zoom
+ * Renderiza los tiles del mapa con sus imágenes de fondo desde la base de datos.
+ * Se actualiza automáticamente cuando cambia el viewport o el zoom.
  */
-export default function MapTileLayer({ zoomLevel = 1, viewport }) {
+export default function MapTileLayer({ zoomLevel = 1, viewport, refreshTrigger }) {
   const [tiles, setTiles] = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!viewport) return
+    fetchTiles()
+  }, [viewport, zoomLevel, refreshTrigger])
 
-    // Calcular tiles visibles
-    const visibleTiles = getVisibleTiles(viewport, zoomLevel)
-    
-    if (visibleTiles.length === 0) {
-      setTiles([])
-      return
-    }
-
-    // Fetch tiles
-    fetchTiles(visibleTiles)
-  }, [viewport, zoomLevel])
-
-  const fetchTiles = async (visibleTiles) => {
+  const fetchTiles = async () => {
     setLoading(true)
 
     try {
-      // Calcular rango de tiles
-      const tileXs = visibleTiles.map(t => t.tile_x)
-      const tileYs = visibleTiles.map(t => t.tile_y)
+      const { tilesX, tilesY } = getTileGrid(zoomLevel)
       
-      const minX = Math.min(...tileXs)
-      const maxX = Math.max(...tileXs)
-      const minY = Math.min(...tileYs)
-      const maxY = Math.max(...tileYs)
-
-      // Fetch del backend
-      const params = new URLSearchParams({
-        minX: minX.toString(),
-        maxX: maxX.toString(),
-        minY: minY.toString(),
-        maxY: maxY.toString(),
-        zoom: zoomLevel.toString()
-      })
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || '/api'}/tiles?${params.toString()}`
-      )
-
-      if (!response.ok) {
-        console.error('Error fetching tiles:', response.statusText)
-        setTiles([])
-        return
-      }
-
-      const data = await response.json()
+      // Fetch tiles del backend
+      const response = await api.get(`/tiles?minX=0&maxX=${tilesX - 1}&minY=0&maxY=${tilesY - 1}&zoom=${zoomLevel}`)
       
-      // Mapear tiles con coordenadas calculadas
-      const tilesWithCoords = data.tiles.map(tile => ({
-        ...tile,
-        coords: tileToCoordinates(tile.tile_x, tile.tile_y, tile.zoom_level)
-      }))
-
-      setTiles(tilesWithCoords)
+      const tilesData = Array.isArray(response.data) ? response.data : response.data.tiles || []
+      
+      console.log('📍 Tiles cargados:', tilesData.length)
+      setTiles(tilesData)
 
     } catch (error) {
-      console.error('Error loading tiles:', error)
+      console.error('❌ Error loading tiles:', error)
       setTiles([])
     } finally {
       setLoading(false)
@@ -80,63 +43,52 @@ export default function MapTileLayer({ zoomLevel = 1, viewport }) {
 
   return (
     <>
-      {tiles.map(tile => (
-        <div
-          key={`tile-${tile.tile_x}-${tile.tile_y}-${tile.zoom_level}`}
-          style={{
-            position: 'absolute',
-            left: tile.coords.x,
-            top: tile.coords.y,
-            width: tile.coords.width,
-            height: tile.coords.height,
-            backgroundImage: tile.background_image_url 
-              ? `url(${tile.background_image_url})` 
-              : undefined,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            border: import.meta.env.DEV ? '1px dashed rgba(255,255,255,0.2)' : undefined,
-            pointerEvents: 'none',
-            zIndex: 0
-          }}
-          className="tile-bg"
-        >
-          {/* Debug info en modo desarrollo */}
-          {import.meta.env.DEV && (
-            <div 
-              style={{
-                position: 'absolute',
-                top: 4,
-                left: 4,
-                fontSize: '10px',
-                color: 'rgba(255,255,255,0.6)',
-                textShadow: '0 0 2px rgba(0,0,0,0.8)',
-                pointerEvents: 'none',
-                fontFamily: 'monospace'
-              }}
-            >
-              {tile.tile_x},{tile.tile_y}
-            </div>
-          )}
-        </div>
-      ))}
+      {/* Tiles con imágenes de fondo */}
+      {tiles.map(tile => {
+        // Solo renderizar tiles que tienen imagen
+        if (!tile.background_image_url) return null
+        
+        const coords = tileToCoordinates(tile.tile_x, tile.tile_y, tile.zoom_level || zoomLevel)
+        
+        return (
+          <div
+            key={`tile-layer-${tile.tile_x}-${tile.tile_y}-${tile.zoom_level}`}
+            className="absolute tile-bg"
+            style={{
+              left: coords.x,
+              top: coords.y,
+              width: coords.width,
+              height: coords.height,
+              backgroundImage: `url(${tile.background_image_url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              pointerEvents: 'none',
+              zIndex: 0,
+              opacity: 0.9
+            }}
+          >
+            {/* Debug info en modo desarrollo */}
+            {import.meta.env.DEV && (
+              <div 
+                className="absolute top-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded"
+                style={{
+                  fontSize: '10px',
+                  pointerEvents: 'none',
+                  fontFamily: 'monospace'
+                }}
+              >
+                {tile.tile_x},{tile.tile_y}
+              </div>
+            )}
+          </div>
+        )
+      })}
 
       {/* Indicador de carga */}
       {loading && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 20,
-            right: 20,
-            padding: '8px 12px',
-            background: 'rgba(0,0,0,0.7)',
-            color: 'white',
-            borderRadius: '6px',
-            fontSize: '12px',
-            zIndex: 1000
-          }}
-        >
-          Cargando tiles...
+        <div className="fixed bottom-20 right-4 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg text-sm z-50">
+          🔄 Cargando tiles...
         </div>
       )}
     </>
