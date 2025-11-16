@@ -13,15 +13,14 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    console.log('🔍 [POINT PANEL CONTENT] Punto recibido:', point);
-    console.log('📋 [POINT PANEL CONTENT] Datos:', {
-      id: point?.id || point?._id,
-      nombre: point?.nombre,
-      categoria: point?.categoria,
-      compañia: point?.compañia_nombre || point?.compañia?.nombre,
-      coordenadas: point?.coordenadas,
-      pisos: point?.pisos
-    });
+    console.log('🔍 [PointPanelContent] === PUNTO RECIBIDO ===');
+    console.log('   ID:', point?.id || point?._id);
+    console.log('   Nombre:', point?.nombre);
+    console.log('   Categoría (global):', point?.categoria);
+    console.log('   Compañía (global):', point?.compañia_nombre || point?.compañia?.nombre);
+    console.log('   Pisos raw:', point?.pisos);
+    console.log('   Pisos tipo:', typeof point?.pisos);
+    console.log('   Pisos isArray:', Array.isArray(point?.pisos));
     // Resetear piso actual cuando cambia el punto
     setPisoActual(0);
   }, [point]);
@@ -47,15 +46,23 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
 
   // Parsear pisos si vienen como string
   let pisos = point.pisos || [];
+  console.log('📊 [PointPanelContent] === PARSEO DE PISOS ===');
+  console.log('   pisos inicial:', pisos);
+  console.log('   typeof:', typeof pisos);
+  
   if (typeof pisos === 'string') {
     try {
       pisos = JSON.parse(pisos);
+      console.log('✅ [PointPanelContent] Pisos parseados desde string:', pisos);
     } catch (e) {
-      console.error('Error parseando pisos:', e);
+      console.error('❌ [PointPanelContent] Error parseando pisos:', e);
       pisos = [];
     }
   }
+  
   if (!Array.isArray(pisos) || pisos.length === 0) {
+    console.log('🔄 [PointPanelContent] No hay pisos válidos, migrando formato antiguo');
+    
     // Fallback: si no hay pisos, crear uno con datos antiguos si existen
     const inventarioAntiguo = point.inventario || [];
     const fotosAntiguas = point.fotos || [];
@@ -63,7 +70,9 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
     
     pisos = [{
       numero: 1,
-      nombre: 'Planta Baja',
+      nombre: point.nombre || 'Planta Baja',
+      categoria: point.categoria || '',
+      compañia: point.compañia || point.company_id || null,
       inventario: Array.isArray(inventarioAntiguo) ? inventarioAntiguo : 
                   (typeof inventarioAntiguo === 'string' ? JSON.parse(inventarioAntiguo) : []),
       fotos: Array.isArray(fotosAntiguas) ? fotosAntiguas :
@@ -71,7 +80,26 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
       documentos: Array.isArray(documentosAntiguos) ? documentosAntiguos :
                   (typeof documentosAntiguos === 'string' ? JSON.parse(documentosAntiguos) : [])
     }];
+    console.log('✅ [PointPanelContent] Piso migrado:', pisos[0]);
+  } else {
+    // Asegurar que todos los pisos tengan categoria y compañia
+    pisos = pisos.map((piso, index) => {
+      const pisoCompleto = {
+        numero: piso.numero || index + 1,
+        nombre: piso.nombre || `Piso ${index + 1}`,
+        categoria: piso.categoria || point.categoria || '',
+        compañia: piso.compañia || point.compañia || point.company_id || null,
+        inventario: Array.isArray(piso.inventario) ? piso.inventario : [],
+        fotos: Array.isArray(piso.fotos) ? piso.fotos : [],
+        documentos: Array.isArray(piso.documentos) ? piso.documentos : []
+      };
+      console.log(`📋 [PointPanelContent] Piso ${index + 1} procesado:`, pisoCompleto);
+      return pisoCompleto;
+    });
   }
+  
+  console.log(`🏢 [PointPanelContent] Total pisos procesados: ${pisos.length}`);
+  console.log(`🏢 [PointPanelContent] ¿Mostrar navegación? ${pisos.length > 1}`);
 
   // Asegurar que pisoActual está en rango
   const currentFloor = pisos[Math.min(pisoActual, pisos.length - 1)] || pisos[0];

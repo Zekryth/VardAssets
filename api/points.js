@@ -27,7 +27,32 @@ export default async function handler(req, res) {
          ORDER BY p.created_at DESC`
       );
 
-      console.log(`✅ Puntos encontrados: ${rows.length}`);
+      console.log(`✅ [GET POINTS] Puntos encontrados: ${rows.length}`);
+      
+      // Log detallado de los primeros 2 puntos para debugging
+      if (rows.length > 0) {
+        rows.slice(0, 2).forEach((point, index) => {
+          console.log(`📍 [GET POINTS] Punto ${index + 1}:`, {
+            id: point.id,
+            nombre: point.nombre,
+            pisos_tipo: typeof point.pisos,
+            pisos_length: Array.isArray(point.pisos) ? point.pisos.length : 'N/A',
+            pisos_raw: point.pisos,
+            tiene_categoria_global: !!point.categoria,
+            tiene_compañia_global: !!point.compañia
+          });
+          
+          // Si tiene pisos, mostrar el primero
+          if (point.pisos && Array.isArray(point.pisos) && point.pisos.length > 0) {
+            console.log(`   Piso 1:`, {
+              nombre: point.pisos[0].nombre,
+              categoria: point.pisos[0].categoria,
+              compañia: point.pisos[0].compañia
+            });
+          }
+        });
+      }
+      
       return res.status(200).json(rows);
     }
 
