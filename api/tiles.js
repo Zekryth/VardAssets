@@ -11,13 +11,14 @@ import { query } from './_lib/db.js'
 import { authenticateToken } from './_lib/auth.js'
 import { handleError } from './_lib/errors.js'
 import { initCors } from './_lib/cors.js'
-import formidable from 'formidable'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import { put } from '@vercel/blob'
+import busboy from 'busboy'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+export const config = {
+  api: {
+    bodyParser: false // Deshabilitar para manejar multipart/form-data con busboy
+  }
+}
 
 export default async function handler(req, res) {
   // CORS
@@ -99,42 +100,34 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid tile coordinates' })
       }
 
-      // Parse multipart/form-data
-      const form = formidable({
-        uploadDir: path.join(__dirname, '..', 'backend', 'mapTiles'),
-        keepExtensions: true,
-        maxFileSize: 10 * 1024 * 1024, // 10MB
-        filename: (name, ext) => {
-          return `tile_${tileX}_${tileY}_z${zoom}_${Date.now()}${ext}`
-        }
-      })
+      // Parse multipart/form-data con busboy
+      const formData = await parseFormData(req)
+      
+      const file = formData.file
+      const width = parseInt(formData.width || '512')
+      const height = parseInt(formData.height || '512')
 
-      // Asegurar que el directorio existe
-      const uploadDir = path.join(__dirname, '..', 'backend', 'mapTiles')
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true })
-      }
-
-      const [fields, files] = await new Promise((resolve, reject) => {
-        form.parse(req, (err, fields, files) => {
-          if (err) reject(err)
-          else resolve([fields, files])
-        })
-      })
-
-      // Verificar si se subió una imagen
+      // Subir imagen a Vercel Blob si existe
       let imageUrl = null
       let imageFilename = null
 
-      if (files.image) {
-        const uploadedFile = Array.isArray(files.image) ? files.image[0] : files.image
-        imageFilename = path.basename(uploadedFile.filepath)
-        imageUrl = `/mapTiles/${imageFilename}`
-      }
+      if (file) {
+        const timestamp = Date.now()
+        const extension = file.name.split('.').pop()
+        const filename = `vard-assets/map-tiles/${tileX}-${tileY}-z${zoom}-${timestamp}.${extension}`
 
-      // Obtener dimensiones (default 512x512)
-      const width = parseInt(fields.width?.[0] || fields.width || '512')
-      const height = parseInt(fields.height?.[0] || fields.height || '512')
+        console.log('📤 Uploading tile to Vercel Blob:', filename)
+
+        const blob = await put(filename, file.buffer, {
+          access: 'public',
+          contentType: file.type
+        })
+
+        imageUrl = blob.url
+        imageFilename = file.name
+
+        console.log('✅ Tile uploaded:', blob.url)
+      }
 
       // Insertar o actualizar
       const result = await query(
@@ -169,4 +162,45 @@ export default async function handler(req, res) {
     console.error('Error in /api/tiles:', error)
     return handleError(res, error)
   }
+}
+
+/**
+ * Helper: Parsear FormData con busboy
+ */
+async function parseFormData(req) {
+  return new Promise((resolve, reject) => {
+    const bb = busboy({ headers: req.headers })
+    
+    const fields = {}
+    const files = {}
+
+    bb.on('file', (name, file, info) => {
+      const { filename, encoding, mimeType } = info
+      const chunks = []
+
+      file.on('data', (data) => chunks.push(data))
+      
+      file.on('end', () => {
+        files[name] = {
+          name: filename,
+          type: mimeType,
+          encoding,
+          buffer: Buffer.concat(chunks),
+          size: Buffer.concat(chunks).length
+        }
+      })
+    })
+
+    bb.on('field', (name, value) => {
+      fields[name] = value
+    })
+
+    bb.on('finish', () => {
+      resolve({ ...fields, file: files.file || files.image })
+    })
+
+    bb.on('error', reject)
+
+    req.pipe(bb)
+  })
 }
