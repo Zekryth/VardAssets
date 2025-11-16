@@ -54,14 +54,15 @@ export default function TileImageManager({ tileX, tileY, zoomLevel = 1, onClose,
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('type', 'map-tiles')
+      formData.append('type', 'tiles')
       formData.append('tileX', tileX.toString())
       formData.append('tileY', tileY.toString())
       formData.append('zoomLevel', zoomLevel.toString())
 
-      const response = await api.post('/tiles', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        params: { tileX, tileY, zoom: zoomLevel }
+      console.log('📤 Uploading tile image:', { tileX, tileY, zoomLevel })
+
+      const response = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       })
 
       console.log('✅ Tile actualizado:', response.data)

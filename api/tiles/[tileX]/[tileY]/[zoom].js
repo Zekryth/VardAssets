@@ -5,35 +5,27 @@
  * DELETE - Eliminar imagen de un tile
  */
 
-import { neon } from '@neondatabase/serverless'
-import { getAuthUser } from '../../_lib/auth.js'
+import { getPool } from '../../../_lib/db.js'
+import { authenticateToken } from '../../../_lib/auth.js'
+import { handleCors } from '../../../_lib/cors.js'
+import { handleError } from '../../../_lib/errors.js'
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader('Access-Control-Allow-Credentials', 'true')
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type')
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end()
-  }
+  if (handleCors(req, res)) return
 
-  const sql = neon(process.env.DATABASE_URL)
+  const pool = getPool()
   const { tileX, tileY, zoom } = req.query
   const zoomLevel = parseInt(zoom) || 1
 
   try {
     // GET: Obtener tile específico
     if (req.method === 'GET') {
-      const tile = await sql`
-        SELECT * FROM map_tiles
-        WHERE tile_x = ${parseInt(tileX)}
-          AND tile_y = ${parseInt(tileY)}
-          AND zoom_level = ${zoomLevel}
-      `
+      const result = await pool.query(
+        'SELECT * FROM map_tiles WHERE tile_x = $1 AND tile_y = $2 AND zoom_level = $3',
+        [parseInt(tileX), parseInt(tileY), zoomLevel]
+      )
 
-      if (tile.length === 0) {
+      if (result.rows.length === 0) {
         return res.status(404).json({
           message: 'Tile no encontrado',
           tile_x: parseInt(tileX),
@@ -42,46 +34,37 @@ export default async function handler(req, res) {
         })
       }
 
-      return res.status(200).json(tile[0])
+      console.log('✅ Tile found:', result.rows[0])
+      return res.status(200).json(result.rows[0])
     }
 
     // DELETE: Eliminar imagen de tile
     if (req.method === 'DELETE') {
-      const user = await getAuthUser(req, sql)
+      const user = authenticateToken(req)
       if (!user) {
         return res.status(401).json({ message: 'No autorizado' })
       }
 
-      const result = await sql`
-        UPDATE map_tiles
-        SET background_image_url = NULL,
-            background_image_filename = NULL,
-            updated_at = NOW()
-        WHERE tile_x = ${parseInt(tileX)}
-          AND tile_y = ${parseInt(tileY)}
-          AND zoom_level = ${zoomLevel}
-        RETURNING *
-      `
+      const result = await pool.query(
+        `UPDATE map_tiles
+         SET background_image_url = NULL,
+             background_image_filename = NULL,
+             updated_at = NOW()
+         WHERE tile_x = $1 AND tile_y = $2 AND zoom_level = $3
+         RETURNING *`,
+        [parseInt(tileX), parseInt(tileY), zoomLevel]
+      )
 
-      if (result.length === 0) {
-        return res.status(404).json({ message: 'Tile no encontrado' })
-      }
-
-      console.log('✅ Imagen de tile eliminada:', tileX, tileY)
-
+      console.log('✅ Tile image deleted:', result.rows[0])
       return res.status(200).json({ 
         message: 'Imagen de tile eliminada',
-        tile: result[0]
+        tile: result.rows[0]
       })
     }
 
     return res.status(405).json({ message: 'Método no permitido' })
 
   } catch (error) {
-    console.error('❌ Error en /api/tiles/[tileX]/[tileY]/[zoom]:', error)
-    return res.status(500).json({ 
-      message: 'Error del servidor', 
-      error: error.message 
-    })
+    return handleError(res, error)
   }
 }

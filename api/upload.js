@@ -1,5 +1,8 @@
 import { put, list, del } from '@vercel/blob';
 import { handleCors } from './_lib/cors.js';
+import { getPool } from './_lib/db.js';
+import { authenticateToken } from './_lib/auth.js';
+import { initializeDatabase } from './_lib/init.js';
 import busboy from 'busboy';
 
 export const config = {
@@ -13,6 +16,9 @@ export default async function handler(req, res) {
   
   if (handleCors(req, res)) return;
 
+  await initializeDatabase();
+  const pool = getPool();
+
   try {
     // ========================================
     // POST - Subir archivo
@@ -24,8 +30,11 @@ export default async function handler(req, res) {
       const formData = await parseFormData(req);
       
       const file = formData.file;
-      const type = formData.type || 'general'; // 'fotos', 'documentos', 'videos'
+      const type = formData.type || 'general'; // 'fotos', 'documentos', 'videos', 'tiles'
       const pointId = formData.pointId || 'unknown';
+      const tileX = formData.tileX ? parseInt(formData.tileX) : null;
+      const tileY = formData.tileY ? parseInt(formData.tileY) : null;
+      const zoomLevel = formData.zoomLevel ? parseInt(formData.zoomLevel) : 1;
 
       if (!file) {
         console.warn('⚠️ [UPLOAD] No se recibió archivo');
@@ -80,7 +89,10 @@ export default async function handler(req, res) {
         .replace(/[^a-zA-Z0-9.-]/g, '_')
         .substring(0, 50);
       
-      const filename = `vard-assets/${type}/${pointId}/${timestamp}-${randomString}-${sanitizedName}`;
+      // Si es un tile, usar path específico
+      const filename = tileX !== null && tileY !== null
+        ? `vard-assets/map-tiles/${tileX}-${tileY}-z${zoomLevel}-${timestamp}.${extension}`
+        : `vard-assets/${type}/${pointId}/${timestamp}-${randomString}-${sanitizedName}`;
 
       console.log('💾 [UPLOAD] Subiendo a Vercel Blob:', filename);
 
@@ -97,6 +109,35 @@ export default async function handler(req, res) {
         size: blob.size,
         downloadUrl: blob.downloadUrl
       });
+
+      // Si es un tile, guardar en base de datos
+      if (tileX !== null && tileY !== null) {
+        console.log('💾 [UPLOAD] Guardando tile en BD:', { tileX, tileY, zoomLevel });
+        
+        try {
+          const user = authenticateToken(req);
+          const userId = user?.id || 1; // Default a admin si no hay auth
+
+          await pool.query(
+            `INSERT INTO map_tiles 
+              (tile_x, tile_y, zoom_level, width, height, background_image_url, background_image_filename, uploaded_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (tile_x, tile_y, zoom_level)
+             DO UPDATE SET
+               background_image_url = EXCLUDED.background_image_url,
+               background_image_filename = EXCLUDED.background_image_filename,
+               uploaded_by = EXCLUDED.uploaded_by,
+               updated_at = NOW()
+             RETURNING *`,
+            [tileX, tileY, zoomLevel, 512, 512, blob.url, file.name, userId]
+          );
+
+          console.log('✅ [UPLOAD] Tile guardado en BD exitosamente');
+        } catch (dbError) {
+          console.error('❌ [UPLOAD] Error guardando tile en BD:', dbError);
+          // No fallar la respuesta, el archivo ya está en Blob
+        }
+      }
 
       return res.status(201).json({
         url: blob.url,
