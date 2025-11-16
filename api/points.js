@@ -203,11 +203,12 @@ export default async function handler(req, res) {
 
     // POST /api/points - Crear punto
     if (req.method === 'POST') {
-      const { nombre, compañia, coordenadas, pisos, inventario, fotos, documentos } = req.body;
+      const { nombre, categoria, compañia, coordenadas, pisos, inventario, fotos, documentos } = req.body;
       
       console.log('📝 [POINTS] === INICIO CREACIÓN ===');
       console.log('   Datos recibidos:', {
         nombre,
+        categoria,
         compañia,
         coordenadas,
         pisos: pisos?.length || 'no enviado',
@@ -272,12 +273,14 @@ export default async function handler(req, res) {
       }
 
       console.log('💾 [POINTS] Insertando en base de datos...');
+      console.log('📦 [POINTS] Payload recibido:', { nombre, categoria, compañia, coordenadas, pisos_count: pisos?.length });
 
       // Si viene 'pisos', usar nuevo formato; si no, crear piso único con datos antiguos
       let pisosData;
       if (pisos && Array.isArray(pisos)) {
         pisosData = pisos;
         console.log('✅ [POINTS] Usando nuevo formato de pisos:', pisos.length);
+        console.log('🔍 [POINTS] Primer piso:', pisosData[0]);
       } else {
         // Backward compatibility: convertir formato antiguo a pisos
         pisosData = [{
@@ -291,11 +294,12 @@ export default async function handler(req, res) {
       }
 
       const { rows } = await pool.query(
-        `INSERT INTO points (nombre, compañia, coordenadas, pisos)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO points (nombre, categoria, compañia, coordenadas, pisos)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
         [
           nombre.trim(),
+          categoria?.trim() || null,
           compañia || null,
           JSON.stringify(coordenadas),
           JSON.stringify(pisosData)
@@ -325,9 +329,10 @@ export default async function handler(req, res) {
     // PUT /api/points?id=xxx - Actualizar punto
     if (req.method === 'PUT') {
       const { id } = req.query;
-      const { nombre, compañia, coordenadas, pisos, inventario, fotos, documentos } = req.body;
+      const { nombre, categoria, compañia, coordenadas, pisos, inventario, fotos, documentos } = req.body;
 
       console.log(`📝 [POINTS] Actualizando punto: ${id}`);
+      console.log('📦 [POINTS] Datos para actualizar:', { nombre, categoria, compañia, pisos_count: pisos?.length });
 
       if (!id) {
         return res.status(400).json({ error: 'ID de punto requerido' });
@@ -359,14 +364,16 @@ export default async function handler(req, res) {
       const { rows } = await pool.query(
         `UPDATE points 
          SET nombre = COALESCE($1, nombre),
-             compañia = COALESCE($2, compañia),
-             coordenadas = COALESCE($3, coordenadas),
-             pisos = COALESCE($4, pisos),
+             categoria = COALESCE($2, categoria),
+             compañia = COALESCE($3, compañia),
+             coordenadas = COALESCE($4, coordenadas),
+             pisos = COALESCE($5, pisos),
              updated_at = NOW()
-         WHERE id = $5
+         WHERE id = $6
          RETURNING *`,
         [
           nombre?.trim(),
+          categoria?.trim() || null,
           compañia,
           coordenadas ? JSON.stringify(coordenadas) : null,
           pisosData ? JSON.stringify(pisosData) : null,

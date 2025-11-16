@@ -13,6 +13,11 @@ import DocumentUpload from './DocumentUpload'
 const cx = (...p) => p.filter(Boolean).join(' ')
 
 export default function CreatePointDialog({ open, coords, onCancel, onConfirm }) {
+  // Información del PUNTO (global)
+  const [nombrePunto, setNombrePunto] = useState('')
+  const [categoriaPunto, setCategoriaPunto] = useState('')
+  const [companiaPunto, setCompaniaPunto] = useState(null)
+
   // Estado de pisos (cada piso tiene toda su información)
   const [pisos, setPisos] = useState([{
     numero: 1,
@@ -28,7 +33,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   // ux state
   const [companyFilter, setCompanyFilter] = useState('')
   const [objectsFilter, setObjectsFilter] = useState('')
-  const [touched, setTouched] = useState({ nombre: false, categoria: false })
+  const [touched, setTouched] = useState({ nombrePunto: false, nombre: false, categoria: false })
 
   // focus/aria
   const modalRef = useRef(null)
@@ -43,7 +48,12 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   // Reset fuerte cada vez que se abre
   useEffect(() => {
     if (!open) return
-    // limpiar formulario
+    // limpiar formulario del punto
+    setNombrePunto('')
+    setCategoriaPunto('')
+    setCompaniaPunto(null)
+    
+    // limpiar formulario de pisos
     setPisos([{
       numero: 1,
       nombre: 'Planta Baja',
@@ -57,7 +67,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     setErrMsg('')
     setCompanyFilter('')
     setObjectsFilter('')
-    setTouched({ nombre: false, categoria: false })
+    setTouched({ nombrePunto: false, nombre: false, categoria: false })
 
     // cargar catálogos
     let ignore = false
@@ -217,9 +227,9 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     updateCurrentFloor('inventario', newInv)
   }
 
-  const canSave = Boolean(pisos[0]?.nombre)
+  const canSave = Boolean(nombrePunto?.trim() && pisos[0]?.nombre)
+  const nombrePuntoError = !nombrePunto && touched.nombrePunto ? 'Requerido' : ''
   const nombreError = !pisos[0]?.nombre && touched.nombre ? 'Requerido' : ''
-  const categoriaError = !pisos[0]?.categoria && touched.categoria ? 'Requerido' : ''
 
   const companiesOptions = useMemo(() => {
     return (Array.isArray(companies) ? companies : []).map((c) => ({
@@ -251,7 +261,12 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   }, [objectsOptions, objectsFilter])
 
   const submit = () => {
-    if (!canSave) return
+    // Validar nombre del PUNTO
+    if (!nombrePunto?.trim()) {
+      alert('❌ El punto debe tener un nombre')
+      setTouched(t => ({ ...t, nombrePunto: true }))
+      return
+    }
     
     // Validate coordinates
     if (!coords || typeof coords.x !== 'number' || typeof coords.y !== 'number') {
@@ -262,16 +277,17 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     
     // Validar que al menos el primer piso tenga nombre
     if (!pisos[0]?.nombre?.trim()) {
-      alert('El primer piso debe tener un nombre')
+      alert('❌ El primer piso debe tener un nombre')
+      setTouched(t => ({ ...t, nombre: true }))
       return
     }
     
-    // Normalizar inventario de cada piso
+    // Normalizar pisos: heredar categoría y compañía del punto si el piso no tiene
     const pisosNormalized = pisos.map(piso => ({
       numero: piso.numero,
       nombre: piso.nombre?.trim() || `Piso ${piso.numero}`,
-      categoria: piso.categoria?.trim() || '',
-      compañia: piso.compañia || null,
+      categoria: piso.categoria?.trim() || categoriaPunto?.trim() || '',
+      compañia: piso.compañia || companiaPunto || null,
       inventario: (piso.inventario || [])
         .map(r => ({
           objeto: r?.objeto?._id || r?.objeto?.id || r?.objeto || '',
@@ -283,12 +299,21 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     }))
     
     const payload = {
-      nombre: pisosNormalized[0].nombre, // Nombre del punto = primer piso
+      nombre: nombrePunto.trim(),        // ✅ Nombre del PUNTO (no del piso)
+      categoria: categoriaPunto?.trim() || null,
+      compañia: companiaPunto || null,
       coordenadas: coords,
       pisos: pisosNormalized
     }
     
-    console.log('💾 [CREATE DIALOG] Payload con pisos:', payload)
+    console.log('💾 [CREATE DIALOG] Payload completo:', {
+      nombre: payload.nombre,
+      categoria: payload.categoria,
+      compañia: payload.compañia,
+      coordenadas: payload.coordenadas,
+      total_pisos: payload.pisos.length,
+      pisos: payload.pisos
+    })
     onConfirm?.(payload)
   }
 
@@ -335,11 +360,90 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
 
         <div className="px-5 py-4 space-y-5 max-h-[70vh] overflow-y-auto">
           
-          {/* Gestión de Pisos */}
+          {/* ==================== SECCIÓN 1: INFORMACIÓN DEL PUNTO ==================== */}
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
+            <h3 className="text-sm font-bold text-green-800 dark:text-green-300 mb-3 flex items-center gap-2">
+              <span>🏢</span>
+              <span>INFORMACIÓN DEL PUNTO</span>
+            </h3>
+            
+            <div className="space-y-3">
+              {/* Nombre del Punto */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nombre del Punto <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={nombrePunto}
+                  onChange={(e) => {
+                    setNombrePunto(e.target.value)
+                    setTouched(t => ({ ...t, nombrePunto: true }))
+                  }}
+                  placeholder="Ej: Edificio A, Container 123, Almacén Principal"
+                  className={cx(
+                    'w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+                    nombrePuntoError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  )}
+                />
+                {nombrePuntoError && (
+                  <p className="text-xs text-red-600 mt-1">{nombrePuntoError}</p>
+                )}
+              </div>
+
+              {/* Categoría del Punto */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Categoría del Punto
+                </label>
+                <input
+                  type="text"
+                  value={categoriaPunto}
+                  onChange={(e) => setCategoriaPunto(e.target.value)}
+                  placeholder="Ej: Almacén, Oficinas, Producción"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  💡 Esta categoría se aplicará a todos los pisos por defecto
+                </p>
+              </div>
+
+              {/* Compañía del Punto */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Compañía del Punto
+                </label>
+                <input
+                  type="text"
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  placeholder="Buscar compañía..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-2"
+                />
+                <select
+                  value={companiaPunto || ''}
+                  onChange={(e) => setCompaniaPunto(e.target.value || null)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Sin compañía</option>
+                  {companiesFiltered.map(company => (
+                    <option key={company.value} value={company.value}>
+                      {company.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  💡 Esta compañía se aplicará a todos los pisos por defecto
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* ==================== SECCIÓN 2: GESTIÓN DE PISOS ==================== */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                🏢 Pisos ({pisos.length})
+                🏗️ Pisos ({pisos.length})
               </label>
               <button
                 type="button"
