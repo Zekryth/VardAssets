@@ -13,15 +13,12 @@ import DocumentUpload from './DocumentUpload'
 const cx = (...p) => p.filter(Boolean).join(' ')
 
 export default function CreatePointDialog({ open, coords, onCancel, onConfirm }) {
-  // Estado del punto (información general)
-  const [nombre, setNombre] = useState('')
-  const [categoria, setCategoria] = useState('')
-  const [companiaId, setCompaniaId] = useState('')
-
-  // Estado de pisos
+  // Estado de pisos (cada piso tiene toda su información)
   const [pisos, setPisos] = useState([{
     numero: 1,
     nombre: 'Planta Baja',
+    categoria: '',
+    compañia: null,
     inventario: [],
     fotos: [],
     documentos: []
@@ -47,12 +44,11 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   useEffect(() => {
     if (!open) return
     // limpiar formulario
-    setNombre('')
-    setCategoria('')
-    setCompaniaId('')
     setPisos([{
       numero: 1,
       nombre: 'Planta Baja',
+      categoria: '',
+      compañia: null,
       inventario: [],
       fotos: [],
       documentos: []
@@ -158,6 +154,8 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
       {
         numero: newNumber,
         nombre: `Piso ${newNumber - 1}`,
+        categoria: '',
+        compañia: null,
         inventario: [],
         fotos: [],
         documentos: []
@@ -219,9 +217,9 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     updateCurrentFloor('inventario', newInv)
   }
 
-  const canSave = Boolean(nombre && categoria)
-  const nombreError = !nombre && touched.nombre ? 'Requerido' : ''
-  const categoriaError = !categoria && touched.categoria ? 'Requerido' : ''
+  const canSave = Boolean(pisos[0]?.nombre)
+  const nombreError = !pisos[0]?.nombre && touched.nombre ? 'Requerido' : ''
+  const categoriaError = !pisos[0]?.categoria && touched.categoria ? 'Requerido' : ''
 
   const companiesOptions = useMemo(() => {
     return (Array.isArray(companies) ? companies : []).map((c) => ({
@@ -262,21 +260,30 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
       return
     }
     
+    // Validar que al menos el primer piso tenga nombre
+    if (!pisos[0]?.nombre?.trim()) {
+      alert('El primer piso debe tener un nombre')
+      return
+    }
+    
     // Normalizar inventario de cada piso
     const pisosNormalized = pisos.map(piso => ({
-      ...piso,
+      numero: piso.numero,
+      nombre: piso.nombre?.trim() || `Piso ${piso.numero}`,
+      categoria: piso.categoria?.trim() || '',
+      compañia: piso.compañia || null,
       inventario: (piso.inventario || [])
         .map(r => ({
           objeto: r?.objeto?._id || r?.objeto?.id || r?.objeto || '',
           cantidad: Number(r?.cantidad) || 1
         }))
-        .filter(r => r.objeto)
+        .filter(r => r.objeto),
+      fotos: piso.fotos || [],
+      documentos: piso.documentos || []
     }))
     
     const payload = {
-      nombre: nombre.trim(),
-      categoria: categoria.trim(),
-      compañia: companiaId || null,
+      nombre: pisosNormalized[0].nombre, // Nombre del punto = primer piso
       coordenadas: coords,
       pisos: pisosNormalized
     }
@@ -327,58 +334,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
         ) : null}
 
         <div className="px-5 py-4 space-y-5 max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm mb-1 text-gray-700 dark:text-gray-300">Nombre <span className="text-red-600 dark:text-red-400">*</span></label>
-              <input
-                className="w-full px-3 py-2 rounded border text-gray-900 placeholder-gray-400 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                onBlur={() => setTouched((t) => ({ ...t, nombre: true }))}
-                placeholder="Nombre del punto"
-              />
-              {nombreError ? (
-                <div className="mt-1 text-xs text-red-600 dark:text-red-400">{nombreError}</div>
-              ) : null}
-            </div>
-            <div>
-              <label className="block text-sm mb-1 text-gray-700 dark:text-gray-300">Categoría <span className="text-red-600 dark:text-red-400">*</span></label>
-              <input
-                className="w-full px-3 py-2 rounded border text-gray-900 placeholder-gray-400 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700"
-                value={categoria}
-                onChange={(e) => setCategoria(e.target.value)}
-                onBlur={() => setTouched((t) => ({ ...t, categoria: true }))}
-                placeholder="silla, mesa, ..." />
-              {categoriaError ? (
-                <div className="mt-1 text-xs text-red-600 dark:text-red-400">{categoriaError}</div>
-              ) : null}
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm mb-1 text-gray-700 dark:text-gray-300">Compañía</label>
-              <input
-                type="text"
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-                placeholder="Buscar compañía…"
-                className="mb-2 w-full px-3 py-2 rounded border text-gray-900 placeholder-gray-400 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700"
-              />
-              <select
-                className="w-full px-3 py-2 rounded border text-gray-900 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700"
-                value={companiaId}
-                onChange={(e) => setCompaniaId(e.target.value)}
-                disabled={loading}
-              >
-                <option value="">Sin compañía</option>
-                {companiesFiltered.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-              {loading ? (
-                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">Cargando catálogos…</div>
-              ) : null}
-            </div>
-          </div>
-
+          
           {/* Gestión de Pisos */}
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -428,26 +384,83 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                 </button>
               </div>
 
-              {/* Nombre del Piso */}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={currentFloor.nombre}
-                  onChange={updateCurrentFloorName}
-                  placeholder={`Piso ${pisoActual + 1}`}
-                  className="flex-1 px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                />
+              {/* Información del Piso Actual */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 space-y-4 border border-blue-200 dark:border-blue-700">
                 
-                {pisos.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveFloor}
-                    className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium flex items-center gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Eliminar
-                  </button>
-                )}
+                {/* Nombre del Piso */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Nombre del Piso {pisoActual === 0 && <span className="text-red-600 dark:text-red-400">*</span>}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={currentFloor.nombre}
+                      onChange={updateCurrentFloorName}
+                      placeholder={`Piso ${pisoActual + 1}`}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      required={pisoActual === 0}
+                    />
+                    
+                    {pisos.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveFloor}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Eliminar
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Categoría del Piso */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Categoría
+                  </label>
+                  <input
+                    type="text"
+                    value={currentFloor.categoria || ''}
+                    onChange={(e) => updateCurrentFloor('categoria', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Ej: Almacén, Oficinas, Producción"
+                  />
+                </div>
+
+                {/* Compañía del Piso */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Compañía
+                  </label>
+                  {loading ? (
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Cargando compañías...</div>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        value={companyFilter}
+                        onChange={(e) => setCompanyFilter(e.target.value)}
+                        placeholder="Buscar compañía…"
+                        className="mb-2 w-full px-4 py-2 rounded-lg border text-gray-900 placeholder-gray-400 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-gray-100 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <select
+                        value={currentFloor.compañia || ''}
+                        onChange={(e) => updateCurrentFloor('compañia', e.target.value || null)}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        <option value="">Sin compañía</option>
+                        {companiesFiltered.map(company => (
+                          <option key={company.id} value={company.id}>
+                            {company.name}
+                          </option>
+                        ))}
+                      </select>
+                    </>
+                  )}
+                </div>
+
               </div>
             </div>
 

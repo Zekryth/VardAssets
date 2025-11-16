@@ -187,16 +187,16 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
             {/* Información Básica */}
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-3">
               <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                📋 Información Básica
+                📋 Información del Piso
               </h3>
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Nombre
+                    Nombre del Piso
                   </label>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {point.nombre}
+                    {currentFloor.nombre}
                   </p>
                 </div>
 
@@ -205,7 +205,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     Categoría
                   </label>
                   <p className="text-sm text-gray-900 dark:text-white">
-                    {point.categoria || (
+                    {currentFloor.categoria || (
                       <span className="text-gray-400 dark:text-gray-500 italic">Sin categoría</span>
                     )}
                   </p>
@@ -216,7 +216,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     Compañía
                   </label>
                   <p className="text-sm text-gray-900 dark:text-white">
-                    {point.compañia_nombre || point.compañia?.nombre || (
+                    {currentFloor.compañia || (
                       <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía</span>
                     )}
                   </p>
