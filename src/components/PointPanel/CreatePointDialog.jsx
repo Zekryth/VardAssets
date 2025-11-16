@@ -160,7 +160,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   }, [open, onCancel])
 
   // Computed values
-  const currentFloor = pisos[pisoActual]
+  const currentPiso = pisosAdicionales[pisoActual] || {}
   
   // Handlers de Pisos
   // === FUNCIONES PARA PISOS ADICIONALES ===
@@ -255,9 +255,8 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     updateCurrentFloor('inventario', newInv)
   }
 
-  const canSave = Boolean(nombrePunto?.trim() && pisos[0]?.nombre)
+  const canSave = Boolean(nombrePunto?.trim())
   const nombrePuntoError = !nombrePunto && touched.nombrePunto ? 'Requerido' : ''
-  const nombreError = !pisos[0]?.nombre && touched.nombre ? 'Requerido' : ''
 
   const companiesOptions = useMemo(() => {
     return (Array.isArray(companies) ? companies : []).map((c) => ({
