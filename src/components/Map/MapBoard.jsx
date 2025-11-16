@@ -6,6 +6,7 @@
  * Utiliza almacenamiento local para persistir tiles y vista del mapa.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import MapTileLayer from './MapTileLayer'
 
 const TILE_SIZE = 512 // px por cuadrante
 const STORAGE_KEY = 'ms.tiles.v1'
@@ -242,6 +243,17 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
           boxShadow: '0 0 0 9999px #000'
         }}
       >
+        {/* MapTileLayer - Renderiza tiles con imágenes de fondo */}
+        <MapTileLayer 
+          zoomLevel={1} 
+          viewport={{
+            x: (bbox.minX || 0) * TILE_SIZE,
+            y: (bbox.minY || 0) * TILE_SIZE,
+            width: boardW,
+            height: boardH
+          }} 
+        />
+        
         {tiles.map(t => (
           <div
             key={keyOf(t.x, t.y)}

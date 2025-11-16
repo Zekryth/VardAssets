@@ -9,6 +9,7 @@ import { ChevronUp, ChevronDown, Plus, Trash2, Building2, Building } from 'lucid
 import { companyService, objectService } from '../../services/api'
 import PhotoUpload from './PhotoUpload'
 import DocumentUpload from './DocumentUpload'
+import { coordinatesToTile } from '../../utils/mapTileCalculator'
 
 const cx = (...p) => p.filter(Boolean).join(' ')
 
@@ -340,6 +341,10 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
       nrInventarioSAP: nrInventarioSAP?.trim() || null,
       mijlocFix: mijlocFix,
       coordenadas: coords,
+      
+      // === ASOCIACIÓN CON TILE ===
+      // Calcular automáticamente el tile basado en las coordenadas
+      ...(coords ? coordinatesToTile(coords.x, coords.y, 1) : {}),
       
       // Datos de Planta Baja
       inventario: inventarioPlantaBaja
