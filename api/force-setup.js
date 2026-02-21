@@ -6,7 +6,8 @@ import bcrypt from 'bcrypt';
  * ⚠️ ENDPOINT TEMPORAL DE EMERGENCIA
  * 
  * Propósito: Recrear usuario admin con credenciales correctas
- * Uso: GET https://vard-assets.vercel.app/api/force-setup
+ * Uso: POST https://vard-assets.vercel.app/api/force-setup
+ * Header requerido: x-admin-reset-token: <ADMIN_RESET_TOKEN>
  * 
  * Este endpoint:
  * 1. Elimina cualquier usuario admin existente
@@ -20,8 +21,19 @@ export default async function handler(req, res) {
   
   if (handleCors(req, res)) return;
 
-  if (req.method !== 'GET') {
+  if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
+  }
+
+  const providedToken = req.headers['x-admin-reset-token'];
+  const expectedToken = process.env.ADMIN_RESET_TOKEN;
+
+  if (!expectedToken) {
+    return res.status(500).json({ error: 'ADMIN_RESET_TOKEN no está configurado en entorno' });
+  }
+
+  if (!providedToken || providedToken !== expectedToken) {
+    return res.status(403).json({ error: 'No autorizado para reset de admin' });
   }
 
   const pool = getPool();
@@ -79,7 +91,7 @@ export default async function handler(req, res) {
       message: '✅ Usuario admin recreado exitosamente',
       credentials: {
         username: 'admin',
-        password: '123456',
+        password: '123456 (cámbiala inmediatamente al iniciar sesión)',
         email: 'admin@vardassets.com'
       },
       user: {
@@ -94,7 +106,8 @@ export default async function handler(req, res) {
         '1. Ve a https://vard-assets.vercel.app/login',
         '2. Username: admin',
         '3. Password: 123456',
-        '4. Después de login exitoso, elimina api/force-setup.js'
+        '4. Cambia la contraseña de admin inmediatamente',
+        '5. Después de usarlo, elimina api/force-setup.js'
       ]
     });
 

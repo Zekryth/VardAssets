@@ -5,8 +5,16 @@ let pool;
 
 export function getPool() {
   if (!pool) {
+    const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+    if (!connectionString) {
+      const error = new Error('DATABASE_URL/POSTGRES_URL no configurada');
+      error.code = 'DB_URL_MISSING';
+      throw error;
+    }
+
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
+      connectionString,
       ssl: { rejectUnauthorized: false },
       max: 10,
       idleTimeoutMillis: 30000,

@@ -38,12 +38,7 @@ export default async function handler(req, res) {
         });
       }
 
-      console.log('🔐 [AUTH] === INICIO DEBUG LOGIN ===');
-      console.log('📧 [AUTH] Email/Username recibido:', email);
-      console.log('🔑 [AUTH] Password recibido:', password);
-      console.log('📏 [AUTH] Password length:', password.length);
-      console.log('🔤 [AUTH] Password type:', typeof password);
-      console.log('🔢 [AUTH] Password charCodes:', Array.from(password).map(c => c.charCodeAt(0)));
+      console.log('🔐 [AUTH] Intento de login para:', email);
 
       // Buscar usuario
       const { rows } = await pool.query(
@@ -59,20 +54,7 @@ export default async function handler(req, res) {
 
       const user = rows[0];
       
-      console.log('👤 [AUTH] === USUARIO ENCONTRADO ===');
-      console.log('   ID:', user.id);
-      console.log('   Email:', user.email);
-      console.log('   Username:', user.username);
-      console.log('   Role:', user.role);
-      console.log('   Password Hash:', user.password);
-      console.log('   Hash Length:', user.password?.length);
-      console.log('   Hash Type:', typeof user.password);
-
-      console.log('🔍 [AUTH] === INICIO COMPARACIÓN BCRYPT ===');
-      console.log('   Input Password:', password);
-      console.log('   Stored Hash:', user.password);
-      console.log('   bcrypt module:', bcrypt);
-      console.log('   bcrypt.compare:', typeof bcrypt.compare);
+      console.log('👤 [AUTH] Usuario encontrado:', user.email);
 
       // Comparar contraseñas
       let isValidPassword = false;
@@ -80,47 +62,12 @@ export default async function handler(req, res) {
 
       try {
         isValidPassword = await bcrypt.compare(password, user.password);
-        console.log('✅ [AUTH] bcrypt.compare() ejecutado exitosamente');
-        console.log('   Resultado:', isValidPassword);
-        console.log('   Resultado type:', typeof isValidPassword);
+        console.log('✅ [AUTH] Verificación de contraseña ejecutada');
       } catch (error) {
         bcryptError = error;
         console.error('❌ [AUTH] bcrypt.compare() lanzó error:', error.message);
         console.error('   Stack:', error.stack);
       }
-
-      // DEBUG: Generar hash de la contraseña recibida
-      console.log('🧪 [AUTH] === GENERANDO HASH DE PRUEBA ===');
-      try {
-        const testHash = await bcrypt.hash(password, 10);
-        console.log('   Test Hash generado:', testHash);
-        console.log('   Test Hash length:', testHash.length);
-        
-        // Comparar el test hash con sí mismo (debe ser true)
-        const selfCompare = await bcrypt.compare(password, testHash);
-        console.log('   Self-compare result:', selfCompare);
-      } catch (error) {
-        console.error('❌ [AUTH] Error generando test hash:', error.message);
-      }
-
-      // DEBUG: Intentar comparar con hashes conocidos
-      console.log('🧪 [AUTH] === PRUEBA CON HASHES CONOCIDOS ===');
-      const knownHashes = [
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', // 123456
-        '$2b$10$rBV2kWq7Z0VxH.QN9ZGz3eH7vK5o3rN9xG8Kp1qF2wX7YnM5tL6He', // 123456
-        '$2a$10$CwTycUXWue0Thq9StjUM0uJ8Z8W5faB2.KzY1Ye6W5K.xP7O5tGXi'  // password
-      ];
-
-      for (let i = 0; i < knownHashes.length; i++) {
-        try {
-          const testResult = await bcrypt.compare(password, knownHashes[i]);
-          console.log(`   Hash ${i + 1}: ${testResult}`);
-        } catch (error) {
-          console.error(`   Hash ${i + 1} error:`, error.message);
-        }
-      }
-
-      console.log('🔍 [AUTH] === FIN COMPARACIÓN BCRYPT ===');
 
       if (bcryptError) {
         return res.status(500).json({ 
@@ -131,15 +78,9 @@ export default async function handler(req, res) {
 
       if (!isValidPassword) {
         console.warn('⚠️ [AUTH] Contraseña incorrecta para:', email);
-        console.warn('   Expected password to match hash, but got false');
         
         return res.status(401).json({ 
-          error: 'Credenciales inválidas',
-          debug: process.env.NODE_ENV === 'development' ? {
-            passwordReceived: password,
-            hashInDB: user.password,
-            compareResult: isValidPassword
-          } : undefined
+          error: 'Credenciales inválidas'
         });
       }
 
@@ -239,6 +180,13 @@ export default async function handler(req, res) {
     console.error('   Mensaje:', error.message);
     console.error('   Code:', error.code);
     console.error('   Stack:', error.stack);
+
+    if (error.code === 'DB_URL_MISSING') {
+      return res.status(500).json({
+        error: 'Falta configurar DATABASE_URL/POSTGRES_URL en Vercel'
+      });
+    }
+
     return handleError(error, res);
   }
 }
