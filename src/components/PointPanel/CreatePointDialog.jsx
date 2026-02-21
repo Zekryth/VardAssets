@@ -38,8 +38,6 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   const [pisoTab, setPisoTab] = useState('inventario')
 
   // ux state
-  const [companyFilter, setCompanyFilter] = useState('')
-  const [objectsFilter, setObjectsFilter] = useState('')
   const [touched, setTouched] = useState({ nombrePunto: false, nombre: false, categoria: false })
 
   // focus/aria
@@ -72,8 +70,6 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     setPisosAdicionales([])
     setPisoActual(0)
     setErrMsg('')
-    setCompanyFilter('')
-    setObjectsFilter('')
     setTouched({ nombrePunto: false, nombre: false, categoria: false })
 
     // cargar catálogos
@@ -90,18 +86,21 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
             : Promise.resolve({ data: [] })
         ])
         if (ignore) return
-        const cList = Array.isArray(cRes?.data?.data)
-          ? cRes.data.data
-          : Array.isArray(cRes?.data)
-          ? cRes.data
-          : Array.isArray(cRes)
-          ? cRes
-          : []
-        const oList = Array.isArray(oRes?.data)
-          ? oRes.data
-          : Array.isArray(oRes)
-          ? oRes
-          : []
+        const extractList = (response) => {
+          if (Array.isArray(response)) return response
+          if (Array.isArray(response?.data)) return response.data
+          if (Array.isArray(response?.data?.data)) return response.data.data
+          if (Array.isArray(response?.data?.rows)) return response.data.rows
+          if (Array.isArray(response?.data?.companies)) return response.data.companies
+          if (Array.isArray(response?.data?.objects)) return response.data.objects
+          if (Array.isArray(response?.data?.items)) return response.data.items
+          if (Array.isArray(response?.companies)) return response.companies
+          if (Array.isArray(response?.objects)) return response.objects
+          return []
+        }
+
+        const cList = extractList(cRes)
+        const oList = extractList(oRes)
         setCompanies(cList.filter(Boolean))
         setObjects(oList.filter(Boolean))
       } catch (e) {
@@ -258,10 +257,26 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   const nombrePuntoError = !nombrePunto && touched.nombrePunto ? 'Requerido' : ''
 
   const companiesOptions = useMemo(() => {
-    return (Array.isArray(companies) ? companies : []).map((c) => ({
-      id: c?._id || c?.id || '',
-      name: c?.nombre || c?.name || ''
-    }))
+    return (Array.isArray(companies) ? companies : [])
+      .map((raw) => {
+        const c = raw?.company || raw?.compania || raw?.compañia || raw
+        const value = c?._id || c?.id || c?.uuid || c?.company_id || c?.companyId || ''
+        const labelRaw =
+          c?.nombre ||
+          c?.name ||
+          c?.razon_social ||
+          c?.companyName ||
+          c?.company_name ||
+          c?.persona_contacto ||
+          c?.email ||
+          value
+
+        return {
+          value: String(value || '').trim(),
+          label: String(labelRaw || '').trim()
+        }
+      })
+      .filter((c) => c.value && c.label)
   }, [companies])
 
   const objectsOptions = useMemo(() => {
@@ -269,22 +284,8 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
       id: o?._id || o?.id || '',
       name: o?.nombre || o?.name || '',
       categoria: o?.categoria || o?.category || ''
-    }))
+    })).filter((o) => o.id && o.name)
   }, [objects])
-
-  const companiesFiltered = useMemo(() => {
-    const q = companyFilter.trim().toLowerCase()
-    if (!q) return companiesOptions
-    return companiesOptions.filter((c) => c.name.toLowerCase().includes(q))
-  }, [companiesOptions, companyFilter])
-
-  const objectsFiltered = useMemo(() => {
-    const q = objectsFilter.trim().toLowerCase()
-    if (!q) return objectsOptions
-    return objectsOptions.filter((o) =>
-      o.name.toLowerCase().includes(q) || (o.categoria || '').toLowerCase().includes(q)
-    )
-  }, [objectsOptions, objectsFilter])
 
   const submit = () => {
     // Validar nombre del PUNTO (Planta Baja)
@@ -513,7 +514,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   >
                     <option value="">Sin compañía</option>
-                    {companiesFiltered.map(company => (
+                    {companiesOptions.map(company => (
                       <option key={company.value} value={company.value}>
                         {company.label}
                       </option>
@@ -536,7 +537,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   >
                     <option value="">Sin compañía</option>
-                    {companiesFiltered.map(company => (
+                    {companiesOptions.map(company => (
                       <option key={company.value} value={company.value}>
                         {company.label}
                       </option>
@@ -627,18 +628,6 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                     </button>
                   </div>
                   
-                  {inventarioPlantaBaja.length > 0 && (
-                    <div className="mb-2">
-                      <input
-                        type="text"
-                        value={objectsFilter}
-                        onChange={(e) => setObjectsFilter(e.target.value)}
-                        placeholder="Buscar objetos…"
-                        className="w-full px-3 py-2 rounded border text-gray-900 placeholder-gray-400 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700 text-xs"
-                      />
-                    </div>
-                  )}
-                  
                   {inventarioPlantaBaja.length === 0 ? (
                     <div className="text-xs text-gray-500 dark:text-gray-400">Sin ítems. Usa "Agregar ítem".</div>
                   ) : (
@@ -657,7 +646,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                               disabled={loading}
                             >
                               <option value="">Seleccione objeto…</option>
-                              {objectsFiltered.map((o) => (
+                              {objectsOptions.map((o) => (
                                 <option key={o.id} value={o.id}>
                                   {o.name} {o.categoria ? `· ${o.categoria}` : ''}
                                 </option>
@@ -893,7 +882,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                             >
                               <option value="">Sin compañía</option>
-                              {companiesFiltered.map(company => (
+                              {companiesOptions.map(company => (
                                 <option key={company.value} value={company.value}>
                                   {company.label}
                                 </option>
@@ -916,7 +905,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                             >
                               <option value="">Sin compañía</option>
-                              {companiesFiltered.map(company => (
+                              {companiesOptions.map(company => (
                                 <option key={company.value} value={company.value}>
                                   {company.label}
                                 </option>
@@ -988,18 +977,6 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                               </button>
                             </div>
                             
-                            {currentPiso?.inventario?.length > 0 && (
-                              <div className="mb-2">
-                                <input
-                                  type="text"
-                                  value={objectsFilter}
-                                  onChange={(e) => setObjectsFilter(e.target.value)}
-                                  placeholder="Buscar objetos…"
-                                  className="w-full px-3 py-2 rounded border text-gray-900 placeholder-gray-400 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-100 dark:bg-gray-800 dark:border-gray-700 text-xs"
-                                />
-                              </div>
-                            )}
-                            
                             {(!currentPiso?.inventario || currentPiso.inventario.length === 0) ? (
                               <div className="text-xs text-gray-500 dark:text-gray-400">Sin ítems. Usa "Agregar ítem".</div>
                             ) : (
@@ -1018,7 +995,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                                         disabled={loading}
                                       >
                                         <option value="">Seleccione objeto…</option>
-                                        {objectsFiltered.map((o) => (
+                                        {objectsOptions.map((o) => (
                                           <option key={o.id} value={o.id}>
                                             {o.name} {o.categoria ? `· ${o.categoria}` : ''}
                                           </option>
