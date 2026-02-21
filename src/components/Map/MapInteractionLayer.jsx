@@ -37,13 +37,16 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
       return
     }
     
-    // Validate coordinates are within map bounds
-    if (!MAP_CONFIG.isInsideMap(boardCoords.x, boardCoords.y)) {
+    const checkX = Number.isFinite(boardCoords.legacyX) ? boardCoords.legacyX : boardCoords.x
+    const checkY = Number.isFinite(boardCoords.legacyY) ? boardCoords.legacyY : boardCoords.y
+
+    // Validate coordinates are within map bounds (legacy board-local frame)
+    if (!MAP_CONFIG.isInsideMap(checkX, checkY)) {
       console.warn('⚠️ [MAP CLICK] Click outside map bounds:', boardCoords, 'Max:', {
         width: MAP_CONFIG.BOARD_WIDTH,
         height: MAP_CONFIG.BOARD_HEIGHT
       })
-      alert(`❌ No puedes crear un punto fuera del mapa.\n\nCoordenadas: (${Math.round(boardCoords.x)}, ${Math.round(boardCoords.y)})\nLímites del mapa: ${MAP_CONFIG.BOARD_WIDTH} x ${MAP_CONFIG.BOARD_HEIGHT} px\n\nHaz click dentro del área blanca del mapa.`)
+      alert(`❌ No puedes crear un punto fuera del mapa.\n\nCoordenadas: (${Math.round(checkX)}, ${Math.round(checkY)})\nLímites del mapa: ${MAP_CONFIG.BOARD_WIDTH} x ${MAP_CONFIG.BOARD_HEIGHT} px\n\nHaz click dentro del área blanca del mapa.`)
       return
     }
     

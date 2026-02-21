@@ -427,7 +427,23 @@ function createStableMapViewValue(containerRef) {
       const sy = y - rect.top
       const bx = (sx - __mapViewRef.offset.x) / __mapViewRef.scale
       const by = (sy - __mapViewRef.offset.y) / __mapViewRef.scale
-      return { x: bx, y: by }
+      const tileSize = __mapViewRef.tileSize || 512
+      const minAbsX = (__mapViewRef.minX || 0) * tileSize
+      const minAbsY = (__mapViewRef.minY || 0) * tileSize
+      const maxAbsX = ((__mapViewRef.maxX || 0) + 1) * tileSize
+      const maxAbsY = ((__mapViewRef.maxY || 0) + 1) * tileSize
+      const centerAbsX = (minAbsX + maxAbsX) / 2
+      const centerAbsY = (minAbsY + maxAbsY) / 2
+      const absX = bx + minAbsX
+      const absY = by + minAbsY
+      return {
+        x: absX,
+        y: absY,
+        centeredX: absX - centerAbsX,
+        centeredY: absY - centerAbsY,
+        legacyX: bx,
+        legacyY: by
+      }
     },
     boardToScreen: (bx, by) => {
       const el = containerRef.current || __mapViewRef.container
@@ -436,8 +452,13 @@ function createStableMapViewValue(containerRef) {
         return { x: bx, y: by }
       }
       const rect = el.getBoundingClientRect()
-      const sx = __mapViewRef.offset.x + bx * __mapViewRef.scale
-      const sy = __mapViewRef.offset.y + by * __mapViewRef.scale
+      const tileSize = __mapViewRef.tileSize || 512
+      const minAbsX = (__mapViewRef.minX || 0) * tileSize
+      const minAbsY = (__mapViewRef.minY || 0) * tileSize
+      const localX = bx - minAbsX
+      const localY = by - minAbsY
+      const sx = __mapViewRef.offset.x + localX * __mapViewRef.scale
+      const sy = __mapViewRef.offset.y + localY * __mapViewRef.scale
       return { x: sx + rect.left, y: sy + rect.top }
     },
     container: null,

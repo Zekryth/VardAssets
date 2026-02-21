@@ -410,6 +410,11 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               📍 Coordenadas: X: {coords?.x ?? '-'} px · Y: {coords?.y ?? '-'} px
             </div>
+            {(typeof coords?.centeredX === 'number' && typeof coords?.centeredY === 'number') && (
+              <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+                🎯 Centro: Xc: {Math.round(coords.centeredX)} px · Yc: {Math.round(coords.centeredY)} px
+              </div>
+            )}
           </div>
           <button
             className="px-2 py-1 rounded-md text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"

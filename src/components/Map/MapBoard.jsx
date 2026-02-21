@@ -36,6 +36,8 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
   const dragging = useRef(null)
   const pointDrag = useRef(null)
   const containerRef = useRef(null)
+  const MIN_SCALE = 0.25
+  const MAX_SCALE = 2
 
   const bbox = useMemo(() => {
     if (!tiles.length) return { minX: 0, maxX: 0, minY: 0, maxY: 0 }
@@ -48,35 +50,10 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
   const boardW = cols * TILE_SIZE
   const boardH = rows * TILE_SIZE
 
-  // Restore persisted view or center the board on first mount
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    onContainer?.(el)
-    try {
-      const saved = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null')
-      if (saved && typeof saved.scale === 'number' && saved.offset && typeof saved.offset.x === 'number') {
-        setScale(Math.min(2, Math.max(0.25, saved.scale)))
-        setOffset({ x: saved.offset.x, y: saved.offset.y })
-        onViewInfo?.({
-          scale: saved.scale,
-          offset: { x: saved.offset.x, y: saved.offset.y },
-          tileSize: TILE_SIZE,
-          gridOffX: bbox.minX || 0,
-          gridOffY: bbox.minY || 0,
-          minX: bbox.minX || 0,
-          minY: bbox.minY || 0,
-          maxX: bbox.maxX || 0,
-          maxY: bbox.maxY || 0
-        })
-        return
-      }
-    } catch {}
-    const r = el.getBoundingClientRect()
-    setOffset({ x: (r.width - boardW * scale) / 2, y: (r.height - boardH * scale) / 2 })
+  const emitViewInfo = (nextScale, nextOffset) => {
     onViewInfo?.({
-      scale,
-      offset: { x: (r.width - boardW * scale) / 2, y: (r.height - boardH * scale) / 2 },
+      scale: nextScale,
+      offset: nextOffset,
       tileSize: TILE_SIZE,
       gridOffX: bbox.minX || 0,
       gridOffY: bbox.minY || 0,
@@ -85,7 +62,80 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
       maxX: bbox.maxX || 0,
       maxY: bbox.maxY || 0
     })
+  }
+
+  const persistView = (nextScale, nextOffset) => {
+    try { localStorage.setItem(VIEW_KEY, JSON.stringify({ scale: nextScale, offset: nextOffset })) } catch {}
+  }
+
+  const applyZoomAt = (targetScale, anchorX, anchorY) => {
+    const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, targetScale))
+    const dx = anchorX - offset.x
+    const dy = anchorY - offset.y
+    const nx = anchorX - (dx * next) / scale
+    const ny = anchorY - (dy * next) / scale
+    const newOffset = { x: nx, y: ny }
+    setScale(next)
+    setOffset(newOffset)
+    emitViewInfo(next, newOffset)
+    persistView(next, newOffset)
+  }
+
+  const fitBoardToViewport = () => {
+    const el = containerRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const fitScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, Math.min(r.width / boardW, r.height / boardH) * 0.95))
+    const newOffset = {
+      x: (r.width - boardW * fitScale) / 2,
+      y: (r.height - boardH * fitScale) / 2
+    }
+    setScale(fitScale)
+    setOffset(newOffset)
+    emitViewInfo(fitScale, newOffset)
+    persistView(fitScale, newOffset)
+  }
+
+  // Restore persisted view or center the board on first mount
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    onContainer?.(el)
+    try {
+      const saved = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null')
+      if (saved && typeof saved.scale === 'number' && saved.offset && typeof saved.offset.x === 'number') {
+        setScale(Math.min(MAX_SCALE, Math.max(MIN_SCALE, saved.scale)))
+        setOffset({ x: saved.offset.x, y: saved.offset.y })
+        emitViewInfo(saved.scale, { x: saved.offset.x, y: saved.offset.y })
+        return
+      }
+    } catch {}
+    const r = el.getBoundingClientRect()
+    setOffset({ x: (r.width - boardW * scale) / 2, y: (r.height - boardH * scale) / 2 })
+    emitViewInfo(scale, { x: (r.width - boardW * scale) / 2, y: (r.height - boardH * scale) / 2 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const preventCtrlWheelZoom = (e) => {
+      if (e.ctrlKey) e.preventDefault()
+    }
+    const preventGesture = (e) => e.preventDefault()
+
+    el.addEventListener('wheel', preventCtrlWheelZoom, { passive: false })
+    el.addEventListener('gesturestart', preventGesture, { passive: false })
+    el.addEventListener('gesturechange', preventGesture, { passive: false })
+    el.addEventListener('gestureend', preventGesture, { passive: false })
+
+    return () => {
+      el.removeEventListener('wheel', preventCtrlWheelZoom)
+      el.removeEventListener('gesturestart', preventGesture)
+      el.removeEventListener('gesturechange', preventGesture)
+      el.removeEventListener('gestureend', preventGesture)
+    }
   }, [])
 
   const onWheel = (e) => {
@@ -95,27 +145,7 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
     const rect = el.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
     const mouseY = e.clientY - rect.top
-    const prev = scale
-    const next = Math.min(2, Math.max(0.25, scale * (e.deltaY > 0 ? 0.9 : 1.1)))
-    const dx = mouseX - offset.x
-    const dy = mouseY - offset.y
-    const nx = mouseX - (dx * next) / prev
-    const ny = mouseY - (dy * next) / prev
-    setScale(next)
-    const newOffset = { x: nx, y: ny }
-    setOffset(newOffset)
-    onViewInfo?.({
-      scale: next,
-      offset: newOffset,
-      tileSize: TILE_SIZE,
-      gridOffX: bbox.minX || 0,
-      gridOffY: bbox.minY || 0,
-      minX: bbox.minX || 0,
-      minY: bbox.minY || 0,
-      maxX: bbox.maxX || 0,
-      maxY: bbox.maxY || 0
-    })
-    try { localStorage.setItem(VIEW_KEY, JSON.stringify({ scale: next, offset: newOffset })) } catch {}
+    applyZoomAt(scale * (e.deltaY > 0 ? 0.9 : 1.1), mouseX, mouseY)
   }
 
   const onPointerDown = (e) => {
@@ -131,22 +161,12 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
     const { x, y, ox, oy } = dragging.current
     const newOffset = { x: ox + (e.clientX - x), y: oy + (e.clientY - y) }
     setOffset(newOffset)
-    onViewInfo?.({
-      scale,
-      offset: newOffset,
-      tileSize: TILE_SIZE,
-      gridOffX: bbox.minX || 0,
-      gridOffY: bbox.minY || 0,
-      minX: bbox.minX || 0,
-      minY: bbox.minY || 0,
-      maxX: bbox.maxX || 0,
-      maxY: bbox.maxY || 0
-    })
+    emitViewInfo(scale, newOffset)
   }
   const onPointerUp = () => {
     dragging.current = null
     window.removeEventListener('pointermove', onPointerMove)
-    try { localStorage.setItem(VIEW_KEY, JSON.stringify({ scale, offset })) } catch {}
+    persistView(scale, offset)
   }
 
   const keyOf = (x, y) => `${x}_${y}`
@@ -214,17 +234,7 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
   // para que el contexto marque "ready" desde el inicio y no quedemos en "Inicializando..."
   useEffect(() => {
     if (!containerRef.current) return
-    onViewInfo?.({
-      scale,
-      offset,
-      tileSize: TILE_SIZE,
-      gridOffX: bbox.minX || 0,
-      gridOffY: bbox.minY || 0,
-      minX: bbox.minX || 0,
-      minY: bbox.minY || 0,
-      maxX: bbox.maxX || 0,
-      maxY: bbox.maxY || 0
-    })
+    emitViewInfo(scale, offset)
   }, [bbox.minX, bbox.minY, bbox.maxX, bbox.maxY, scale, offset, onViewInfo])
 
   return (
@@ -264,6 +274,11 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
         {showTileGrid && (
           <MapTileGrid
             zoomLevel={1}
+            tilesX={cols}
+            tilesY={rows}
+            offsetX={bbox.minX || 0}
+            offsetY={bbox.minY || 0}
+            centeredOrigin
             onTileClick={(tileX, tileY) => setSelectedTile({ tileX, tileY })}
           />
         )}
@@ -294,6 +309,57 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
             title={isAdmin && isTiling ? `(${t.x}, ${t.y}) — Click: reemplazar | Ctrl+Click: borrar` : `(${t.x}, ${t.y})`}
           />
         ))}
+      </div>
+
+      <div className="absolute right-4 bottom-4 z-30 pointer-events-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/85 backdrop-blur shadow-lg p-2 flex items-center gap-2">
+        <button
+          onClick={() => {
+            const el = containerRef.current
+            if (!el) return
+            const r = el.getBoundingClientRect()
+            applyZoomAt(scale * 1.15, r.width / 2, r.height / 2)
+          }}
+          className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
+          title="Acercar"
+          aria-label="Acercar"
+        >
+          +
+        </button>
+        <input
+          type="range"
+          min={Math.round(MIN_SCALE * 100)}
+          max={Math.round(MAX_SCALE * 100)}
+          value={Math.round(scale * 100)}
+          onChange={(e) => {
+            const el = containerRef.current
+            if (!el) return
+            const r = el.getBoundingClientRect()
+            applyZoomAt(Number(e.target.value) / 100, r.width / 2, r.height / 2)
+          }}
+          className="w-28 accent-blue-600"
+          aria-label="Control de zoom"
+        />
+        <button
+          onClick={() => {
+            const el = containerRef.current
+            if (!el) return
+            const r = el.getBoundingClientRect()
+            applyZoomAt(scale / 1.15, r.width / 2, r.height / 2)
+          }}
+          className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
+          title="Alejar"
+          aria-label="Alejar"
+        >
+          −
+        </button>
+        <button
+          onClick={fitBoardToViewport}
+          className="px-2 h-8 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-500"
+          title="Ajustar mapa"
+          aria-label="Ajustar mapa"
+        >
+          Ajustar
+        </button>
       </div>
 
       <div className="pointer-events-none" style={{ position: 'absolute', inset: 0 }}>
