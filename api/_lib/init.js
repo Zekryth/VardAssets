@@ -160,6 +160,22 @@ export async function initializeDatabase() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
+
+    // Migraciones incrementales de points (compatibilidad con versión actual API)
+    await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS categoria VARCHAR(255)`);
+    await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS compania_propietaria UUID`);
+    await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS compania_alojada UUID`);
+    await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS nr_inventario_sap VARCHAR(255)`);
+    await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS mijloc_fix BOOLEAN DEFAULT FALSE`);
+    await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS pisos_adicionales JSONB DEFAULT '[]'::jsonb`);
+
+    // Backfill: si existía columna antigua "compañia", úsala como propietaria por defecto
+    await pool.query(`
+      UPDATE points
+      SET compania_propietaria = COALESCE(compania_propietaria, compañia)
+      WHERE compania_propietaria IS NULL
+    `);
+
     console.log('✅ Tabla points verificada/creada');
 
     // Tabla: deleted_points (papelera)

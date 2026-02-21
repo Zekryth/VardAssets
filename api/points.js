@@ -24,6 +24,7 @@ export default async function handler(req, res) {
         // GET /api/points/:id - Obtener un punto específico
         const { rows } = await pool.query(
           `SELECT p.*, 
+                  COALESCE(p.pisos_adicionales, '[]'::jsonb) as pisos,
                   c.nombre as company_name
            FROM points p
            LEFT JOIN companies c ON p.compañia = c.id
@@ -117,6 +118,7 @@ export default async function handler(req, res) {
       // GET /api/points - Obtener todos los puntos
       const { rows } = await pool.query(
         `SELECT p.*, 
+                COALESCE(p.pisos_adicionales, '[]'::jsonb) as pisos,
                 c.nombre as company_name,
                 jsonb_array_length(COALESCE(p.inventario, '[]'::jsonb)) as items_count
          FROM points p
@@ -253,15 +255,17 @@ export default async function handler(req, res) {
       console.log('✅ [POINTS] Columna "compañia" verificada');
 
       // Si hay compañía, verificar que existe
-      if (compañia) {
-        console.log(`🔍 [POINTS] Verificando compañía: ${compañia}`);
+      const selectedCompanyId = companiaPropietaria || compañia || null;
+
+      if (selectedCompanyId) {
+        console.log(`🔍 [POINTS] Verificando compañía: ${selectedCompanyId}`);
         const { rows: companyCheck } = await pool.query(
           `SELECT id, nombre FROM companies WHERE id = $1`,
-          [compañia]
+          [selectedCompanyId]
         );
 
         if (companyCheck.length === 0) {
-          console.warn(`⚠️ [POINTS] Compañía no encontrada: ${compañia}`);
+          console.warn(`⚠️ [POINTS] Compañía no encontrada: ${selectedCompanyId}`);
           return res.status(400).json({ 
             error: 'La compañía seleccionada no existe' 
           });
