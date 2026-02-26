@@ -5,7 +5,7 @@
  * Orquesta la visualización del mapa, paneles de puntos, filtros, acciones de administrador y notificaciones.
  * Utiliza múltiples contextos y componentes para la experiencia de usuario en el mapa.
  */
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 import MapComponent from '../components/Map/MapComponent.jsx'
 import { MapActionModeProvider, useMapActionMode } from '../contexts/MapActionModeContext.jsx'
@@ -19,7 +19,7 @@ import { ToastProvider, useToast } from '../components/System/ToastContext.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { tileService, deletedPointsService } from '../services/api'
 import PointPanel from '../components/PointPanel/PointPanel.jsx'
-import { pointService } from '../services/api'
+import { companyService, pointService } from '../services/api'
 import { useSearch } from '../contexts/SearchContext.jsx'
 import FloatingFilters from '../components/Filters/FloatingFilters.jsx'
 import { SlidersHorizontal } from 'lucide-react'
@@ -40,16 +40,13 @@ export default function MapPage() {
 
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
-  const controlsRef = useRef(null)
   const [selectedPoint, setSelectedPoint] = useState(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const mapContainerRef = useRef(null)
+  const [companies, setCompanies] = useState([])
   const [filters, setFilters] = useState(() => ({ companyId: '', category: '' }))
-  // Undo buffer simple para borrados recientes (memoria)
-  const [undo, setUndo] = useState(null)
   // Barra de búsqueda siempre visible ahora
   const searchInputRef = useRef(null)
-  const searchWrapperRef = useRef(null)
 
   const fetchPoints = () => pointService.getPoints()
     .then(res => {
@@ -57,14 +54,75 @@ export default function MapPage() {
     })
     .catch(() => {})
 
+  const fetchCompanies = () => companyService.getCompanies({ params: { page: 1, limit: 1000 } })
+    .then((res) => {
+      const data = res?.data
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data?.companies)
+        ? data.companies
+        : []
+      setCompanies(list.filter(Boolean))
+    })
+    .catch(() => setCompanies([]))
+
   useEffect(() => {
     let mounted = true
     setLoading(true)
-    fetchPoints()
+    Promise.all([fetchPoints(), fetchCompanies()])
       .then(() => { if (!mounted) return })
       .finally(() => mounted && setLoading(false))
     return () => { mounted = false }
   }, [])
+
+  const companyOptions = useMemo(() => {
+    return (Array.isArray(companies) ? companies : [])
+      .map((company) => ({
+        id: company?._id || company?.id || '',
+        nombre: company?.nombre || company?.name || ''
+      }))
+      .filter((company) => company.id && company.nombre)
+  }, [companies])
+
+  const categoryOptions = useMemo(() => {
+    return [...new Set((points || []).map((point) => point?.categoria).filter(Boolean))]
+  }, [points])
+
+  const filteredPoints = useMemo(() => {
+    const companyId = String(filters?.companyId || '').trim()
+    const category = String(filters?.category || '').trim().toLowerCase()
+    const text = String(debouncedQuery || '').trim().toLowerCase()
+
+    return (points || []).filter((point) => {
+      if (!point) return false
+
+      const pointCompanyId = String(point?.compania_propietaria || point?.compañia || point?.company_id || '').trim()
+      if (companyId && pointCompanyId !== companyId) return false
+
+      const pointCategory = String(point?.categoria || '').trim().toLowerCase()
+      if (category && pointCategory !== category) return false
+
+      if (text.length >= 2) {
+        const haystack = [
+          point?.nombre,
+          point?.categoria,
+          point?.company_name,
+          point?.compania_propietaria_nombre,
+          point?.compania_alojada_nombre,
+          point?.compañia?.nombre
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+
+        if (!haystack.includes(text)) return false
+      }
+
+      return true
+    })
+  }, [points, filters, debouncedQuery])
 
   // Atajos: '/' enfoca búsqueda si no estás en un input/textarea; ESC cierra sugerencias
   useEffect(() => {
@@ -170,9 +228,9 @@ export default function MapPage() {
       {/* Center map area */}
   <div className="relative flex-1 min-h-0 h-full bg-white dark:bg-surface flex flex-col transition-colors duration-300">
         {/* Top toolbar */}
-        <div className="relative z-20 px-4 pt-4 md:px-6 md:pt-5 select-none" ref={searchWrapperRef}>
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="flex items-center flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-surface-raised/80 backdrop-blur px-3 py-2 shadow-lg transition-colors duration-300" role="search" aria-label="Buscar puntos, objetos o compañías">
+        <div className="relative z-20 px-4 pt-4 md:px-6 md:pt-5 select-none">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="flex items-center flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-raised px-3 py-2 transition-colors" role="search" aria-label="Buscar puntos, objetos o compañías">
               <Search size={16} className="text-gray-500 dark:text-gray-400 mr-2" />
               <input
                 ref={searchInputRef}
@@ -186,7 +244,7 @@ export default function MapPage() {
                   else if (e.key === 'Enter') { e.preventDefault(); selectActive?.(); triggerEnter?.(); setOpen?.(false) }
                   else if (e.key === 'Escape') { setOpen?.(false) }
                 }}
-                placeholder="Buscar puntos, objetos o compañías (/ para enfocar)"
+                placeholder="Buscar puntos, objetos o compañías"
                 className="w-full bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
                 aria-label="Buscar puntos, objetos o compañías"
               />
@@ -205,19 +263,8 @@ export default function MapPage() {
               <FiltersInline
                 filters={filters}
                 setFilters={setFilters}
-                companies={Array.from(
-                  new Map(
-                    points
-                      .filter(Boolean)
-                      .map(p => {
-                        const c = p?.compañia
-                        const id = c?._id || c?.id
-                        return id ? [id, c] : [undefined, undefined]
-                      })
-                      .filter(([id, c]) => Boolean(id && c))
-                  ).values()
-                ).filter(Boolean)}
-                categories={[...new Set(points.filter(Boolean).map(p => p?.categoria).filter(Boolean))]}
+                companies={companyOptions}
+                categories={categoryOptions}
               />
             </div>
             {/* Botón compacto mobile */}
@@ -225,25 +272,14 @@ export default function MapPage() {
               <MobileFiltersButton
                 filters={filters}
                 setFilters={setFilters}
-                companies={Array.from(
-                  new Map(
-                    points
-                      .filter(Boolean)
-                      .map(p => {
-                        const c = p?.compañia
-                        const id = c?._id || c?.id
-                        return id ? [id, c] : [undefined, undefined]
-                      })
-                      .filter(([id, c]) => Boolean(id && c))
-                  ).values()
-                ).filter(Boolean)}
-                categories={[...new Set(points.filter(Boolean).map(p => p?.categoria).filter(Boolean))]}
+                companies={companyOptions}
+                categories={categoryOptions}
               />
             </div>
           </div>
           {/* Dropdown de sugerencias */}
           {open && (debouncedQuery || '').length >= 2 && flatList.length > 0 && (
-            <div className="absolute left-4 md:left-6 top-full mt-2 w-[calc(100%-2rem)] md:w-[640px] max-w-[90vw] bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden transition-colors" role="listbox" aria-label="Resultados de búsqueda" aria-activedescendant={activeIndex >=0 ? `search-opt-${activeIndex}`: undefined}>
+            <div className="absolute left-4 md:left-6 top-full mt-2 w-[calc(100%-2rem)] md:w-[640px] max-w-[90vw] bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden transition-colors" role="listbox" aria-label="Resultados de búsqueda" aria-activedescendant={activeIndex >=0 ? `search-opt-${activeIndex}`: undefined}>
               <div className="max-h-72 overflow-auto divide-y divide-gray-200 dark:divide-gray-700">
                 {flatList.map((row, idx) => (
                   <button
@@ -275,7 +311,7 @@ export default function MapPage() {
             <MapViewProvider value={createStableMapViewValue(mapContainerRef)}>
               <MapWithPanels
                 mapContainerRef={mapContainerRef}
-                points={points}
+                points={filteredPoints}
                 fetchPoints={fetchPoints}
               />
               {/* Panels overlay */}
@@ -283,7 +319,7 @@ export default function MapPage() {
               {/* Controller reacts to search selection to open panels */}
               <PanelsController selection={selection} enterTick={enterTick} onCloseSearch={() => setOpen(false)} />
               {/* Interaction overlay + admin FAB (admin only) */}
-              <MapInteractionLayer points={points} onChanged={fetchPoints} />
+              <MapInteractionLayer points={filteredPoints} onChanged={fetchPoints} />
               <AdminActionFab isAdmin={isAdmin} />
               {/* Dock */}
               <PointPanelsDock />
@@ -522,7 +558,7 @@ function FiltersInline({ filters, setFilters, companies, categories }) {
               >
                 <option value="">Todas</option>
                 {companies.map(c => (
-                  <option key={c._id || c.id} value={c._id || c.id}>{c.nombre}</option>
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
                 ))}
               </select>
             </div>

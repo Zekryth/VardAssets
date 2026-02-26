@@ -50,8 +50,35 @@ export const SearchProvider = ({ children }) => {
     abortRef.current = controller
     api.get('/search', { params: { q }, signal: controller.signal })
       .then(res => {
-        setSuggestions(res.data || { points: [], companies: [], objects: [] })
-        setOpen(true)
+        const payload = res.data || {}
+
+        const normalizeFromResults = (results = []) => {
+          const points = []
+          const companies = []
+          const objects = []
+
+          results.forEach((item) => {
+            if (!item) return
+            const itemType = String(item.type || '').toLowerCase()
+            if (itemType === 'point') points.push(item)
+            else if (itemType === 'company') companies.push(item)
+            else if (itemType === 'object') objects.push(item)
+          })
+
+          return { points, companies, objects }
+        }
+
+        const normalized = Array.isArray(payload.results)
+          ? normalizeFromResults(payload.results)
+          : {
+              points: Array.isArray(payload.points) ? payload.points : [],
+              companies: Array.isArray(payload.companies) ? payload.companies : [],
+              objects: Array.isArray(payload.objects) ? payload.objects : []
+            }
+
+        const total = normalized.points.length + normalized.companies.length + normalized.objects.length
+        setSuggestions(normalized)
+        setOpen(total > 0)
         setActiveIndex(0)
       })
       .catch(err => {
