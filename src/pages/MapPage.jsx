@@ -98,8 +98,16 @@ export default function MapPage() {
     return (points || []).filter((point) => {
       if (!point) return false
 
-      const pointCompanyId = String(point?.compania_propietaria || point?.compañia || point?.company_id || '').trim()
-      if (companyId && pointCompanyId !== companyId) return false
+      const companyCandidates = [
+        point?.compania_propietaria,
+        point?.compania_alojada,
+        point?.compañia,
+        point?.company_id
+      ]
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+
+      if (companyId && !companyCandidates.includes(companyId)) return false
 
       const pointCategory = String(point?.categoria || '').trim().toLowerCase()
       if (category && pointCategory !== category) return false
@@ -550,7 +558,7 @@ function FiltersInline({ filters, setFilters, companies, categories }) {
           <div className="font-medium text-gray-100 mb-3">Filtros</div>
           <div className="space-y-4 max-h-80 overflow-auto pr-1 custom-scroll">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Compañía</label>
+              <label className="block text-xs text-gray-400 mb-1">Compañía (propietaria o alojada)</label>
               <select
                 value={filters.companyId}
                 onChange={(e) => setField('companyId', e.target.value)}

@@ -72,7 +72,11 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
       numero: 1,
       nombre: point.nombre || 'Planta Baja',
       categoria: point.categoria || '',
-      compañia: point.compañia || point.company_id || null,
+      compañia: point.compania_propietaria || point.compañia || point.company_id || null,
+      compania_propietaria: point.compania_propietaria || point.compañia || point.company_id || null,
+      compania_alojada: point.compania_alojada || null,
+      compania_propietaria_nombre: point.compania_propietaria_nombre || point.company_name || null,
+      compania_alojada_nombre: point.compania_alojada_nombre || null,
       inventario: Array.isArray(inventarioAntiguo) ? inventarioAntiguo : 
                   (typeof inventarioAntiguo === 'string' ? JSON.parse(inventarioAntiguo) : []),
       fotos: Array.isArray(fotosAntiguas) ? fotosAntiguas :
@@ -88,7 +92,11 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
         numero: piso.numero || index + 1,
         nombre: piso.nombre || `Piso ${index + 1}`,
         categoria: piso.categoria || point.categoria || '',
-        compañia: piso.compañia || point.compañia || point.company_id || null,
+        compañia: piso.compañia || piso.compania_propietaria || point.compania_propietaria || point.compañia || point.company_id || null,
+        compania_propietaria: piso.compania_propietaria || piso.compañia || point.compania_propietaria || point.compañia || point.company_id || null,
+        compania_alojada: piso.compania_alojada || point.compania_alojada || null,
+        compania_propietaria_nombre: piso.compania_propietaria_nombre || point.compania_propietaria_nombre || point.company_name || null,
+        compania_alojada_nombre: piso.compania_alojada_nombre || point.compania_alojada_nombre || null,
         inventario: Array.isArray(piso.inventario) ? piso.inventario : [],
         fotos: Array.isArray(piso.fotos) ? piso.fotos : [],
         documentos: Array.isArray(piso.documentos) ? piso.documentos : []
@@ -241,10 +249,21 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
 
                 <div className="col-span-2">
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Compañía
+                    Compañía Propietaria
                   </label>
                   <p className="text-sm text-gray-900 dark:text-white">
-                    {currentFloor.compañia || (
+                    {currentFloor.compania_propietaria_nombre || currentFloor.compania_propietaria || currentFloor.compañia || (
+                      <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía propietaria</span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Compañía Alojada
+                  </label>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {currentFloor.compania_alojada_nombre || currentFloor.compania_alojada || (
                       <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía</span>
                     )}
                   </p>

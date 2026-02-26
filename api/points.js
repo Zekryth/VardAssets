@@ -25,9 +25,13 @@ export default async function handler(req, res) {
         const { rows } = await pool.query(
           `SELECT p.*, 
                   COALESCE(p.pisos_adicionales, '[]'::jsonb) as pisos,
-                  c.nombre as company_name
+                  cp.nombre as compania_propietaria_nombre,
+                  ca.nombre as compania_alojada_nombre,
+                  COALESCE(cp.nombre, legacy.nombre) as company_name
            FROM points p
-           LEFT JOIN companies c ON p.compañia = c.id
+           LEFT JOIN companies cp ON p.compania_propietaria = cp.id
+           LEFT JOIN companies ca ON p.compania_alojada = ca.id
+           LEFT JOIN companies legacy ON p.compañia = legacy.id
            WHERE p.id = $1`,
           [id]
         );
@@ -86,7 +90,11 @@ export default async function handler(req, res) {
             numero: 1,
             nombre: pointData.nombre || 'Planta Baja',
             categoria: pointData.categoria || '',
-            compañia: pointData.compañia || null,
+            compañia: pointData.compania_propietaria || pointData.compañia || null,
+            compania_propietaria: pointData.compania_propietaria || pointData.compañia || null,
+            compania_alojada: pointData.compania_alojada || null,
+            compania_propietaria_nombre: pointData.compania_propietaria_nombre || pointData.company_name || null,
+            compania_alojada_nombre: pointData.compania_alojada_nombre || null,
             inventario,
             fotos,
             documentos
@@ -105,7 +113,11 @@ export default async function handler(req, res) {
           return {
             ...piso,
             categoria: piso.categoria || pointData.categoria || '',
-            compañia: piso.compañia || pointData.compañia || null
+            compañia: piso.compañia || piso.compania_propietaria || pointData.compania_propietaria || pointData.compañia || null,
+            compania_propietaria: piso.compania_propietaria || piso.compañia || pointData.compania_propietaria || pointData.compañia || null,
+            compania_alojada: piso.compania_alojada || pointData.compania_alojada || null,
+            compania_propietaria_nombre: piso.compania_propietaria_nombre || pointData.compania_propietaria_nombre || pointData.company_name || null,
+            compania_alojada_nombre: piso.compania_alojada_nombre || pointData.compania_alojada_nombre || null
           };
         });
 
@@ -119,10 +131,14 @@ export default async function handler(req, res) {
       const { rows } = await pool.query(
         `SELECT p.*, 
                 COALESCE(p.pisos_adicionales, '[]'::jsonb) as pisos,
-                c.nombre as company_name,
+             cp.nombre as compania_propietaria_nombre,
+             ca.nombre as compania_alojada_nombre,
+             COALESCE(cp.nombre, legacy.nombre) as company_name,
                 jsonb_array_length(COALESCE(p.inventario, '[]'::jsonb)) as items_count
          FROM points p
-         LEFT JOIN companies c ON p.compañia = c.id
+        LEFT JOIN companies cp ON p.compania_propietaria = cp.id
+        LEFT JOIN companies ca ON p.compania_alojada = ca.id
+        LEFT JOIN companies legacy ON p.compañia = legacy.id
          ORDER BY p.created_at DESC`
       );
 
@@ -167,12 +183,24 @@ export default async function handler(req, res) {
             numero: 1,
             nombre: pointData.nombre || 'Planta Baja',
             categoria: pointData.categoria || '',
-            compañia: pointData.compañia || null,
+            compañia: pointData.compania_propietaria || pointData.compañia || null,
+            compania_propietaria: pointData.compania_propietaria || pointData.compañia || null,
+            compania_alojada: pointData.compania_alojada || null,
+            compania_propietaria_nombre: pointData.compania_propietaria_nombre || pointData.company_name || null,
+            compania_alojada_nombre: pointData.compania_alojada_nombre || null,
             inventario,
             fotos,
             documentos
           }];
         }
+
+        pointData.pisos = pointData.pisos.map((piso) => ({
+          ...piso,
+          compania_propietaria: piso.compania_propietaria || piso.compañia || pointData.compania_propietaria || pointData.compañia || null,
+          compania_alojada: piso.compania_alojada || pointData.compania_alojada || null,
+          compania_propietaria_nombre: piso.compania_propietaria_nombre || pointData.compania_propietaria_nombre || pointData.company_name || null,
+          compania_alojada_nombre: piso.compania_alojada_nombre || pointData.compania_alojada_nombre || null
+        }));
 
         return pointData;
       });
@@ -255,23 +283,21 @@ export default async function handler(req, res) {
       console.log('✅ [POINTS] Columna "compañia" verificada');
 
       // Si hay compañía, verificar que existe
-      const selectedCompanyId = companiaPropietaria || compañia || null;
+      const ownerCompanyId = companiaPropietaria || compañia || null;
+      const hostedCompanyId = companiaAlojada || null;
+      const companyIdsToValidate = [ownerCompanyId, hostedCompanyId].filter(Boolean);
 
-      if (selectedCompanyId) {
-        console.log(`🔍 [POINTS] Verificando compañía: ${selectedCompanyId}`);
+      if (companyIdsToValidate.length > 0) {
         const { rows: companyCheck } = await pool.query(
-          `SELECT id, nombre FROM companies WHERE id = $1`,
-          [selectedCompanyId]
+          `SELECT id, nombre FROM companies WHERE id = ANY($1::uuid[])`,
+          [companyIdsToValidate]
         );
-
-        if (companyCheck.length === 0) {
-          console.warn(`⚠️ [POINTS] Compañía no encontrada: ${selectedCompanyId}`);
-          return res.status(400).json({ 
-            error: 'La compañía seleccionada no existe' 
-          });
+        const validIds = new Set(companyCheck.map((row) => row.id));
+        const missing = companyIdsToValidate.find((id) => !validIds.has(id));
+        if (missing) {
+          console.warn(`⚠️ [POINTS] Compañía no encontrada: ${missing}`);
+          return res.status(400).json({ error: 'La compañía seleccionada no existe' });
         }
-
-        console.log(`✅ [POINTS] Compañía verificada: ${companyCheck[0].nombre}`);
       }
 
       console.log('💾 [POINTS] Insertando en base de datos...');
@@ -434,9 +460,13 @@ export default async function handler(req, res) {
       const { rows: fullPoint } = await pool.query(`
         SELECT 
           p.*,
-          c.nombre as company_name
+          cp.nombre as compania_propietaria_nombre,
+          ca.nombre as compania_alojada_nombre,
+          COALESCE(cp.nombre, legacy.nombre) as company_name
         FROM points p
-        LEFT JOIN companies c ON p.compañia = c.id
+        LEFT JOIN companies cp ON p.compania_propietaria = cp.id
+        LEFT JOIN companies ca ON p.compania_alojada = ca.id
+        LEFT JOIN companies legacy ON p.compañia = legacy.id
         WHERE p.id = $1
       `, [rows[0].id]);
 

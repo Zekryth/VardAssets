@@ -17,7 +17,8 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
       id: point?.id || point?._id,
       nombre: point?.nombre,
       categoria: point?.categoria,
-      compañia: point?.compañia_nombre || point?.compañia?.nombre,
+      compania_propietaria: point?.compania_propietaria_nombre || point?.company_name || point?.compania_propietaria || point?.compañia?.nombre,
+      compania_alojada: point?.compania_alojada_nombre || point?.compania_alojada,
       coordenadas: point?.coordenadas,
       inventario: point?.inventario,
       fotos: point?.fotos,
@@ -128,7 +129,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             {point.nombre}
           </h2>
           <p className="text-blue-100 text-sm mt-1">
-            {point.categoria || 'Sin categoría'} • {point.compañia_nombre || point.compañia?.nombre || 'Sin compañía'}
+            {point.categoria || 'Sin categoría'} • {(point.compania_propietaria_nombre || point.company_name || point.compania_propietaria || point.compañia?.nombre || 'Sin compañía propietaria')}
           </p>
         </div>
         <button
@@ -200,11 +201,22 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
 
                 <div className="col-span-2">
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Compañía
+                    Compañía Propietaria
                   </label>
                   <p className="text-sm text-gray-900 dark:text-white">
-                    {point.compañia_nombre || point.compañia?.nombre || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía</span>
+                    {point.compania_propietaria_nombre || point.company_name || point.compania_propietaria || point.compañia?.nombre || (
+                      <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía propietaria</span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Compañía Alojada
+                  </label>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {point.compania_alojada_nombre || point.compania_alojada || (
+                      <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía alojada</span>
                     )}
                   </p>
                 </div>

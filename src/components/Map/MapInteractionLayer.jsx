@@ -63,13 +63,17 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
       const body = {
         nombre: payload?.nombre,
         categoria: payload?.categoria,
-        compañia: payload?.compañia || payload?.compania || null,
+        companiaPropietaria: payload?.companiaPropietaria || payload?.compania_propietaria || payload?.compañia || payload?.compania || null,
+        companiaAlojada: payload?.companiaAlojada || payload?.compania_alojada || null,
+        nrInventarioSAP: payload?.nrInventarioSAP || payload?.nr_inventario_sap || null,
+        mijlocFix: Boolean(payload?.mijlocFix),
         coordenadas: { x: coords.x, y: coords.y },
         inventario: Array.isArray(payload?.inventario)
           ? payload.inventario.map(it => ({ objeto: it?.objeto?._id || it?.objeto || it?.id, cantidad: Number(it?.cantidad) || 1 }))
           : [],
         fotos: payload?.fotos || [],
-        documentos: payload?.documentos || []
+        documentos: payload?.documentos || [],
+        pisosAdicionales: Array.isArray(payload?.pisosAdicionales) ? payload.pisosAdicionales : []
       }
       
       console.log('💾 [CREATE POINT] Saving:', payload.nombre, 'at', body.coordenadas)
