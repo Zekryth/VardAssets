@@ -30,7 +30,8 @@ export default function MapPage() {
   const {
     query, setQuery,
     committedQuery,
-    debouncedQuery,
+    loading: searchLoading,
+    error: searchError,
     open, setOpen,
     activeIndex, moveActive,
     flatList,
@@ -47,6 +48,7 @@ export default function MapPage() {
   const [filters, setFilters] = useState(() => ({ companyId: '', category: '' }))
   // Barra de búsqueda siempre visible ahora
   const searchInputRef = useRef(null)
+  const searchListId = 'map-search-listbox'
 
   const fetchPoints = useCallback(() => pointService.getPoints()
     .then(res => {
@@ -203,6 +205,7 @@ export default function MapPage() {
   }, [enterTick, selection, committedQuery, points, setOpen])
 
   const mapViewValue = useMemo(() => createStableMapViewValue(mapContainerRef), [])
+  const isComboboxOpen = open && (committedQuery || '').length >= 2 && flatList.length > 0
 
   // Cerrar al hacer click fuera del FloatingSearch
   // Ya no necesitamos cerrar por click externo; solo cerramos sugerencias con Escape
@@ -258,9 +261,10 @@ export default function MapPage() {
               <input
                 ref={searchInputRef}
                 type="text"
+                role="combobox"
                 value={query}
                 onChange={(e) => { setQuery?.(e.target.value); setOpen?.(false) }}
-                onFocus={() => { if ((committedQuery || '').length >= 2) setOpen?.(true) }}
+                onFocus={() => { if ((committedQuery || '').length >= 2 && flatList.length > 0) setOpen?.(true) }}
                 onKeyDown={(e) => {
                   if (e.key === 'ArrowDown') { e.preventDefault(); moveActive?.(1) }
                   else if (e.key === 'ArrowUp') { e.preventDefault(); moveActive?.(-1) }
@@ -275,7 +279,11 @@ export default function MapPage() {
                   else if (e.key === 'Escape') { setOpen?.(false) }
                 }}
                 placeholder="Buscar puntos, objetos o compañías"
-                className="w-full bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
+                className="w-full bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded"
+                aria-expanded={isComboboxOpen}
+                aria-controls={searchListId}
+                aria-autocomplete="list"
+                aria-activedescendant={isComboboxOpen && activeIndex >= 0 ? `search-opt-${activeIndex}` : undefined}
                 aria-label="Buscar puntos, objetos o compañías"
               />
               {(query || '').length > 0 && (
@@ -288,6 +296,13 @@ export default function MapPage() {
                 </button>
               )}
             </div>
+            <span className="sr-only" aria-live="polite">
+              {searchLoading
+                ? 'Cargando resultados de búsqueda'
+                : searchError
+                ? 'Error al cargar resultados'
+                : `${flatList.length} resultados disponibles`}
+            </span>
             {/* Filtros integrados (desktop) */}
             <div className="hidden md:block relative">
               <FiltersInline
@@ -298,7 +313,7 @@ export default function MapPage() {
               />
             </div>
             {/* Botón compacto mobile */}
-            <div className="md:hidden">
+            <div className="md:hidden relative">
               <MobileFiltersButton
                 filters={filters}
                 setFilters={setFilters}
@@ -308,8 +323,8 @@ export default function MapPage() {
             </div>
           </div>
           {/* Dropdown de sugerencias */}
-          {open && (committedQuery || '').length >= 2 && flatList.length > 0 && (
-            <div className="absolute left-4 md:left-6 top-full mt-2 w-[calc(100%-2rem)] md:w-[640px] max-w-[90vw] bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden transition-colors" role="listbox" aria-label="Resultados de búsqueda" aria-activedescendant={activeIndex >=0 ? `search-opt-${activeIndex}`: undefined}>
+          {isComboboxOpen && (
+            <div id={searchListId} className="absolute left-4 md:left-6 top-full mt-2 w-[calc(100%-2rem)] md:w-[640px] max-w-[90vw] bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden transition-colors" role="listbox" aria-label="Resultados de búsqueda">
               <div className="max-h-72 overflow-auto divide-y divide-gray-200 dark:divide-gray-700">
                 {flatList.map((row, idx) => (
                   <button
@@ -319,7 +334,13 @@ export default function MapPage() {
                     aria-selected={idx === activeIndex}
                     className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${idx === activeIndex ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => { selectSuggestion?.(row); triggerEnter?.(query); setOpen?.(false) }}
+                    onClick={() => {
+                      const selectedText = row?.item?.nombre || query
+                      setQuery?.(selectedText)
+                      selectSuggestion?.(row)
+                      triggerEnter?.(selectedText)
+                      setOpen?.(false)
+                    }}
                   >
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] uppercase">{row.type[0]}</span>
                     <span className="truncate">
