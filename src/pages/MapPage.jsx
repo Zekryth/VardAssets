@@ -21,7 +21,6 @@ import { tileService, deletedPointsService } from '../services/api'
 import PointPanel from '../components/PointPanel/PointPanel.jsx'
 import { companyService, pointService } from '../services/api'
 import { useSearch } from '../contexts/SearchContext.jsx'
-import FloatingFilters from '../components/Filters/FloatingFilters.jsx'
 import { SlidersHorizontal } from 'lucide-react'
 import { Skeleton, SkeletonText } from '../components/UI/Skeleton.jsx'
 
@@ -46,8 +45,9 @@ export default function MapPage() {
   const mapContainerRef = useRef(null)
   const [companies, setCompanies] = useState([])
   const [filters, setFilters] = useState(() => ({ companyId: '', category: '' }))
-  // Barra de búsqueda siempre visible ahora
+  const [searchPanelOpen, setSearchPanelOpen] = useState(false)
   const searchInputRef = useRef(null)
+  const searchPanelRef = useRef(null)
   const searchListId = 'map-search-listbox'
 
   const fetchPoints = useCallback(() => pointService.getPoints()
@@ -154,10 +154,12 @@ export default function MapPage() {
         const tag = document.activeElement?.tagName
         if (tag !== 'INPUT' && tag !== 'TEXTAREA' && !document.activeElement?.isContentEditable) {
           e.preventDefault()
+          setSearchPanelOpen(true)
           searchInputRef.current?.focus()
         }
       } else if (e.key === 'Escape') {
         setOpen?.(false)
+        setSearchPanelOpen(false)
         // Cerrar popover de filtros inline si existe alguno abierto
         const anyActive = document.querySelector('[data-filters-popover="open"]')
         if (anyActive) {
@@ -204,9 +206,20 @@ export default function MapPage() {
     }
   }, [enterTick, selection, committedQuery, points, setOpen])
 
+  useEffect(() => {
+    const onDoc = (e) => {
+      if (!searchPanelOpen) return
+      if (searchPanelRef.current && !searchPanelRef.current.contains(e.target)) {
+        setSearchPanelOpen(false)
+        setOpen?.(false)
+      }
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [searchPanelOpen, setOpen])
+
   const mapViewValue = useMemo(() => createStableMapViewValue(mapContainerRef), [])
-  const isComboboxOpen = open && (committedQuery || '').length >= 2 && flatList.length > 0
-  const hasPendingSearch = (query || '').trim() !== (committedQuery || '').trim()
+  const isComboboxOpen = searchPanelOpen && open && (committedQuery || '').length >= 2 && flatList.length > 0
 
   // Cerrar al hacer click fuera del FloatingSearch
   // Ya no necesitamos cerrar por click externo; solo cerramos sugerencias con Escape
@@ -256,112 +269,118 @@ export default function MapPage() {
   <div className="relative flex-1 min-h-0 h-full bg-white dark:bg-surface flex flex-col transition-colors duration-300">
         {/* Top toolbar */}
         <div className="relative z-20 px-4 pt-4 md:px-6 md:pt-5 select-none">
-          <div className="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white/90 dark:bg-surface-raised/80 backdrop-blur p-2 md:p-3 shadow-sm">
-            <div className="flex flex-col md:flex-row items-stretch gap-2 md:gap-3">
-              <div className="relative flex-1 min-w-0" role="search" aria-label="Buscar puntos, objetos o compañías">
-                <div className="flex items-center h-12 rounded-xl border border-gray-300/80 dark:border-gray-600 bg-white dark:bg-surface px-4 transition-colors focus-within:border-primary-500/80 focus-within:ring-2 focus-within:ring-primary-500/20">
-                  <Search size={18} className="text-gray-500 dark:text-gray-400 mr-3" />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    role="combobox"
-                    value={query}
-                    onChange={(e) => { setQuery?.(e.target.value); setOpen?.(false) }}
-                    onFocus={() => { if ((committedQuery || '').length >= 2 && flatList.length > 0) setOpen?.(true) }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'ArrowDown') { e.preventDefault(); moveActive?.(1) }
-                      else if (e.key === 'ArrowUp') { e.preventDefault(); moveActive?.(-1) }
-                      else if (e.key === 'Enter') {
-                        e.preventDefault()
-                        if (open && flatList.length > 0) {
-                          selectActive?.()
-                        }
-                        triggerEnter?.(query)
-                        setOpen?.(false)
-                      }
-                      else if (e.key === 'Escape') { setOpen?.(false) }
-                    }}
-                    placeholder="Buscar puntos, objetos o compañías"
-                    className="w-full bg-transparent text-base text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
-                    aria-expanded={isComboboxOpen}
-                    aria-controls={searchListId}
-                    aria-autocomplete="list"
-                    aria-activedescendant={isComboboxOpen && activeIndex >= 0 ? `search-opt-${activeIndex}` : undefined}
-                    aria-label="Buscar puntos, objetos o compañías"
-                  />
-                  {(query || '').length > 0 && (
-                    <button
-                      onClick={() => { setQuery?.(''); triggerEnter?.(''); setOpen?.(false) }}
-                      className="ml-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xs px-2.5 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      aria-label="Limpiar búsqueda"
-                    >
-                      Limpiar
-                    </button>
-                  )}
-                </div>
+          <div className="flex items-start justify-between">
+            <div className="relative" ref={searchPanelRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchPanelOpen((prev) => {
+                    const next = !prev
+                    if (next) requestAnimationFrame(() => searchInputRef.current?.focus())
+                    else setOpen?.(false)
+                    return next
+                  })
+                }}
+                className="inline-flex items-center justify-center min-w-[44px] h-12 px-4 rounded-xl border bg-white dark:bg-surface border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+                aria-label="Abrir búsqueda"
+                aria-expanded={searchPanelOpen}
+                aria-haspopup="dialog"
+              >
+                <Search size={18} />
+              </button>
 
-                <div className="mt-1.5 px-1 flex items-center justify-between gap-2 text-[11px]">
-                  <span className="text-gray-500 dark:text-gray-400" aria-live="polite">
+              {searchPanelOpen && (
+                <div className="absolute left-0 mt-2 w-[min(32rem,calc(100vw-2rem))] md:w-[36rem] bg-white/95 dark:bg-surface/95 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4" role="dialog" aria-label="Buscar puntos, objetos o compañías">
+                  <div className="flex items-center h-12 rounded-xl border border-gray-300/80 dark:border-gray-600 bg-white dark:bg-surface px-4 transition-colors focus-within:border-primary-500/80 focus-within:ring-2 focus-within:ring-primary-500/20">
+                    <Search size={18} className="text-gray-500 dark:text-gray-400 mr-3" />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      role="combobox"
+                      value={query}
+                      onChange={(e) => { setQuery?.(e.target.value); setOpen?.(false) }}
+                      onFocus={() => { if ((committedQuery || '').length >= 2 && flatList.length > 0) setOpen?.(true) }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowDown') { e.preventDefault(); moveActive?.(1) }
+                        else if (e.key === 'ArrowUp') { e.preventDefault(); moveActive?.(-1) }
+                        else if (e.key === 'Enter') {
+                          e.preventDefault()
+                          if (open && flatList.length > 0) {
+                            selectActive?.()
+                          }
+                          triggerEnter?.(query)
+                          setOpen?.(false)
+                        }
+                        else if (e.key === 'Escape') { setOpen?.(false); setSearchPanelOpen(false) }
+                      }}
+                      placeholder="Escribir para buscar"
+                      className="w-full bg-transparent text-base text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
+                      aria-expanded={isComboboxOpen}
+                      aria-controls={searchListId}
+                      aria-autocomplete="list"
+                      aria-activedescendant={isComboboxOpen && activeIndex >= 0 ? `search-opt-${activeIndex}` : undefined}
+                      aria-label="Buscar puntos, objetos o compañías"
+                    />
+                    {(query || '').length > 0 && (
+                      <button
+                        onClick={() => { setQuery?.(''); triggerEnter?.(''); setOpen?.(false) }}
+                        className="ml-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xs px-2.5 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        aria-label="Limpiar búsqueda"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400" aria-live="polite">
                     {searchLoading
                       ? 'Cargando resultados…'
                       : searchError
                       ? 'Error al cargar resultados'
-                      : `${flatList.length} resultados`}
-                  </span>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${hasPendingSearch ? 'border-amber-300/70 text-amber-700 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-900/20' : 'border-gray-300/70 dark:border-gray-600 text-gray-500 dark:text-gray-400 bg-gray-50/80 dark:bg-gray-800/70'}`}>
-                    Enter para buscar
-                  </span>
-                </div>
-
-                {isComboboxOpen && (
-                  <div id={searchListId} className="absolute left-0 right-0 top-[calc(100%+0.5rem)] bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden transition-colors" role="listbox" aria-label="Resultados de búsqueda">
-                    <div className="max-h-72 overflow-auto divide-y divide-gray-200 dark:divide-gray-700">
-                      {flatList.map((row, idx) => (
-                        <button
-                          key={`${row.type}-${row.item._id || row.item.nombre}`}
-                          role="option"
-                          id={`search-opt-${idx}`}
-                          aria-selected={idx === activeIndex}
-                          className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 ${idx === activeIndex ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => {
-                            const selectedText = row?.item?.nombre || query
-                            setQuery?.(selectedText)
-                            selectSuggestion?.(row)
-                            triggerEnter?.(selectedText)
-                            setOpen?.(false)
-                          }}
-                        >
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] uppercase">{row.type[0]}</span>
-                          <span className="truncate">
-                            {row.type === 'point' && `${row.item.nombre} — ${row.item.compañia?.nombre || ''}`}
-                            {row.type === 'company' && `${row.item.nombre}`}
-                            {row.type === 'object' && `${row.item.nombre}`}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
+                      : `${flatList.length} resultados · Enter para buscar`}
                   </div>
-                )}
-              </div>
 
-              <div className="hidden md:flex shrink-0">
-                <FiltersInline
-                  filters={filters}
-                  setFilters={setFilters}
-                  companies={companyOptions}
-                  categories={categoryOptions}
-                />
-              </div>
+                  {isComboboxOpen && (
+                    <div id={searchListId} className="mt-2 bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden transition-colors" role="listbox" aria-label="Resultados de búsqueda">
+                      <div className="max-h-72 overflow-auto divide-y divide-gray-200 dark:divide-gray-700">
+                        {flatList.map((row, idx) => (
+                          <button
+                            key={`${row.type}-${row.item._id || row.item.nombre}`}
+                            role="option"
+                            id={`search-opt-${idx}`}
+                            aria-selected={idx === activeIndex}
+                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 ${idx === activeIndex ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              const selectedText = row?.item?.nombre || query
+                              setQuery?.(selectedText)
+                              selectSuggestion?.(row)
+                              triggerEnter?.(selectedText)
+                              setOpen?.(false)
+                            }}
+                          >
+                            <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] uppercase">{row.type[0]}</span>
+                            <span className="truncate">
+                              {row.type === 'point' && `${row.item.nombre} — ${row.item.compañia?.nombre || ''}`}
+                              {row.type === 'company' && `${row.item.nombre}`}
+                              {row.type === 'object' && `${row.item.nombre}`}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
-              <div className="md:hidden self-end">
-                <MobileFiltersButton
-                  filters={filters}
-                  setFilters={setFilters}
-                  companies={companyOptions}
-                  categories={categoryOptions}
-                />
-              </div>
+            <div className="shrink-0">
+              <FiltersInline
+                filters={filters}
+                setFilters={setFilters}
+                companies={companyOptions}
+                categories={categoryOptions}
+              />
             </div>
           </div>
         </div>
@@ -595,12 +614,12 @@ function FiltersInline({ filters, setFilters, companies, categories }) {
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className={`inline-flex items-center gap-2 h-12 px-4 rounded-xl border text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 ${hasActive ? 'bg-primary-600 border-primary-500 text-white hover:bg-primary-500 shadow-sm' : 'bg-white dark:bg-surface border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-surface-raised'}`}
+        className={`inline-flex items-center justify-center min-w-[44px] h-12 px-4 rounded-xl border text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 ${hasActive ? 'bg-primary-600 border-primary-500 text-white hover:bg-primary-500 shadow-sm' : 'bg-white dark:bg-surface border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-surface-raised'}`}
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-label="Abrir filtros"
       >
         <SlidersHorizontal size={16} />
-        <span>Filtros</span>
         {hasActive && <span className="ml-1 inline-block w-2 h-2 rounded-full bg-primary-200 animate-pulse" />}
       </button>
       {open && (
@@ -650,14 +669,3 @@ function FiltersInline({ filters, setFilters, companies, categories }) {
   )
 }
 
-function MobileFiltersButton({ filters, setFilters, companies, categories }) {
-  // Reutiliza FloatingFilters existente para mobile usando la API original
-  return (
-    <FloatingFilters
-      value={filters}
-      onChange={setFilters}
-      companies={companies}
-      categories={categories}
-    />
-  )
-}
