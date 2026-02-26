@@ -19,6 +19,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   const [categoriaPunto, setCategoriaPunto] = useState('')
   const [companiaPropietaria, setCompaniaPropietaria] = useState(null)
   const [companiaAlojada, setCompaniaAlojada] = useState(null)
+  const [companiaAlojadaFecha, setCompaniaAlojadaFecha] = useState('')
   const [nrInventarioSAP, setNrInventarioSAP] = useState('')
   const [showSAPField, setShowSAPField] = useState(false)
   const [mijlocFix, setMijlocFix] = useState(false)
@@ -58,6 +59,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     setCategoriaPunto('')
     setCompaniaPropietaria(null)
     setCompaniaAlojada(null)
+    setCompaniaAlojadaFecha('')
     setNrInventarioSAP('')
     setShowSAPField(false)
     setMijlocFix(false)
@@ -174,6 +176,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
         categoria: '',
         compania_propietaria: null,
         compania_alojada: null,
+        compania_alojada_fecha: '',
         mijloc_fix: false,
         inventario: [],
         fotos: [],
@@ -321,6 +324,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
       categoria: piso.categoria?.trim() || '',
       compania_propietaria: piso.compania_propietaria || null,
       compania_alojada: piso.compania_alojada || null,
+      compania_alojada_fecha: piso.compania_alojada_fecha || null,
       mijloc_fix: piso.mijloc_fix || false,
       inventario: (piso.inventario || [])
         .map(r => ({
@@ -339,6 +343,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
       categoria: categoriaPunto?.trim() || null,
       companiaPropietaria: companiaPropietaria || null,
       companiaAlojada: companiaAlojada || null,
+      companiaAlojadaFecha: companiaAlojadaFecha || null,
       nrInventarioSAP: nrInventarioSAP?.trim() || null,
       mijlocFix: mijlocFix,
       coordenadas: coords,
@@ -533,7 +538,11 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                 ) : (
                   <select
                     value={companiaAlojada || ''}
-                    onChange={(e) => setCompaniaAlojada(e.target.value || null)}
+                    onChange={(e) => {
+                      const value = e.target.value || null
+                      setCompaniaAlojada(value)
+                      if (!value) setCompaniaAlojadaFecha('')
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   >
                     <option value="">Sin compañía</option>
@@ -544,6 +553,20 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                     ))}
                   </select>
                 )}
+              </div>
+
+              {/* Fecha de Alojamiento */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Fecha de Alojamiento
+                </label>
+                <input
+                  type="date"
+                  value={companiaAlojadaFecha || ''}
+                  onChange={(e) => setCompaniaAlojadaFecha(e.target.value || '')}
+                  disabled={!companiaAlojada}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm disabled:opacity-60"
+                />
               </div>
 
               {/* Nr. Inv. SAP (colapsable) */}
@@ -901,7 +924,11 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                           ) : (
                             <select
                               value={currentPiso?.compania_alojada || ''}
-                              onChange={(e) => updatePisoActual('compania_alojada', e.target.value || null)}
+                              onChange={(e) => {
+                                const value = e.target.value || null
+                                updatePisoActual('compania_alojada', value)
+                                if (!value) updatePisoActual('compania_alojada_fecha', '')
+                              }}
                               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                             >
                               <option value="">Sin compañía</option>
@@ -912,6 +939,20 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                               ))}
                             </select>
                           )}
+                        </div>
+
+                        {/* Fecha de Alojamiento */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Fecha de Alojamiento
+                          </label>
+                          <input
+                            type="date"
+                            value={currentPiso?.compania_alojada_fecha || ''}
+                            onChange={(e) => updatePisoActual('compania_alojada_fecha', e.target.value || '')}
+                            disabled={!currentPiso?.compania_alojada}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm disabled:opacity-60"
+                          />
                         </div>
                       </div>
 

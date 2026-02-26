@@ -120,6 +120,13 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   };
 
+  const formatHostedDate = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString('es-ES');
+  };
+
   return (
     <div className="fixed inset-y-0 right-0 w-[450px] bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col animate-slide-in-right">
       {/* Header */}
@@ -217,6 +224,17 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
                   <p className="text-sm text-gray-900 dark:text-white">
                     {point.compania_alojada_nombre || point.compania_alojada || (
                       <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía alojada</span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Fecha de Alojamiento
+                  </label>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {formatHostedDate(point.compania_alojada_fecha) || (
+                      <span className="text-gray-400 dark:text-gray-500 italic">Sin fecha registrada</span>
                     )}
                   </p>
                 </div>

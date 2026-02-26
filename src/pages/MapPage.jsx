@@ -98,11 +98,18 @@ export default function MapPage() {
     return (points || []).filter((point) => {
       if (!point) return false
 
+      const floors = Array.isArray(point?.pisos) ? point.pisos : []
+
       const companyCandidates = [
         point?.compania_propietaria,
         point?.compania_alojada,
         point?.compañia,
-        point?.company_id
+        point?.company_id,
+        ...floors.flatMap((floor) => [
+          floor?.compania_propietaria,
+          floor?.compania_alojada,
+          floor?.compañia
+        ])
       ]
         .map((value) => String(value || '').trim())
         .filter(Boolean)
@@ -119,7 +126,13 @@ export default function MapPage() {
           point?.company_name,
           point?.compania_propietaria_nombre,
           point?.compania_alojada_nombre,
-          point?.compañia?.nombre
+          point?.compañia?.nombre,
+          ...floors.flatMap((floor) => [
+            floor?.nombre,
+            floor?.categoria,
+            floor?.compania_propietaria_nombre,
+            floor?.compania_alojada_nombre
+          ])
         ]
           .filter(Boolean)
           .join(' ')

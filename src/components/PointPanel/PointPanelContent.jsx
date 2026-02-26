@@ -75,6 +75,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
       compañia: point.compania_propietaria || point.compañia || point.company_id || null,
       compania_propietaria: point.compania_propietaria || point.compañia || point.company_id || null,
       compania_alojada: point.compania_alojada || null,
+      compania_alojada_fecha: point.compania_alojada_fecha || null,
       compania_propietaria_nombre: point.compania_propietaria_nombre || point.company_name || null,
       compania_alojada_nombre: point.compania_alojada_nombre || null,
       inventario: Array.isArray(inventarioAntiguo) ? inventarioAntiguo : 
@@ -95,6 +96,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
         compañia: piso.compañia || piso.compania_propietaria || point.compania_propietaria || point.compañia || point.company_id || null,
         compania_propietaria: piso.compania_propietaria || piso.compañia || point.compania_propietaria || point.compañia || point.company_id || null,
         compania_alojada: piso.compania_alojada || point.compania_alojada || null,
+        compania_alojada_fecha: piso.compania_alojada_fecha || point.compania_alojada_fecha || null,
         compania_propietaria_nombre: piso.compania_propietaria_nombre || point.compania_propietaria_nombre || point.company_name || null,
         compania_alojada_nombre: piso.compania_alojada_nombre || point.compania_alojada_nombre || null,
         inventario: Array.isArray(piso.inventario) ? piso.inventario : [],
@@ -150,6 +152,13 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
+
+  const formatHostedDate = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString('es-ES');
   };
 
   return (
@@ -265,6 +274,17 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                   <p className="text-sm text-gray-900 dark:text-white">
                     {currentFloor.compania_alojada_nombre || currentFloor.compania_alojada || (
                       <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía</span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Fecha de Alojamiento
+                  </label>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {formatHostedDate(currentFloor.compania_alojada_fecha) || (
+                      <span className="text-gray-400 dark:text-gray-500 italic">Sin fecha registrada</span>
                     )}
                   </p>
                 </div>

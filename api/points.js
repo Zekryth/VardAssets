@@ -16,6 +16,14 @@ export default async function handler(req, res) {
     const user = authenticateToken(req);
     console.log('✅ Usuario autenticado:', user.email);
 
+    const normalizeDate = (value) => {
+      if (!value) return null;
+      const text = String(value).trim();
+      if (!text) return null;
+      const match = text.match(/^(\d{4}-\d{2}-\d{2})/);
+      return match ? match[1] : null;
+    };
+
     // GET /api/points - Listar puntos
     if (req.method === 'GET') {
       const { id } = req.query;
@@ -93,6 +101,7 @@ export default async function handler(req, res) {
             compañia: pointData.compania_propietaria || pointData.compañia || null,
             compania_propietaria: pointData.compania_propietaria || pointData.compañia || null,
             compania_alojada: pointData.compania_alojada || null,
+            compania_alojada_fecha: normalizeDate(pointData.compania_alojada_fecha),
             compania_propietaria_nombre: pointData.compania_propietaria_nombre || pointData.company_name || null,
             compania_alojada_nombre: pointData.compania_alojada_nombre || null,
             inventario,
@@ -116,6 +125,7 @@ export default async function handler(req, res) {
             compañia: piso.compañia || piso.compania_propietaria || pointData.compania_propietaria || pointData.compañia || null,
             compania_propietaria: piso.compania_propietaria || piso.compañia || pointData.compania_propietaria || pointData.compañia || null,
             compania_alojada: piso.compania_alojada || pointData.compania_alojada || null,
+            compania_alojada_fecha: normalizeDate(piso.compania_alojada_fecha || pointData.compania_alojada_fecha),
             compania_propietaria_nombre: piso.compania_propietaria_nombre || pointData.compania_propietaria_nombre || pointData.company_name || null,
             compania_alojada_nombre: piso.compania_alojada_nombre || pointData.compania_alojada_nombre || null
           };
@@ -186,6 +196,7 @@ export default async function handler(req, res) {
             compañia: pointData.compania_propietaria || pointData.compañia || null,
             compania_propietaria: pointData.compania_propietaria || pointData.compañia || null,
             compania_alojada: pointData.compania_alojada || null,
+            compania_alojada_fecha: normalizeDate(pointData.compania_alojada_fecha),
             compania_propietaria_nombre: pointData.compania_propietaria_nombre || pointData.company_name || null,
             compania_alojada_nombre: pointData.compania_alojada_nombre || null,
             inventario,
@@ -198,6 +209,7 @@ export default async function handler(req, res) {
           ...piso,
           compania_propietaria: piso.compania_propietaria || piso.compañia || pointData.compania_propietaria || pointData.compañia || null,
           compania_alojada: piso.compania_alojada || pointData.compania_alojada || null,
+          compania_alojada_fecha: normalizeDate(piso.compania_alojada_fecha || pointData.compania_alojada_fecha),
           compania_propietaria_nombre: piso.compania_propietaria_nombre || pointData.compania_propietaria_nombre || pointData.company_name || null,
           compania_alojada_nombre: piso.compania_alojada_nombre || pointData.compania_alojada_nombre || null
         }));
@@ -238,6 +250,7 @@ export default async function handler(req, res) {
         categoria, 
         companiaPropietaria,
         companiaAlojada,
+        companiaAlojadaFecha,
         nrInventarioSAP,
         mijlocFix,
         coordenadas, 
@@ -256,6 +269,7 @@ export default async function handler(req, res) {
         categoria,
         companiaPropietaria,
         companiaAlojada,
+        companiaAlojadaFecha,
         nrInventarioSAP,
         mijlocFix,
         coordenadas,
@@ -310,6 +324,7 @@ export default async function handler(req, res) {
         categoria: categoria?.trim() || null,
         compania_propietaria: companiaPropietaria || compañia || null,
         compania_alojada: companiaAlojada || null,
+        compania_alojada_fecha: normalizeDate(companiaAlojadaFecha),
         nr_inventario_sap: nrInventarioSAP?.trim() || null,
         mijloc_fix: mijlocFix || false,
         pisosAdicionales_count: Array.isArray(pisosAdicionales) ? pisosAdicionales.length : (Array.isArray(pisos) ? pisos.length : 0),
@@ -317,7 +332,11 @@ export default async function handler(req, res) {
       });
 
       // Determinar pisos_adicionales (nueva estructura) o pisos (backward compatibility)
-      const pisosAdicionalesData = Array.isArray(pisosAdicionales) ? pisosAdicionales : (Array.isArray(pisos) ? pisos : []);
+      const pisosAdicionalesDataRaw = Array.isArray(pisosAdicionales) ? pisosAdicionales : (Array.isArray(pisos) ? pisos : []);
+      const pisosAdicionalesData = pisosAdicionalesDataRaw.map((piso) => ({
+        ...piso,
+        compania_alojada_fecha: normalizeDate(piso?.compania_alojada_fecha)
+      }));
 
       const { rows } = await pool.query(
         `INSERT INTO points (
@@ -325,6 +344,7 @@ export default async function handler(req, res) {
           categoria, 
           compania_propietaria, 
           compania_alojada, 
+          compania_alojada_fecha,
           nr_inventario_sap,
           mijloc_fix,
           coordenadas, 
@@ -332,13 +352,14 @@ export default async function handler(req, res) {
           fotos,
           documentos,
           pisos_adicionales
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING *`,
         [
           nombre.trim(),
           categoria?.trim() || null,
           companiaPropietaria || compañia || null,  // Backward compatibility
           companiaAlojada || null,
+          normalizeDate(companiaAlojadaFecha),
           nrInventarioSAP?.trim() || null,
           mijlocFix || false,
           JSON.stringify(coordenadas),
@@ -355,6 +376,7 @@ export default async function handler(req, res) {
         nombre: newPoint.nombre,
         compania_propietaria: newPoint.compania_propietaria,
         compania_alojada: newPoint.compania_alojada,
+        compania_alojada_fecha: newPoint.compania_alojada_fecha,
         mijloc_fix: newPoint.mijloc_fix,
         pisos_adicionales_count: Array.isArray(newPoint.pisos_adicionales) ? newPoint.pisos_adicionales.length : 0
       });
@@ -382,6 +404,7 @@ export default async function handler(req, res) {
         categoria, 
         companiaPropietaria,
         companiaAlojada,
+        companiaAlojadaFecha,
         nrInventarioSAP,
         mijlocFix,
         coordenadas, 
@@ -400,6 +423,7 @@ export default async function handler(req, res) {
         categoria, 
         companiaPropietaria,
         companiaAlojada,
+        companiaAlojadaFecha,
         mijlocFix,
         pisosAdicionales_count: Array.isArray(pisosAdicionales) ? pisosAdicionales.length : (Array.isArray(pisos) ? pisos.length : undefined)
       });
@@ -415,7 +439,13 @@ export default async function handler(req, res) {
       }
 
       // Determinar pisos_adicionales
-      const pisosAdicionalesData = Array.isArray(pisosAdicionales) ? pisosAdicionales : (Array.isArray(pisos) ? pisos : null);
+      const pisosAdicionalesDataRaw = Array.isArray(pisosAdicionales) ? pisosAdicionales : (Array.isArray(pisos) ? pisos : null);
+      const pisosAdicionalesData = Array.isArray(pisosAdicionalesDataRaw)
+        ? pisosAdicionalesDataRaw.map((piso) => ({
+            ...piso,
+            compania_alojada_fecha: normalizeDate(piso?.compania_alojada_fecha)
+          }))
+        : null;
 
       const { rows } = await pool.query(
         `UPDATE points 
@@ -423,21 +453,23 @@ export default async function handler(req, res) {
              categoria = COALESCE($2, categoria),
              compania_propietaria = COALESCE($3, compania_propietaria),
              compania_alojada = COALESCE($4, compania_alojada),
-             nr_inventario_sap = COALESCE($5, nr_inventario_sap),
-             mijloc_fix = COALESCE($6, mijloc_fix),
-             coordenadas = COALESCE($7, coordenadas),
-             inventario = COALESCE($8, inventario),
-             fotos = COALESCE($9, fotos),
-             documentos = COALESCE($10, documentos),
-             pisos_adicionales = COALESCE($11, pisos_adicionales),
+             compania_alojada_fecha = COALESCE($5, compania_alojada_fecha),
+             nr_inventario_sap = COALESCE($6, nr_inventario_sap),
+             mijloc_fix = COALESCE($7, mijloc_fix),
+             coordenadas = COALESCE($8, coordenadas),
+             inventario = COALESCE($9, inventario),
+             fotos = COALESCE($10, fotos),
+             documentos = COALESCE($11, documentos),
+             pisos_adicionales = COALESCE($12, pisos_adicionales),
              updated_at = NOW()
-         WHERE id = $12
+         WHERE id = $13
          RETURNING *`,
         [
           nombre?.trim() || null,
           categoria?.trim() || null,
           companiaPropietaria || compañia || null,  // Backward compatibility
           companiaAlojada || null,
+          normalizeDate(companiaAlojadaFecha),
           nrInventarioSAP?.trim() || null,
           mijlocFix !== undefined ? mijlocFix : null,
           coordenadas ? JSON.stringify(coordenadas) : null,

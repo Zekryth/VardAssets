@@ -165,6 +165,7 @@ export async function initializeDatabase() {
     await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS categoria VARCHAR(255)`);
     await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS compania_propietaria UUID`);
     await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS compania_alojada UUID`);
+    await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS compania_alojada_fecha DATE`);
     await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS nr_inventario_sap VARCHAR(255)`);
     await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS mijloc_fix BOOLEAN DEFAULT FALSE`);
     await pool.query(`ALTER TABLE points ADD COLUMN IF NOT EXISTS pisos_adicionales JSONB DEFAULT '[]'::jsonb`);

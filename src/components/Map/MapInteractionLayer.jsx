@@ -65,6 +65,7 @@ export default function MapInteractionLayer({ className = '', points = [], onCha
         categoria: payload?.categoria,
         companiaPropietaria: payload?.companiaPropietaria || payload?.compania_propietaria || payload?.compañia || payload?.compania || null,
         companiaAlojada: payload?.companiaAlojada || payload?.compania_alojada || null,
+        companiaAlojadaFecha: payload?.companiaAlojadaFecha || payload?.compania_alojada_fecha || null,
         nrInventarioSAP: payload?.nrInventarioSAP || payload?.nr_inventario_sap || null,
         mijlocFix: Boolean(payload?.mijlocFix),
         coordenadas: { x: coords.x, y: coords.y },
