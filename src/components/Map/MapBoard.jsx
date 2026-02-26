@@ -362,6 +362,18 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
         >
           Ajustar
         </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowTileGrid(!showTileGrid)}
+            className={`px-2 h-8 rounded-md text-xs font-medium transition-colors ${showTileGrid
+              ? 'bg-blue-600 text-white hover:bg-blue-500'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+            title={showTileGrid ? 'Ocultar grid de tiles' : 'Mostrar grid de tiles'}
+            aria-label={showTileGrid ? 'Ocultar grid de tiles' : 'Mostrar grid de tiles'}
+          >
+            Grid
+          </button>
+        )}
       </div>
 
       <div className="pointer-events-none" style={{ position: 'absolute', inset: 0 }}>
@@ -477,17 +489,6 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
           Zoom: {Math.round(scale * 100)}%
         </div>
       </div>
-
-      {/* Toggle Grid Button */}
-      {isAdmin && (
-        <button
-          onClick={() => setShowTileGrid(!showTileGrid)}
-          className="absolute top-4 left-4 z-20 px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-          title={showTileGrid ? 'Ocultar grid de tiles' : 'Mostrar grid de tiles'}
-        >
-          {showTileGrid ? '🔲 Ocultar Grid' : '⬜ Mostrar Grid'}
-        </button>
-      )}
 
       {/* Tile Manager Modal */}
       {selectedTile && (
