@@ -266,127 +266,125 @@ export default function MapPage() {
     <MapActionModeProvider>
     <div className="flex h-[100dvh]">
       {/* Center map area */}
-  <div className="relative flex-1 min-h-0 h-full bg-white dark:bg-surface flex flex-col transition-colors duration-300">
-        {/* Top toolbar */}
-        <div className="relative z-20 px-4 pt-4 md:px-6 md:pt-5 select-none">
-          <div className="flex items-start justify-between">
-            <div className="relative" ref={searchPanelRef}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchPanelOpen((prev) => {
-                    const next = !prev
-                    if (next) requestAnimationFrame(() => searchInputRef.current?.focus())
-                    else setOpen?.(false)
-                    return next
-                  })
-                }}
-                className="inline-flex items-center justify-center min-w-[44px] h-12 px-4 rounded-xl border bg-white dark:bg-surface border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
-                aria-label="Abrir búsqueda"
-                aria-expanded={searchPanelOpen}
-                aria-haspopup="dialog"
-              >
-                <Search size={18} />
-              </button>
+  <div className="relative flex-1 min-h-0 h-full bg-white dark:bg-surface transition-colors duration-300">
+        <div className="relative flex-1 h-full" ref={mapContainerRef}>
+          <div className="absolute top-4 left-4 right-4 md:top-5 md:left-6 md:right-6 z-50 pointer-events-none select-none">
+            <div className="flex items-start justify-between">
+              <div className="relative pointer-events-auto" ref={searchPanelRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchPanelOpen((prev) => {
+                      const next = !prev
+                      if (next) requestAnimationFrame(() => searchInputRef.current?.focus())
+                      else setOpen?.(false)
+                      return next
+                    })
+                  }}
+                  className="inline-flex items-center justify-center min-w-[44px] h-12 px-4 rounded-xl border bg-white dark:bg-surface border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+                  aria-label="Abrir búsqueda"
+                  aria-expanded={searchPanelOpen}
+                  aria-haspopup="dialog"
+                >
+                  <Search size={18} />
+                </button>
 
-              {searchPanelOpen && (
-                <div className="absolute left-0 mt-2 w-[min(32rem,calc(100vw-2rem))] md:w-[36rem] bg-white/95 dark:bg-surface/95 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4" role="dialog" aria-label="Buscar puntos, objetos o compañías">
-                  <div className="flex items-center h-12 rounded-xl border border-gray-300/80 dark:border-gray-600 bg-white dark:bg-surface px-4 transition-colors focus-within:border-primary-500/80 focus-within:ring-2 focus-within:ring-primary-500/20">
-                    <Search size={18} className="text-gray-500 dark:text-gray-400 mr-3" />
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      role="combobox"
-                      value={query}
-                      onChange={(e) => { setQuery?.(e.target.value); setOpen?.(false) }}
-                      onFocus={() => { if ((committedQuery || '').length >= 2 && flatList.length > 0) setOpen?.(true) }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'ArrowDown') { e.preventDefault(); moveActive?.(1) }
-                        else if (e.key === 'ArrowUp') { e.preventDefault(); moveActive?.(-1) }
-                        else if (e.key === 'Enter') {
-                          e.preventDefault()
-                          if (open && flatList.length > 0) {
-                            selectActive?.()
+                {searchPanelOpen && (
+                  <div className="absolute left-0 mt-2 w-[min(32rem,calc(100vw-2rem))] md:w-[36rem] bg-white/95 dark:bg-surface/95 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4" role="dialog" aria-label="Buscar puntos, objetos o compañías">
+                    <div className="flex items-center h-12 rounded-xl border border-gray-300/80 dark:border-gray-600 bg-white dark:bg-surface px-4 transition-colors focus-within:border-primary-500/80 focus-within:ring-2 focus-within:ring-primary-500/20">
+                      <Search size={18} className="text-gray-500 dark:text-gray-400 mr-3" />
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        role="combobox"
+                        value={query}
+                        onChange={(e) => { setQuery?.(e.target.value); setOpen?.(false) }}
+                        onFocus={() => { if ((committedQuery || '').length >= 2 && flatList.length > 0) setOpen?.(true) }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'ArrowDown') { e.preventDefault(); moveActive?.(1) }
+                          else if (e.key === 'ArrowUp') { e.preventDefault(); moveActive?.(-1) }
+                          else if (e.key === 'Enter') {
+                            e.preventDefault()
+                            if (open && flatList.length > 0) {
+                              selectActive?.()
+                            }
+                            triggerEnter?.(query)
+                            setOpen?.(false)
                           }
-                          triggerEnter?.(query)
-                          setOpen?.(false)
-                        }
-                        else if (e.key === 'Escape') { setOpen?.(false); setSearchPanelOpen(false) }
-                      }}
-                      placeholder="Escribir para buscar"
-                      className="w-full bg-transparent text-base text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
-                      aria-expanded={isComboboxOpen}
-                      aria-controls={searchListId}
-                      aria-autocomplete="list"
-                      aria-activedescendant={isComboboxOpen && activeIndex >= 0 ? `search-opt-${activeIndex}` : undefined}
-                      aria-label="Buscar puntos, objetos o compañías"
-                    />
-                    {(query || '').length > 0 && (
-                      <button
-                        onClick={() => { setQuery?.(''); triggerEnter?.(''); setOpen?.(false) }}
-                        className="ml-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xs px-2.5 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        aria-label="Limpiar búsqueda"
-                      >
-                        Limpiar
-                      </button>
+                          else if (e.key === 'Escape') { setOpen?.(false); setSearchPanelOpen(false) }
+                        }}
+                        placeholder="Escribir para buscar"
+                        className="w-full bg-transparent text-base text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
+                        aria-expanded={isComboboxOpen}
+                        aria-controls={searchListId}
+                        aria-autocomplete="list"
+                        aria-activedescendant={isComboboxOpen && activeIndex >= 0 ? `search-opt-${activeIndex}` : undefined}
+                        aria-label="Buscar puntos, objetos o compañías"
+                      />
+                      {(query || '').length > 0 && (
+                        <button
+                          onClick={() => { setQuery?.(''); triggerEnter?.(''); setOpen?.(false) }}
+                          className="ml-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xs px-2.5 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          aria-label="Limpiar búsqueda"
+                        >
+                          Limpiar
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400" aria-live="polite">
+                      {searchLoading
+                        ? 'Cargando resultados…'
+                        : searchError
+                        ? 'Error al cargar resultados'
+                        : `${flatList.length} resultados · Enter para buscar`}
+                    </div>
+
+                    {isComboboxOpen && (
+                      <div id={searchListId} className="mt-2 bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden transition-colors" role="listbox" aria-label="Resultados de búsqueda">
+                        <div className="max-h-72 overflow-auto divide-y divide-gray-200 dark:divide-gray-700">
+                          {flatList.map((row, idx) => (
+                            <button
+                              key={`${row.type}-${row.item._id || row.item.nombre}`}
+                              role="option"
+                              id={`search-opt-${idx}`}
+                              aria-selected={idx === activeIndex}
+                              className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 ${idx === activeIndex ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                const selectedText = row?.item?.nombre || query
+                                setQuery?.(selectedText)
+                                selectSuggestion?.(row)
+                                triggerEnter?.(selectedText)
+                                setOpen?.(false)
+                              }}
+                            >
+                              <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] uppercase">{row.type[0]}</span>
+                              <span className="truncate">
+                                {row.type === 'point' && `${row.item.nombre} — ${row.item.compañia?.nombre || ''}`}
+                                {row.type === 'company' && `${row.item.nombre}`}
+                                {row.type === 'object' && `${row.item.nombre}`}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
+                )}
+              </div>
 
-                  <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400" aria-live="polite">
-                    {searchLoading
-                      ? 'Cargando resultados…'
-                      : searchError
-                      ? 'Error al cargar resultados'
-                      : `${flatList.length} resultados · Enter para buscar`}
-                  </div>
-
-                  {isComboboxOpen && (
-                    <div id={searchListId} className="mt-2 bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden transition-colors" role="listbox" aria-label="Resultados de búsqueda">
-                      <div className="max-h-72 overflow-auto divide-y divide-gray-200 dark:divide-gray-700">
-                        {flatList.map((row, idx) => (
-                          <button
-                            key={`${row.type}-${row.item._id || row.item.nombre}`}
-                            role="option"
-                            id={`search-opt-${idx}`}
-                            aria-selected={idx === activeIndex}
-                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 ${idx === activeIndex ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => {
-                              const selectedText = row?.item?.nombre || query
-                              setQuery?.(selectedText)
-                              selectSuggestion?.(row)
-                              triggerEnter?.(selectedText)
-                              setOpen?.(false)
-                            }}
-                          >
-                            <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] uppercase">{row.type[0]}</span>
-                            <span className="truncate">
-                              {row.type === 'point' && `${row.item.nombre} — ${row.item.compañia?.nombre || ''}`}
-                              {row.type === 'company' && `${row.item.nombre}`}
-                              {row.type === 'object' && `${row.item.nombre}`}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="shrink-0">
-              <FiltersInline
-                filters={filters}
-                setFilters={setFilters}
-                companies={companyOptions}
-                categories={categoryOptions}
-              />
+              <div className="shrink-0 pointer-events-auto">
+                <FiltersInline
+                  filters={filters}
+                  setFilters={setFilters}
+                  companies={companyOptions}
+                  categories={categoryOptions}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Map fills remaining space */}
-        <div className="relative flex-1" ref={mapContainerRef}>
           <PointPanelsProvider getBounds={getBounds}>
             {/* MapViewProvider: exposes transforms based on a mutable ref updated by MapComponent callbacks */}
             <MapViewProvider value={mapViewValue}>
