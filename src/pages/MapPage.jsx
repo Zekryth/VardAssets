@@ -202,6 +202,8 @@ export default function MapPage() {
     }
   }, [enterTick, selection, committedQuery, points, setOpen])
 
+  const mapViewValue = useMemo(() => createStableMapViewValue(mapContainerRef), [])
+
   // Cerrar al hacer click fuera del FloatingSearch
   // Ya no necesitamos cerrar por click externo; solo cerramos sugerencias con Escape
 
@@ -241,8 +243,6 @@ export default function MapPage() {
     const r = el.getBoundingClientRect()
     return { width: r.width, height: r.height }
   }
-
-  const mapViewValue = useMemo(() => createStableMapViewValue(mapContainerRef), [])
 
   return (
     <ToastProvider>
