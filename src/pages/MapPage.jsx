@@ -259,8 +259,8 @@ export default function MapPage() {
                 ref={searchInputRef}
                 type="text"
                 value={query}
-                onChange={(e) => setQuery?.(e.target.value)}
-                onFocus={() => { if ((debouncedQuery || '').length >= 2) setOpen?.(true) }}
+                onChange={(e) => { setQuery?.(e.target.value); setOpen?.(false) }}
+                onFocus={() => { if ((committedQuery || '').length >= 2) setOpen?.(true) }}
                 onKeyDown={(e) => {
                   if (e.key === 'ArrowDown') { e.preventDefault(); moveActive?.(1) }
                   else if (e.key === 'ArrowUp') { e.preventDefault(); moveActive?.(-1) }
@@ -278,7 +278,7 @@ export default function MapPage() {
                 className="w-full bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
                 aria-label="Buscar puntos, objetos o compañías"
               />
-              {(debouncedQuery || '').length > 0 && (
+              {(query || '').length > 0 && (
                 <button
                   onClick={() => { setQuery?.(''); triggerEnter?.(''); setOpen?.(false) }}
                   className="ml-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xs px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -308,7 +308,7 @@ export default function MapPage() {
             </div>
           </div>
           {/* Dropdown de sugerencias */}
-          {open && (debouncedQuery || '').length >= 2 && flatList.length > 0 && (
+          {open && (committedQuery || '').length >= 2 && flatList.length > 0 && (
             <div className="absolute left-4 md:left-6 top-full mt-2 w-[calc(100%-2rem)] md:w-[640px] max-w-[90vw] bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden transition-colors" role="listbox" aria-label="Resultados de búsqueda" aria-activedescendant={activeIndex >=0 ? `search-opt-${activeIndex}`: undefined}>
               <div className="max-h-72 overflow-auto divide-y divide-gray-200 dark:divide-gray-700">
                 {flatList.map((row, idx) => (

@@ -43,11 +43,12 @@ export const SearchProvider = ({ children }) => {
 
   useEffect(() => {
     setSelection(null)
+    setOpen(false)
   }, [query])
 
-  // Fetch suggestions
+  // Fetch suggestions only when query is committed (Enter)
   useEffect(() => {
-    const q = debouncedQuery
+    const q = committedQuery
     if (!q || q.length < 2) {
       setSuggestions({ points: [], companies: [], objects: [] })
       setOpen(false)
@@ -96,7 +97,7 @@ export const SearchProvider = ({ children }) => {
         setError(err)
       })
       .finally(() => setLoading(false))
-  }, [debouncedQuery])
+  }, [committedQuery])
 
   const flatList = useMemo(() => {
     const list = []
