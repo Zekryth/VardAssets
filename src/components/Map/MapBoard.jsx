@@ -237,6 +237,8 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
     height: boardH
   }), [bbox.minX, bbox.minY, boardW, boardH])
 
+  const controlsRight = isAdmin ? 96 : 16
+
   // NEW: emitir view info cuando cambie el bbox (tiles) o el offset/scale por efectos externos,
   // para que el contexto marque "ready" desde el inicio y no quedemos en "Inicializando..."
   useEffect(() => {
@@ -313,7 +315,10 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
         ))}
       </div>
 
-      <div className="absolute right-4 bottom-4 z-30 pointer-events-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/85 backdrop-blur shadow-lg p-2 flex items-center gap-2">
+      <div
+        className="absolute bottom-4 z-30 pointer-events-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/85 backdrop-blur shadow-xl p-2 flex items-center gap-2"
+        style={{ right: controlsRight }}
+      >
         <button
           onClick={() => {
             const el = containerRef.current
@@ -321,7 +326,7 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
             const r = el.getBoundingClientRect()
             applyZoomAt(scale * 1.15, r.width / 2, r.height / 2)
           }}
-          className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
+          className="w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
           title="Acercar"
           aria-label="Acercar"
         >
@@ -338,9 +343,12 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
             const r = el.getBoundingClientRect()
             applyZoomAt(Number(e.target.value) / 100, r.width / 2, r.height / 2)
           }}
-          className="w-28 accent-blue-600"
+          className="w-24 accent-blue-600"
           aria-label="Control de zoom"
         />
+        <span className="px-2 h-9 inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-semibold text-gray-700 dark:text-gray-200 tabular-nums min-w-[54px] justify-center">
+          {Math.round(scale * 100)}%
+        </span>
         <button
           onClick={() => {
             const el = containerRef.current
@@ -348,7 +356,7 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
             const r = el.getBoundingClientRect()
             applyZoomAt(scale / 1.15, r.width / 2, r.height / 2)
           }}
-          className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
+          className="w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
           title="Alejar"
           aria-label="Alejar"
         >
@@ -356,7 +364,7 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
         </button>
         <button
           onClick={fitBoardToViewport}
-          className="px-2 h-8 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-500"
+          className="px-3 h-9 rounded-md bg-blue-600 text-white text-xs font-semibold hover:bg-blue-500"
           title="Ajustar mapa"
           aria-label="Ajustar mapa"
         >
@@ -365,13 +373,13 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
         {isAdmin && (
           <button
             onClick={() => setShowTileGrid(!showTileGrid)}
-            className={`px-2 h-8 rounded-md text-xs font-medium transition-colors ${showTileGrid
+            className={`px-3 h-9 rounded-md text-xs font-semibold transition-colors ${showTileGrid
               ? 'bg-blue-600 text-white hover:bg-blue-500'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
             title={showTileGrid ? 'Ocultar grid de tiles' : 'Mostrar grid de tiles'}
             aria-label={showTileGrid ? 'Ocultar grid de tiles' : 'Mostrar grid de tiles'}
           >
-            Grid
+            {showTileGrid ? 'Ocultar grid' : 'Mostrar grid'}
           </button>
         )}
       </div>
@@ -485,9 +493,6 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
           }
           return items
         })}
-        <div style={{ position: 'absolute', left: 'calc(env(safe-area-inset-left) + 12px)', bottom: 'calc(env(safe-area-inset-bottom) + 12px)', color: '#9aa4b2', fontSize: 12 }}>
-          Zoom: {Math.round(scale * 100)}%
-        </div>
       </div>
 
       {/* Tile Manager Modal */}
