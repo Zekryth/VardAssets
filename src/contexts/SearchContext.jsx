@@ -10,9 +10,11 @@ import api from '../services/api'
 const SearchCtx = createContext(null)
 
 const STORAGE_KEY = 'ms:search:q'
+const COMMITTED_STORAGE_KEY = 'ms:search:committed:q'
 
 export const SearchProvider = ({ children }) => {
   const [query, setQuery] = useState(() => sessionStorage.getItem(STORAGE_KEY) || '')
+  const [committedQuery, setCommittedQuery] = useState(() => sessionStorage.getItem(COMMITTED_STORAGE_KEY) || '')
   const [debouncedQuery, setDebouncedQuery] = useState(query)
   const [suggestions, setSuggestions] = useState({ points: [], companies: [], objects: [] })
   const [loading, setLoading] = useState(false)
@@ -29,10 +31,18 @@ export const SearchProvider = ({ children }) => {
     sessionStorage.setItem(STORAGE_KEY, query)
   }, [query])
 
+  useEffect(() => {
+    sessionStorage.setItem(COMMITTED_STORAGE_KEY, committedQuery)
+  }, [committedQuery])
+
   // Debounce
   useEffect(() => {
     const id = setTimeout(() => setDebouncedQuery(query.trim()), 250)
     return () => clearTimeout(id)
+  }, [query])
+
+  useEffect(() => {
+    setSelection(null)
   }, [query])
 
   // Fetch suggestions
@@ -105,7 +115,13 @@ export const SearchProvider = ({ children }) => {
     })
   }
 
-  const triggerEnter = () => setEnterTick((n) => n + 1)
+  const commitQuery = (nextQuery) => {
+    const resolved = typeof nextQuery === 'string' ? nextQuery : query
+    setCommittedQuery(String(resolved || '').trim())
+    setEnterTick((n) => n + 1)
+  }
+
+  const triggerEnter = (nextQuery) => commitQuery(nextQuery)
 
   const selectSuggestion = (row) => {
     setSelection(row)
@@ -121,6 +137,9 @@ export const SearchProvider = ({ children }) => {
   const value = {
     query,
     setQuery,
+    committedQuery,
+    setCommittedQuery,
+    commitQuery,
     debouncedQuery,
     suggestions,
     loading,

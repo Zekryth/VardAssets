@@ -5,7 +5,7 @@
  * Orquesta la visualización del mapa, paneles de puntos, filtros, acciones de administrador y notificaciones.
  * Utiliza múltiples contextos y componentes para la experiencia de usuario en el mapa.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 import MapComponent from '../components/Map/MapComponent.jsx'
 import { MapActionModeProvider, useMapActionMode } from '../contexts/MapActionModeContext.jsx'
@@ -29,11 +29,11 @@ export default function MapPage() {
   const { isAdmin } = useAuth()
   const {
     query, setQuery,
+    committedQuery,
     debouncedQuery,
     open, setOpen,
     activeIndex, moveActive,
     flatList,
-    loading: searchLoading,
     triggerEnter, enterTick,
     selection, selectSuggestion, selectActive,
   } = useSearch()
@@ -48,13 +48,13 @@ export default function MapPage() {
   // Barra de búsqueda siempre visible ahora
   const searchInputRef = useRef(null)
 
-  const fetchPoints = () => pointService.getPoints()
+  const fetchPoints = useCallback(() => pointService.getPoints()
     .then(res => {
       setPoints(Array.isArray(res.data) ? res.data : (res.data?.points || []))
     })
-    .catch(() => {})
+    .catch(() => {}), [])
 
-  const fetchCompanies = () => companyService.getCompanies({ params: { page: 1, limit: 1000 } })
+  const fetchCompanies = useCallback(() => companyService.getCompanies({ params: { page: 1, limit: 1000 } })
     .then((res) => {
       const data = res?.data
       const list = Array.isArray(data)
@@ -66,7 +66,7 @@ export default function MapPage() {
         : []
       setCompanies(list.filter(Boolean))
     })
-    .catch(() => setCompanies([]))
+    .catch(() => setCompanies([])), [])
 
   useEffect(() => {
     let mounted = true
@@ -75,7 +75,7 @@ export default function MapPage() {
       .then(() => { if (!mounted) return })
       .finally(() => mounted && setLoading(false))
     return () => { mounted = false }
-  }, [])
+  }, [fetchPoints, fetchCompanies])
 
   const companyOptions = useMemo(() => {
     return (Array.isArray(companies) ? companies : [])
@@ -93,7 +93,7 @@ export default function MapPage() {
   const filteredPoints = useMemo(() => {
     const companyId = String(filters?.companyId || '').trim()
     const category = String(filters?.category || '').trim().toLowerCase()
-    const text = String(debouncedQuery || '').trim().toLowerCase()
+    const text = String(committedQuery || '').trim().toLowerCase()
 
     return (points || []).filter((point) => {
       if (!point) return false
@@ -143,7 +143,7 @@ export default function MapPage() {
 
       return true
     })
-  }, [points, filters, debouncedQuery])
+  }, [points, filters, committedQuery])
 
   // Atajos: '/' enfoca búsqueda si no estás en un input/textarea; ESC cierra sugerencias
   useEffect(() => {
@@ -191,7 +191,7 @@ export default function MapPage() {
       setOpen(false)
       return
     }
-    const q = (debouncedQuery || '').toLowerCase()
+    const q = (committedQuery || '').toLowerCase()
     if (!q) return
     const exact = points.find(p => (p?.nombre || '').toLowerCase() === q)
     if (exact) {
@@ -200,7 +200,7 @@ export default function MapPage() {
       setIsPanelOpen(true)
       setOpen(false)
     }
-  }, [enterTick])
+  }, [enterTick, selection, committedQuery, points, setOpen])
 
   // Cerrar al hacer click fuera del FloatingSearch
   // Ya no necesitamos cerrar por click externo; solo cerramos sugerencias con Escape
@@ -242,6 +242,8 @@ export default function MapPage() {
     return { width: r.width, height: r.height }
   }
 
+  const mapViewValue = useMemo(() => createStableMapViewValue(mapContainerRef), [])
+
   return (
     <ToastProvider>
     <MapActionModeProvider>
@@ -262,7 +264,14 @@ export default function MapPage() {
                 onKeyDown={(e) => {
                   if (e.key === 'ArrowDown') { e.preventDefault(); moveActive?.(1) }
                   else if (e.key === 'ArrowUp') { e.preventDefault(); moveActive?.(-1) }
-                  else if (e.key === 'Enter') { e.preventDefault(); selectActive?.(); triggerEnter?.(); setOpen?.(false) }
+                  else if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (open && flatList.length > 0) {
+                      selectActive?.()
+                    }
+                    triggerEnter?.(query)
+                    setOpen?.(false)
+                  }
                   else if (e.key === 'Escape') { setOpen?.(false) }
                 }}
                 placeholder="Buscar puntos, objetos o compañías"
@@ -271,7 +280,7 @@ export default function MapPage() {
               />
               {(debouncedQuery || '').length > 0 && (
                 <button
-                  onClick={() => { setQuery?.(''); setOpen?.(false) }}
+                  onClick={() => { setQuery?.(''); triggerEnter?.(''); setOpen?.(false) }}
                   className="ml-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xs px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   aria-label="Limpiar búsqueda"
                 >
@@ -310,7 +319,7 @@ export default function MapPage() {
                     aria-selected={idx === activeIndex}
                     className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${idx === activeIndex ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => { selectSuggestion?.(row); triggerEnter?.(); setOpen?.(false) }}
+                    onClick={() => { selectSuggestion?.(row); triggerEnter?.(query); setOpen?.(false) }}
                   >
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] uppercase">{row.type[0]}</span>
                     <span className="truncate">
@@ -329,8 +338,8 @@ export default function MapPage() {
         <div className="relative flex-1" ref={mapContainerRef}>
           <PointPanelsProvider getBounds={getBounds}>
             {/* MapViewProvider: exposes transforms based on a mutable ref updated by MapComponent callbacks */}
-            <MapViewProvider value={createStableMapViewValue(mapContainerRef)}>
-              <MapWithPanels
+            <MapViewProvider value={mapViewValue}>
+              <MemoMapWithPanels
                 mapContainerRef={mapContainerRef}
                 points={filteredPoints}
                 fetchPoints={fetchPoints}
@@ -340,7 +349,7 @@ export default function MapPage() {
               {/* Controller reacts to search selection to open panels */}
               <PanelsController selection={selection} enterTick={enterTick} onCloseSearch={() => setOpen(false)} />
               {/* Interaction overlay + admin FAB (admin only) */}
-              <MapInteractionLayer points={filteredPoints} onChanged={fetchPoints} />
+              <MapInteractionLayer onChanged={fetchPoints} />
               <AdminActionFab isAdmin={isAdmin} />
               {/* Dock */}
               <PointPanelsDock />
@@ -442,6 +451,8 @@ function MapWithPanels({ points, mapContainerRef, fetchPoints }) {
     </>
   )
 }
+
+const MemoMapWithPanels = React.memo(MapWithPanels)
 
 function PanelsOverlay() {
   const { panels } = usePointPanels()

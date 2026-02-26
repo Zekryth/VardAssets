@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { getTileGrid, tileToCoordinates } from '../../utils/mapTileCalculator'
 import api from '../../services/api'
 
@@ -11,31 +11,46 @@ import api from '../../services/api'
 export default function MapTileLayer({ zoomLevel = 1, viewport, refreshTrigger }) {
   const [tiles, setTiles] = useState([])
   const [loading, setLoading] = useState(false)
+  const abortRef = useRef(null)
 
   useEffect(() => {
-    if (!viewport) return
     fetchTiles()
-  }, [viewport, zoomLevel, refreshTrigger])
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort()
+      }
+    }
+  }, [zoomLevel, refreshTrigger])
 
   const fetchTiles = async () => {
+    if (abortRef.current) abortRef.current.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
     setLoading(true)
 
     try {
       const { tilesX, tilesY } = getTileGrid(zoomLevel)
       
       // Fetch tiles del backend
-      const response = await api.get(`/tiles?minX=0&maxX=${tilesX - 1}&minY=0&maxY=${tilesY - 1}&zoom=${zoomLevel}`)
+      const response = await api.get(`/tiles?minX=0&maxX=${tilesX - 1}&minY=0&maxY=${tilesY - 1}&zoom=${zoomLevel}`, {
+        signal: controller.signal
+      })
       
       const tilesData = Array.isArray(response.data) ? response.data : response.data.tiles || []
       
-      console.log('📍 Tiles cargados:', tilesData.length)
+      if (import.meta.env.DEV) {
+        console.log('📍 Tiles cargados:', tilesData.length)
+      }
       setTiles(tilesData)
 
     } catch (error) {
+      if (error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED') return
       console.error('❌ Error loading tiles:', error)
       setTiles([])
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) {
+        setLoading(false)
+      }
     }
   }
 

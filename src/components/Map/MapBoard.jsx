@@ -230,6 +230,13 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
     return { x: gx, y: gy }
   }
 
+  const tileViewport = useMemo(() => ({
+    x: (bbox.minX || 0) * TILE_SIZE,
+    y: (bbox.minY || 0) * TILE_SIZE,
+    width: boardW,
+    height: boardH
+  }), [bbox.minX, bbox.minY, boardW, boardH])
+
   // NEW: emitir view info cuando cambie el bbox (tiles) o el offset/scale por efectos externos,
   // para que el contexto marque "ready" desde el inicio y no quedemos en "Inicializando..."
   useEffect(() => {
@@ -261,12 +268,7 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
         {/* MapTileLayer - Renderiza tiles con imágenes de fondo */}
         <MapTileLayer 
           zoomLevel={1} 
-          viewport={{
-            x: (bbox.minX || 0) * TILE_SIZE,
-            y: (bbox.minY || 0) * TILE_SIZE,
-            width: boardW,
-            height: boardH
-          }}
+          viewport={tileViewport}
           refreshTrigger={tileRefreshTrigger}
         />
 

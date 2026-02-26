@@ -12,7 +12,7 @@ import CreatePointDialog from '../PointPanel/CreatePointDialog.jsx'
 import { MAP_CONFIG } from '../../utils/constants.js'
 
 // Esta capa está encima del mapa. Solo captura eventos cuando el modo lo requiere.
-export default function MapInteractionLayer({ className = '', points = [], onChanged }) {
+export default function MapInteractionLayer({ className = '', onChanged }) {
   const { mode } = useMapActionMode()
   const { screenToBoard } = useMapView()
   const overlayRef = useRef(null)
