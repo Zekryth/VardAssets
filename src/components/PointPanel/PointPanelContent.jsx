@@ -179,92 +179,28 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
     });
   };
 
-  // Floor navigation component
-  const FloorNavigation = () => {
-    console.log('🏢 [FloorNavigation] Render - pisos.length:', pisos.length, 'pisoActual:', pisoActual);
-    if (pisos.length <= 1) {
-      console.log('⚠️ [FloorNavigation] Solo hay 1 piso, ocultando navegación');
-      return null;
-    }
-    
-    const handlePrev = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const newPiso = Math.max(0, pisoActual - 1);
-      console.log('⬆️ [FloorNavigation] Anterior clicked - de', pisoActual, 'a', newPiso);
-      setPisoActual(newPiso);
-    };
+  // Floor navigation handlers
+  const handlePrevFloor = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newPiso = Math.max(0, pisoActual - 1);
+    console.log('⬆️ [FloorNav] Anterior clicked - de', pisoActual, 'a', newPiso);
+    setPisoActual(newPiso);
+  };
 
-    const handleNext = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const newPiso = Math.min(pisos.length - 1, pisoActual + 1);
-      console.log('⬇️ [FloorNavigation] Siguiente clicked - de', pisoActual, 'a', newPiso);
-      setPisoActual(newPiso);
-    };
+  const handleNextFloor = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newPiso = Math.min(pisos.length - 1, pisoActual + 1);
+    console.log('⬇️ [FloorNav] Siguiente clicked - de', pisoActual, 'a', newPiso);
+    setPisoActual(newPiso);
+  };
 
-    const handleDotClick = (e, idx) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('🔘 [FloorNavigation] Dot clicked - a piso', idx);
-      setPisoActual(idx);
-    };
-    
-    return (
-      <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-b border-gray-200 dark:border-gray-700">
-        <button
-          type="button"
-          onClick={handlePrev}
-          disabled={pisoActual === 0}
-          className={cx(
-            'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all',
-            pisoActual === 0
-              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-              : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm hover:shadow border border-gray-200 dark:border-gray-600'
-          )}
-        >
-          <ChevronUp size={16} />
-          <span className="hidden sm:inline">Anterior</span>
-        </button>
-
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">
-            {currentFloor.nombre}
-          </span>
-          <div className="flex items-center gap-1">
-            {pisos.map((_, idx) => (
-              <button
-                type="button"
-                key={idx}
-                onClick={(e) => handleDotClick(e, idx)}
-                className={cx(
-                  'w-2 h-2 rounded-full transition-all',
-                  idx === pisoActual 
-                    ? 'bg-blue-600 dark:bg-blue-400 scale-125' 
-                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
-                )}
-                title={pisos[idx].nombre}
-              />
-            ))}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleNext}
-          disabled={pisoActual === pisos.length - 1}
-          className={cx(
-            'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all',
-            pisoActual === pisos.length - 1
-              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-              : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm hover:shadow border border-gray-200 dark:border-gray-600'
-          )}
-        >
-          <span className="hidden sm:inline">Siguiente</span>
-          <ChevronDown size={16} />
-        </button>
-      </div>
-    );
+  const handleDotClick = (e, idx) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🔘 [FloorNav] Dot clicked - a piso', idx);
+    setPisoActual(idx);
   };
 
   // Empty state component
@@ -288,8 +224,62 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Floor Navigation */}
-      <FloorNavigation />
+      {/* Floor Navigation - inline para evitar problemas de re-render */}
+      {pisos.length > 1 && (
+        <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-b border-gray-200 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={handlePrevFloor}
+            disabled={pisoActual === 0}
+            className={cx(
+              'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all',
+              pisoActual === 0
+                ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm hover:shadow border border-gray-200 dark:border-gray-600'
+            )}
+          >
+            <ChevronUp size={16} />
+            <span className="hidden sm:inline">Anterior</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+              {currentFloor.nombre}
+            </span>
+            <div className="flex items-center gap-1">
+              {pisos.map((piso, idx) => (
+                <button
+                  type="button"
+                  key={idx}
+                  onClick={(e) => handleDotClick(e, idx)}
+                  className={cx(
+                    'w-2 h-2 rounded-full transition-all',
+                    idx === pisoActual 
+                      ? 'bg-blue-600 dark:bg-blue-400 scale-125' 
+                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
+                  )}
+                  title={piso.nombre}
+                />
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleNextFloor}
+            disabled={pisoActual === pisos.length - 1}
+            className={cx(
+              'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all',
+              pisoActual === pisos.length - 1
+                ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm hover:shadow border border-gray-200 dark:border-gray-600'
+            )}
+          >
+            <span className="hidden sm:inline">Siguiente</span>
+            <ChevronDown size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Segmented Control Tabs */}
       <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
