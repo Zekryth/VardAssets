@@ -23,7 +23,8 @@ import {
   Clock,
   Tag,
   Users,
-  Download
+  Download,
+  Barcode
 } from 'lucide-react';
 import SegmentedControl from './SegmentedControl';
 
@@ -39,9 +40,11 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
     console.log('   ID:', point?.id || point?._id);
     console.log('   Nombre:', point?.nombre);
     console.log('   Categoría (global):', point?.categoria);
+    console.log('   Nr. Inv. SAP:', point?.nr_inventario_sap);
     console.log('   Compañía propietaria nombre:', point?.compania_propietaria_nombre);
     console.log('   Compañía alojada nombre:', point?.compania_alojada_nombre);
-    console.log('   Pisos:', point?.pisos);
+    console.log('   Pisos (raw):', point?.pisos);
+    console.log('   Pisos length:', Array.isArray(point?.pisos) ? point.pisos.length : 'NOT ARRAY');
     setPisoActual(0);
   }, [point]);
 
@@ -178,12 +181,40 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
 
   // Floor navigation component
   const FloorNavigation = () => {
-    if (pisos.length <= 1) return null;
+    console.log('🏢 [FloorNavigation] Render - pisos.length:', pisos.length, 'pisoActual:', pisoActual);
+    if (pisos.length <= 1) {
+      console.log('⚠️ [FloorNavigation] Solo hay 1 piso, ocultando navegación');
+      return null;
+    }
+    
+    const handlePrev = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const newPiso = Math.max(0, pisoActual - 1);
+      console.log('⬆️ [FloorNavigation] Anterior clicked - de', pisoActual, 'a', newPiso);
+      setPisoActual(newPiso);
+    };
+
+    const handleNext = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const newPiso = Math.min(pisos.length - 1, pisoActual + 1);
+      console.log('⬇️ [FloorNavigation] Siguiente clicked - de', pisoActual, 'a', newPiso);
+      setPisoActual(newPiso);
+    };
+
+    const handleDotClick = (e, idx) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('🔘 [FloorNavigation] Dot clicked - a piso', idx);
+      setPisoActual(idx);
+    };
     
     return (
       <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-b border-gray-200 dark:border-gray-700">
         <button
-          onClick={() => setPisoActual(Math.max(0, pisoActual - 1))}
+          type="button"
+          onClick={handlePrev}
           disabled={pisoActual === 0}
           className={cx(
             'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all',
@@ -203,8 +234,9 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
           <div className="flex items-center gap-1">
             {pisos.map((_, idx) => (
               <button
+                type="button"
                 key={idx}
-                onClick={() => setPisoActual(idx)}
+                onClick={(e) => handleDotClick(e, idx)}
                 className={cx(
                   'w-2 h-2 rounded-full transition-all',
                   idx === pisoActual 
@@ -218,7 +250,8 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
         </div>
 
         <button
-          onClick={() => setPisoActual(Math.min(pisos.length - 1, pisoActual + 1))}
+          type="button"
+          onClick={handleNext}
           disabled={pisoActual === pisos.length - 1}
           className={cx(
             'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all',
@@ -371,6 +404,23 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     </div>
                   </div>
                 </div>
+
+                {/* Nr. Inventario SAP */}
+                {point.nr_inventario_sap && (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                        <Barcode size={18} className="text-rose-600 dark:text-rose-400" />
+                      </div>
+                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Nr. Inv. SAP
+                      </span>
+                    </div>
+                    <p className="text-base font-mono font-semibold text-gray-900 dark:text-white">
+                      {point.nr_inventario_sap}
+                    </p>
+                  </div>
+                )}
 
                 {/* Fecha de Alojamiento */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
