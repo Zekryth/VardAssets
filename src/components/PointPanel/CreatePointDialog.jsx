@@ -652,7 +652,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                   </div>
                   
                   {inventarioPlantaBaja.length === 0 ? (
-                    <div className="text-xs text-gray-500 dark:text-gray-400">No items. Use "Add item".</div></div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">No items. Use "Add item".</div>
                   ) : (
                     <div className="space-y-2">
                       {inventarioPlantaBaja.map((row, idx) => (
