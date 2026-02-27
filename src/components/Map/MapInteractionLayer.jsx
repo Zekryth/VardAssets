@@ -88,7 +88,7 @@ export default function MapInteractionLayer({ className = '', onChanged }) {
       onChanged?.()
       setCreateOpen(false)
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || 'Error al crear el punto'
+      const msg = err?.response?.data?.message || err?.message || 'Error creating point'
       alert(msg)
       // Cierra el diálogo pero permanece en adding para reintentar en otra celda
       setCreateOpen(false)

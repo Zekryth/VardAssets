@@ -194,7 +194,7 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
     <button
       className="pointer-events-auto"
       onClick={onClick}
-      title="Agregar sección"
+      title="Add section"
       style={{
         position: 'absolute',
         padding: '10px 18px',
@@ -398,8 +398,8 @@ export default function MapBoard({ initialImage = `${import.meta.env.BASE_URL}de
               key={pt._id || pt.id || `${px}-${py}-${pt?.nombre || ''}`}
               className={`absolute pointer-events-auto p-2 -m-2 group ${isMoving ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
               style={toScreen({ left: leftBase, top: topBase })}
-              title={`${pt?.nombre || 'Punto'}${pt?.compañia?.nombre ? ' — ' + pt.compañia.nombre : ''}`}
-              aria-label={`${pt?.nombre || 'Punto'} — abrir panel`}
+              title={`${pt?.nombre || 'Point'}${pt?.compañia?.nombre ? ' — ' + pt.compañia.nombre : ''}`}
+              aria-label={`${pt?.nombre || 'Point'} — open panel`}
               onClick={(e) => {
                 e.stopPropagation()
                 if (isDeleting) {

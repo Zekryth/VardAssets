@@ -49,12 +49,12 @@ export default function TileUploader({ onClose, onTileUploaded }) {
   const handleUpload = async () => {
     // Validaciones
     if (!tileX || !tileY) {
-      setError('Debes especificar las coordenadas del tile (X, Y)')
+      setError('You must specify the tile coordinates (X, Y)')
       return
     }
 
     if (!selectedFile) {
-      setError('Debes seleccionar una imagen')
+      setError('You must select an image')
       return
     }
 
@@ -62,7 +62,7 @@ export default function TileUploader({ onClose, onTileUploaded }) {
     const y = parseInt(tileY)
 
     if (isNaN(x) || isNaN(y) || x < 0 || y < 0) {
-      setError('Las coordenadas deben ser números positivos')
+      setError('Coordinates must be positive numbers')
       return
     }
 
@@ -89,7 +89,7 @@ export default function TileUploader({ onClose, onTileUploaded }) {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Error al subir tile')
+        throw new Error(data.error || 'Error uploading tile')
       }
 
       const data = await response.json()
@@ -102,7 +102,7 @@ export default function TileUploader({ onClose, onTileUploaded }) {
 
     } catch (err) {
       console.error('Error uploading tile:', err)
-      setError(err.message || 'Error al subir la imagen del tile')
+      setError(err.message || 'Error uploading tile image')
     } finally {
       setUploading(false)
     }
@@ -115,7 +115,7 @@ export default function TileUploader({ onClose, onTileUploaded }) {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <ImageIcon className="w-5 h-5" />
-            Subir Imagen de Tile
+            Upload Tile Image
           </h2>
           <button
             onClick={onClose}
@@ -127,10 +127,10 @@ export default function TileUploader({ onClose, onTileUploaded }) {
 
         {/* Body */}
         <div className="p-6 space-y-4">
-          {/* Coordenadas del Tile */}
+          {/* Tile Coordinates */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Coordenadas del Tile
+              Tile Coordinates
             </label>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -189,14 +189,14 @@ export default function TileUploader({ onClose, onTileUploaded }) {
           {/* File Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Imagen de Fondo
+              Background Image
             </label>
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
               {!previewUrl ? (
                 <div>
                   <Upload className="w-12 h-12 mx-auto text-gray-400 mb-2" />
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Click para seleccionar imagen
+                    Click to select image
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500">
                     PNG, JPG hasta 10MB
@@ -249,7 +249,7 @@ export default function TileUploader({ onClose, onTileUploaded }) {
             <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 
                           dark:border-green-800 rounded-lg text-green-700 dark:text-green-400">
               <CheckCircle className="w-5 h-5 flex-shrink-0" />
-              <p className="text-sm">¡Tile subido exitosamente!</p>
+              <p className="text-sm">Tile uploaded successfully!</p>
             </div>
           )}
         </div>
@@ -262,7 +262,7 @@ export default function TileUploader({ onClose, onTileUploaded }) {
                      text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
             disabled={uploading}
           >
-            Cancelar
+            Cancel
           </button>
           <button
             onClick={handleUpload}
@@ -273,12 +273,12 @@ export default function TileUploader({ onClose, onTileUploaded }) {
             {uploading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Subiendo...
+                Uploading...
               </>
             ) : (
               <>
                 <Upload className="w-4 h-4" />
-                Subir Tile
+                Upload Tile
               </>
             )}
           </button>

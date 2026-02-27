@@ -38,13 +38,13 @@ export default function TileImageManager({ tileX, tileY, zoomLevel = 1, onClose,
 
     // Validar tipo
     if (!file.type.startsWith('image/')) {
-      setError('Por favor selecciona una imagen válida')
+      setError('Please select a valid image')
       return
     }
 
     // Validar tamaño (10MB)
     if (file.size > 10 * 1024 * 1024) {
-      setError('La imagen no debe superar 10MB')
+      setError('Image must not exceed 10MB')
       return
     }
 
@@ -71,27 +71,27 @@ export default function TileImageManager({ tileX, tileY, zoomLevel = 1, onClose,
       onUpdate?.()
 
     } catch (err) {
-      console.error('❌ Error subiendo imagen:', err)
-      setError(err.response?.data?.error || 'Error al subir imagen')
+      console.error('❌ Error uploading image:', err)
+      setError(err.response?.data?.error || 'Error uploading image')
     } finally {
       setUploading(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm('¿Eliminar la imagen de este tile?')) return
+    if (!confirm('Delete this tile image?')) return
     
     try {
       await api.delete(`/tiles/${tileX}/${tileY}/${zoomLevel}`)
-      console.log('✅ Imagen eliminada')
+      console.log('✅ Image deleted')
       
       setCurrentTile(null)
       onUpdate?.()
       onClose()
 
     } catch (err) {
-      console.error('❌ Error eliminando tile:', err)
-      setError('Error al eliminar imagen')
+      console.error('❌ Error deleting tile:', err)
+      setError('Error deleting image')
     }
   }
 
@@ -103,7 +103,7 @@ export default function TileImageManager({ tileX, tileY, zoomLevel = 1, onClose,
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <ImageIcon className="w-5 h-5" />
-            Gestionar Tile ({tileX}, {tileY})
+            Manage Tile ({tileX}, {tileY})
           </h3>
           <button
             onClick={onClose}
@@ -128,7 +128,7 @@ export default function TileImageManager({ tileX, tileY, zoomLevel = 1, onClose,
               {currentTile?.background_image_url ? (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Imagen actual:
+                    Current image:
                   </label>
                   <img
                     src={currentTile.background_image_url}
@@ -143,20 +143,20 @@ export default function TileImageManager({ tileX, tileY, zoomLevel = 1, onClose,
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Eliminar Imagen
+                    Delete Image
                   </button>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-gray-400">
                   <ImageIcon className="w-12 h-12 mb-2" />
-                  <p className="text-sm">Este tile no tiene imagen de fondo</p>
+                  <p className="text-sm">This tile has no background image</p>
                 </div>
               )}
 
               {/* Uploader */}
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                  {currentTile?.background_image_url ? 'Cambiar imagen:' : 'Subir imagen:'}
+                  {currentTile?.background_image_url ? 'Change image:' : 'Upload image:'}
                 </label>
                 
                 <label className={`
@@ -170,13 +170,13 @@ export default function TileImageManager({ tileX, tileY, zoomLevel = 1, onClose,
                   {uploading ? (
                     <>
                       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Subiendo...</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Uploading...</span>
                     </>
                   ) : (
                     <>
                       <Upload className="w-8 h-8 text-gray-400 mb-2" />
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        Click para seleccionar imagen
+                        Click to select image
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                         PNG, JPG hasta 10MB

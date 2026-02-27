@@ -15,8 +15,6 @@ import {
 import { useTheme } from '../../contexts/ThemeContext'
 import AccountPanel from '../Account/AccountPanel.jsx'
 import { Button } from '../UI/Button.jsx'
-import { useTranslation } from 'react-i18next'
-import '../../i18n'
 
 const cx = (...p) => p.filter(Boolean).join(' ')
 
@@ -28,31 +26,30 @@ const Layout = ({ children }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const { theme, toggleTheme } = useTheme()
-  const { t } = useTranslation()
 
   const routes = [
-    { to: '/', label: t('nav.map'), icon: MapPin },
-    ...(isUserAdmin ? [{ to: '/dashboard', label: t('nav.dashboard'), icon: BarChart3 }] : []),
+    { to: '/', label: 'Map', icon: MapPin },
+    ...(isUserAdmin ? [{ to: '/dashboard', label: 'Dashboard', icon: BarChart3 }] : []),
     ...(isUserAdmin ? [
-      { to: '/companies', label: t('nav.companies'), icon: Building2 },
-      { to: '/inventory', label: t('nav.inventory'), icon: Package },
+      { to: '/companies', label: 'Companies', icon: Building2 },
+      { to: '/inventory', label: 'Inventory', icon: Package },
     ] : []),
-    // Solo el admin ve el enlace de usuarios
-    ...(isUserAdmin ? [{ to: '/users', label: t('nav.users'), icon: Users }] : []),
-    { to: '/settings', label: 'Configuración', icon: Settings },
-    { to: '/help', label: 'Ayuda & Soporte', icon: HelpCircle }
+    // Only admin sees user link
+    ...(isUserAdmin ? [{ to: '/users', label: 'Users', icon: Users }] : []),
+    { to: '/settings', label: 'Settings', icon: Settings },
+    { to: '/help', label: 'Help & Support', icon: HelpCircle }
   ]
 
   const titleMap = {
-    '/': t('nav.map'),
-    '/dashboard': t('nav.dashboard'),
-    '/companies': t('nav.companies'),
-    '/inventory': t('nav.inventory'),
-    '/users': t('nav.users'),
-    '/settings': 'Configuración',
-    '/help': 'Ayuda & Soporte'
+    '/': 'Map',
+    '/dashboard': 'Dashboard',
+    '/companies': 'Companies',
+    '/inventory': 'Inventory',
+    '/users': 'Users',
+    '/settings': 'Settings',
+    '/help': 'Help & Support'
   }
-  const currentTitle = titleMap[location.pathname] || t('nav.map')
+  const currentTitle = titleMap[location.pathname] || 'Map'
   const CurrentIcon = (routes.find(r => r.to === location.pathname)?.icon) || MapPin
 
   const NavItem = ({ to, label, icon: Icon }) => {
@@ -89,7 +86,7 @@ const Layout = ({ children }) => {
           'hidden lg:flex flex-col h-full border-r border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/90 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-gray-950/80 transition-[width] duration-300 relative',
           collapsed ? 'w-16' : 'w-64'
         )}
-        aria-label="Barra lateral de navegación"
+        aria-label="Sidebar navigation"
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800">
@@ -111,8 +108,8 @@ const Layout = ({ children }) => {
               <Button
                 variant="icon"
                 size="icon"
-                aria-label="Cambiar tema"
-                title={theme === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+                aria-label="Toggle theme"
+                title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
                 onClick={toggleTheme}
                 className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
@@ -121,8 +118,8 @@ const Layout = ({ children }) => {
               <Button
                 variant="icon"
                 size="icon"
-                aria-label="Colapsar menú"
-                title="Colapsar menú"
+                aria-label="Collapse menu"
+                title="Collapse menu"
                 onClick={() => setCollapsed(true)}
                 className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
@@ -134,8 +131,8 @@ const Layout = ({ children }) => {
             <Button
               variant="icon"
               size="icon"
-              aria-label="Cambiar tema"
-              title={theme === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+              aria-label="Toggle theme"
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
               onClick={toggleTheme}
               className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
@@ -158,13 +155,13 @@ const Layout = ({ children }) => {
           </div>
         )}
 
-        {/* Handle expand (VISIBLE SOLO COLAPSADO) */}
+        {/* Handle expand (VISIBLE ONLY WHEN COLLAPSED) */}
         {collapsed && (
           <Button
             variant="icon"
             size="icon"
-            aria-label="Expandir menú"
-            title="Expandir menú"
+            aria-label="Expand menu"
+            title="Expand menu"
             onClick={() => setCollapsed(false)}
             className="absolute top-1/2 -right-3 translate-y-[-50%] z-20 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
           >
@@ -187,7 +184,7 @@ const Layout = ({ children }) => {
                 <MapPin size={22} className="text-primary-600 dark:text-primary-300" />
                 <span className="text-base font-semibold text-gray-800 dark:text-gray-200">VardAssets</span>
               </div>
-              <Button variant="icon" size="icon" onClick={() => setSidebarOpen(false)} aria-label="Cerrar menú">
+              <Button variant="icon" size="icon" onClick={() => setSidebarOpen(false)} aria-label="Close menu">
                 <X size={18} />
               </Button>
             </div>
@@ -208,7 +205,7 @@ const Layout = ({ children }) => {
         variant="icon"
         size="icon"
         className="lg:hidden fixed top-4 left-4 z-40 rounded-lg bg-white/90 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow-sm hover:bg-white dark:hover:bg-gray-800"
-        aria-label="Abrir menú"
+        aria-label="Open menu"
       >
         <Menu size={18} />
       </Button>

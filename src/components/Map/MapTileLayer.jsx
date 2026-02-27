@@ -100,10 +100,10 @@ export default function MapTileLayer({ zoomLevel = 1, viewport, refreshTrigger }
         )
       })}
 
-      {/* Indicador de carga */}
+      {/* Loading indicator */}
       {loading && (
         <div className="fixed bottom-20 right-4 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-lg text-sm z-50">
-          🔄 Cargando tiles...
+          🔄 Loading tiles...
         </div>
       )}
     </>

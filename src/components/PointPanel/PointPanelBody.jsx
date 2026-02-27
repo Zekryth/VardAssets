@@ -29,7 +29,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
   if (!point) {
     return (
       <div className="fixed inset-y-0 right-0 w-96 bg-white dark:bg-gray-800 shadow-2xl z-50 flex items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400">No hay punto seleccionado</p>
+        <p className="text-gray-500 dark:text-gray-400">No point selected</p>
       </div>
     );
   }
@@ -83,21 +83,21 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
   if (!Array.isArray(documentos)) documentos = [];
 
   const tabs = [
-    { id: 'info', name: 'Información', icon: '📋' },
-    { id: 'inventory', name: 'Inventario', icon: '📦', badge: inventario.length },
-    { id: 'photos', name: 'Fotos', icon: '📷', badge: fotos.length },
-    { id: 'documents', name: 'Documentos', icon: '📄', badge: documentos.length }
+    { id: 'info', name: 'Information', icon: '📋' },
+    { id: 'inventory', name: 'Inventory', icon: '📦', badge: inventario.length },
+    { id: 'photos', name: 'Photos', icon: '📷', badge: fotos.length },
+    { id: 'documents', name: 'Documents', icon: '📄', badge: documentos.length }
   ];
 
   const handleDelete = async () => {
-    if (confirm(`¿Estás seguro de eliminar el punto "${point.nombre}"?`)) {
+    if (confirm(`Are you sure you want to delete the point "${point.nombre}"?`)) {
       setLoading(true);
       try {
         await onDelete(point.id || point._id);
         onClose();
       } catch (error) {
-        console.error('Error eliminando punto:', error);
-        alert('Error al eliminar el punto');
+        console.error('Error deleting point:', error);
+        alert('Error deleting point');
       } finally {
         setLoading(false);
       }
@@ -136,7 +136,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             {point.nombre}
           </h2>
           <p className="text-blue-100 text-sm mt-1">
-            {point.categoria || 'Sin categoría'} • {(point.compania_propietaria_nombre || point.company_name || point.compania_propietaria || point.compañia?.nombre || 'Sin compañía propietaria')}
+            {point.categoria || 'No category'} • {(point.compania_propietaria_nombre || point.company_name || point.compania_propietaria || point.compañia?.nombre || 'No owner company')}
           </p>
         </div>
         <button
@@ -197,44 +197,44 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
 
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Categoría
+                    Category
                   </label>
                   <p className="text-sm text-gray-900 dark:text-white">
                     {point.categoria || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">Sin categoría</span>
+                      <span className="text-gray-400 dark:text-gray-500 italic">No category</span>
                     )}
                   </p>
                 </div>
 
                 <div className="col-span-2">
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Compañía Propietaria
+                    Owner Company
                   </label>
                   <p className="text-sm text-gray-900 dark:text-white">
                     {point.compania_propietaria_nombre || point.company_name || point.compania_propietaria || point.compañia?.nombre || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía propietaria</span>
+                      <span className="text-gray-400 dark:text-gray-500 italic">No owner company</span>
                     )}
                   </p>
                 </div>
 
                 <div className="col-span-2">
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Compañía Alojada
+                    Hosted Company
                   </label>
                   <p className="text-sm text-gray-900 dark:text-white">
                     {point.compania_alojada_nombre || point.compania_alojada || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía alojada</span>
+                      <span className="text-gray-400 dark:text-gray-500 italic">No hosted company</span>
                     )}
                   </p>
                 </div>
 
                 <div className="col-span-2">
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Fecha de Alojamiento
+                    Hosting Date
                   </label>
                   <p className="text-sm text-gray-900 dark:text-white">
                     {formatHostedDate(point.compania_alojada_fecha) || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">Sin fecha registrada</span>
+                      <span className="text-gray-400 dark:text-gray-500 italic">No date recorded</span>
                     )}
                   </p>
                 </div>
@@ -244,13 +244,13 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             {/* Coordenadas */}
             <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 space-y-3">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                📍 Ubicación
+                📍 Location
               </h3>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Coordenada X
+                    X Coordinate
                   </label>
                   <p className="text-lg font-mono font-bold text-blue-600 dark:text-blue-400">
                     {coords?.x || 0} <span className="text-xs text-gray-400">px</span>
@@ -259,7 +259,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
 
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Coordenada Y
+                    Y Coordinate
                   </label>
                   <p className="text-lg font-mono font-bold text-blue-600 dark:text-blue-400">
                     {coords?.y || 0} <span className="text-xs text-gray-400">px</span>
@@ -271,22 +271,22 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             {/* Fechas */}
             <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 space-y-3">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                🕐 Fechas
+                🕐 Dates
               </h3>
               
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Creado:</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Created:</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {point.created_at ? new Date(point.created_at).toLocaleString('es-ES') : 'N/A'}
+                    {point.created_at ? new Date(point.created_at).toLocaleString('en-US') : 'N/A'}
                   </span>
                 </div>
                 
                 {point.updated_at && point.updated_at !== point.created_at && (
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Actualizado:</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Updated:</span>
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {new Date(point.updated_at).toLocaleString('es-ES')}
+                      {new Date(point.updated_at).toLocaleString('en-US')}
                     </span>
                   </div>
                 )}
@@ -301,13 +301,13 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                  📦 Inventario ({inventario.length})
+                  📦 Inventory ({inventario.length})
                 </h3>
                 <button
                   onClick={() => onEdit(point)}
                   className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  Editar
+                  Edit
                 </button>
               </div>
 
@@ -315,13 +315,13 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📦</div>
                   <p className="text-gray-500 dark:text-gray-400">
-                    No hay objetos en el inventario
+                    No inventory items
                   </p>
                   <button
                     onClick={() => onEdit(point)}
                     className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline"
                   >
-                    Agregar objetos
+                    Add items
                   </button>
                 </div>
               ) : (
@@ -334,7 +334,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {item.objeto_nombre || item.objeto?.nombre || item.nombre || 'Sin nombre'}
+                            {item.objeto_nombre || item.objeto?.nombre || item.nombre || 'No name'}
                           </p>
                           {(item.descripcion || item.objeto?.descripcion) && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -347,7 +347,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
                             {item.cantidad || 0}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {item.unidad || item.objeto?.unidad || 'unidades'}
+                            {item.unidad || item.objeto?.unidad || 'units'}
                           </p>
                         </div>
                       </div>
@@ -365,13 +365,13 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                  📷 Fotos ({fotos.length})
+                  📷 Photos ({fotos.length})
                 </h3>
                 <button
                   onClick={() => onEdit(point)}
                   className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  Gestionar fotos
+                  Manage photos
                 </button>
               </div>
 
@@ -379,13 +379,13 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📷</div>
                   <p className="text-gray-500 dark:text-gray-400">
-                    No hay fotos
+                    No photos
                   </p>
                   <button
                     onClick={() => onEdit(point)}
                     className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline"
                   >
-                    Subir fotos
+                    Upload photos
                   </button>
                 </div>
               ) : (
@@ -398,15 +398,15 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
                     >
                       <img
                         src={foto}
-                        alt={`Foto ${index + 1}`}
+                        alt={`Photo ${index + 1}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          console.error('Error cargando foto:', foto);
+                          console.error('Error loading photo:', foto);
                           e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3E❌%3C/text%3E%3C/svg%3E';
                         }}
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-white text-sm font-medium">Ver imagen</span>
+                        <span className="text-white text-sm font-medium">View image</span>
                       </div>
                     </div>
                   ))}
@@ -422,13 +422,13 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                  📄 Documentos ({documentos.length})
+                  📄 Documents ({documentos.length})
                 </h3>
                 <button
                   onClick={() => onEdit(point)}
                   className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  Gestionar documentos
+                  Manage documents
                 </button>
               </div>
 
@@ -436,13 +436,13 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📄</div>
                   <p className="text-gray-500 dark:text-gray-400">
-                    No hay documentos
+                    No documents
                   </p>
                   <button
                     onClick={() => onEdit(point)}
                     className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline"
                   >
-                    Subir documentos
+                    Upload documents
                   </button>
                 </div>
               ) : (
@@ -458,7 +458,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 dark:text-white truncate">
-                            {doc.filename || `Documento ${index + 1}`}
+                            {doc.filename || `Document ${index + 1}`}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {formatFileSize(doc.size)}
@@ -471,7 +471,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
                           rel="noopener noreferrer"
                           className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                         >
-                          Descargar
+                          Download
                         </a>
                       </div>
                     </div>
@@ -492,7 +492,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors"
           >
             <Pencil className="w-5 h-5" />
-            Editar Punto
+            Edit Point
           </button>
           
           <button
@@ -501,7 +501,7 @@ export default function PointPanelBody({ point, onClose, onEdit, onDelete }) {
             className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors"
           >
             <Trash2 className="w-5 h-5" />
-            {loading ? 'Eliminando...' : 'Eliminar'}
+            {loading ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </div>

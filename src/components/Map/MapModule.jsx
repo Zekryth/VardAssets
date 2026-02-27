@@ -234,7 +234,7 @@ export default function MapModule({ points = [], onPointSelect, tileSize = 256, 
           <div className="absolute inset-0 pointer-events-none z-10">
             <button
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-3 shadow-lg"
-              title="Agregar primer tile (0,0)"
+              title="Add first tile (0,0)"
               onClick={() => addTile(0, 0)}
             >
               +
@@ -243,19 +243,19 @@ export default function MapModule({ points = [], onPointSelect, tileSize = 256, 
         ) : (
           <div className="absolute inset-0 pointer-events-none z-10">
             <div className="absolute left-1/2 top-6 -translate-x-1/2 flex gap-2 pointer-events-auto">
-              <button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-3 py-1 shadow" onClick={() => addTile(bbox.minX, bbox.minY - 1)}>+ Arriba</button>
+              <button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-3 py-1 shadow" onClick={() => addTile(bbox.minX, bbox.minY - 1)}>+ Top</button>
             </div>
             <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-auto">
-              <button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-3 py-1 shadow" onClick={() => addTile(bbox.maxX + 1, bbox.minY)}>+ Derecha</button>
+              <button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-3 py-1 shadow" onClick={() => addTile(bbox.maxX + 1, bbox.minY)}>+ Right</button>
             </div>
             <div className="absolute left-1/2 bottom-6 -translate-x-1/2 pointer-events-auto">
-              <button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-3 py-1 shadow" onClick={() => addTile(bbox.minX, bbox.maxY + 1)}>+ Abajo</button>
+              <button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-3 py-1 shadow" onClick={() => addTile(bbox.minX, bbox.maxY + 1)}>+ Bottom</button>
             </div>
             <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-auto">
-              <button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-3 py-1 shadow" onClick={() => addTile(bbox.minX - 1, bbox.minY)}>+ Izquierda</button>
+              <button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-3 py-1 shadow" onClick={() => addTile(bbox.minX - 1, bbox.minY)}>+ Left</button>
             </div>
             {loadingTiles && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 bg-gray-900/70 px-2 py-1 rounded">Cargando…</div>
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 text-xs text-gray-300 bg-gray-900/70 px-2 py-1 rounded">Loading...</div>
             )}
             {err && (
               <div className="absolute top-12 left-1/2 -translate-x-1/2 text-xs text-red-300 bg-red-900/40 px-2 py-1 rounded">{err}</div>

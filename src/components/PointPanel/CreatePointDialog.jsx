@@ -1,8 +1,8 @@
 /**
  * CreatePointDialog.jsx
  *
- * Diálogo/modal para crear un nuevo punto en el mapa con soporte de múltiples pisos.
- * Permite ingresar nombre, categoría, compañía, y gestionar pisos con inventario y archivos independientes.
+ * Dialog/modal for creating a new point on the map with multiple floor support.
+ * Allows entering name, category, company, and managing floors with inventory and independent files.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronUp, ChevronDown, Plus, Trash2, Building2, Building } from 'lucide-react'
@@ -106,7 +106,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
         setCompanies(cList.filter(Boolean))
         setObjects(oList.filter(Boolean))
       } catch (e) {
-        setErrMsg(e?.response?.data?.message || e?.message || 'Error cargando catálogos')
+        setErrMsg(e?.response?.data?.message || e?.message || 'Error loading catalogs')
         setCompanies([])
         setObjects([])
       } finally {
@@ -172,7 +172,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
       {
         numero: prev.length + 1,
         nombre_punto: '',
-        nombre_piso: `Etajul ${prev.length + 1}`,
+        nombre_piso: `Floor ${prev.length + 1}`,
         categoria: '',
         compania_propietaria: null,
         compania_alojada: null,
@@ -187,7 +187,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   }
 
   const handleRemovePiso = (index) => {
-    if (confirm(`¿Eliminar ${pisosAdicionales[index]?.nombre_piso || `Piso ${index + 1}`}?`)) {
+    if (confirm(`Delete ${pisosAdicionales[index]?.nombre_piso || `Floor ${index + 1}`}?`)) {
       setPisosAdicionales(prev => prev.filter((_, i) => i !== index))
       if (pisoActual >= pisosAdicionales.length - 1) {
         setPisoActual(Math.max(0, pisosAdicionales.length - 2))
@@ -257,7 +257,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   }
 
   const canSave = Boolean(nombrePunto?.trim())
-  const nombrePuntoError = !nombrePunto && touched.nombrePunto ? 'Requerido' : ''
+  const nombrePuntoError = !nombrePunto && touched.nombrePunto ? 'Required' : ''
 
   const companiesOptions = useMemo(() => {
     return (Array.isArray(companies) ? companies : [])
@@ -291,9 +291,9 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
   }, [objects])
 
   const submit = () => {
-    // Validar nombre del PUNTO (Planta Baja)
+    // Validate POINT name (Ground Floor)
     if (!nombrePunto?.trim()) {
-      alert('❌ El punto debe tener un nombre')
+      alert('❌ The point must have a name')
       setTouched(t => ({ ...t, nombrePunto: true }))
       return
     }
@@ -301,16 +301,16 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     // Validate coordinates
     if (!coords || typeof coords.x !== 'number' || typeof coords.y !== 'number') {
       console.error('❌ [CREATE DIALOG] Invalid coordinates:', coords)
-      alert('Coordenadas inválidas. Por favor, cierra este diálogo y haz click en el mapa de nuevo.')
+      alert('Invalid coordinates. Please close this dialog and click on the map again.')
       return
     }
     
-    // Validar pisos adicionales si existen
+    // Validate additional floors if any
     if (showPisosAdicionales && pisosAdicionales.length > 0) {
       for (let i = 0; i < pisosAdicionales.length; i++) {
         const piso = pisosAdicionales[i]
         if (!piso.nombre_punto?.trim()) {
-          alert(`❌ El piso ${i + 1} debe tener un nombre de punto para búsqueda`)
+          alert(`❌ Floor ${i + 1} must have a point name for search`)
           return
         }
       }
@@ -319,8 +319,8 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     // Normalizar pisos adicionales
     const pisosNormalized = pisosAdicionales.map((piso, index) => ({
       numero: index + 1,
-      nombre_punto: piso.nombre_punto?.trim() || `Piso ${index + 1}`,
-      nombre_piso: piso.nombre_piso?.trim() || `Etajul ${index + 1}`,
+      nombre_punto: piso.nombre_punto?.trim() || `Floor ${index + 1}`,
+      nombre_piso: piso.nombre_piso?.trim() || `Floor ${index + 1}`,
       categoria: piso.categoria?.trim() || '',
       compania_propietaria: piso.compania_propietaria || null,
       compania_alojada: piso.compania_alojada || null,
@@ -379,7 +379,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
     console.log('🏗️ Pisos Adicionales:', payload.pisosAdicionales.length)
     if (payload.pisosAdicionales.length > 0) {
       payload.pisosAdicionales.forEach((piso, i) => {
-        console.log(`  Piso ${i + 1}:`, {
+        console.log(`  Floor ${i + 1}:`, {
           nombre_punto: piso.nombre_punto,
           nombre_piso: piso.nombre_piso,
           categoria: piso.categoria,
@@ -412,21 +412,21 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
         {/* HEADER */}
         <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <div>
-            <h3 id="cpd-title" className="font-semibold text-lg">Crear Punto</h3>
+            <h3 id="cpd-title" className="font-semibold text-lg">Create Point</h3>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              📍 Coordenadas: X: {coords?.x != null ? Math.round(coords.x) : '-'} px · Y: {coords?.y != null ? Math.round(coords.y) : '-'} px
+              📍 Coordinates: X: {coords?.x != null ? Math.round(coords.x) : '-'} px · Y: {coords?.y != null ? Math.round(coords.y) : '-'} px
             </div>
             {(typeof coords?.centeredX === 'number' && typeof coords?.centeredY === 'number') && (
               <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
-                🎯 Centro: Xc: {Math.round(coords.centeredX)} px · Yc: {Math.round(coords.centeredY)} px
+                🎯 Center: Xc: {Math.round(coords.centeredX)} px · Yc: {Math.round(coords.centeredY)} px
               </div>
             )}
           </div>
           <button
             className="px-2 py-1 rounded-md text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
             onClick={onCancel}
-            aria-label="Cerrar"
-            title="Cerrar"
+            aria-label="Close"
+            title="Close"
           >
             ✕
           </button>
@@ -446,7 +446,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-green-800 dark:text-green-300 flex items-center gap-2">
                 <Building2 className="w-5 h-5" />
-                <span>INFORMACIÓN DEL PUNTO (Planta Baja)</span>
+                <span>POINT INFORMATION (Ground Floor)</span>
               </h3>
               
               <button
@@ -458,20 +458,20 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                     ? 'bg-yellow-500 text-white shadow-lg'
                     : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                 )}
-                title="Marcar como Mijloc Fix"
+                title="Mark as Mijloc Fix"
               >
                 <span className="text-base">{mijlocFix ? '⭐' : '☆'}</span>
                 <span>Mijloc Fix</span>
               </button>
             </div>
             
-            {/* Campos de Planta Baja */}
+            {/* Ground Floor Fields */}
             <div className="space-y-3">
-              {/* Nombre del Punto */}
+              {/* Point Name */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Nombre del Punto <span className="text-red-500">*</span>
-                  <span className="text-gray-500 ml-2">(Nr. Container)</span>
+                  Point Name <span className="text-red-500">*</span>
+                  <span className="text-gray-500 ml-2">(Container Nr.)</span>
                 </label>
                 <input
                   type="text"
@@ -480,7 +480,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                     setNombrePunto(e.target.value)
                     setTouched(t => ({ ...t, nombrePunto: true }))
                   }}
-                  placeholder="Ej: 234150"
+                  placeholder="E.g.: 234150"
                   className={cx(
                     'w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm',
                     nombrePuntoError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
@@ -491,34 +491,34 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                 )}
               </div>
 
-              {/* Categoría */}
+              {/* Category */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Categoría
+                  Category
                 </label>
                 <input
                   type="text"
                   value={categoriaPunto}
                   onChange={(e) => setCategoriaPunto(e.target.value)}
-                  placeholder="Ej: Container tip birou"
+                  placeholder="E.g.: Container office type"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                 />
               </div>
 
-              {/* Compañía Propietaria */}
+              {/* Owner Company */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Compañía Propietaria
+                  Owner Company
                 </label>
                 {loading ? (
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Cargando compañías...</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Loading companies...</div>
                 ) : (
                   <select
                     value={companiaPropietaria || ''}
                     onChange={(e) => setCompaniaPropietaria(e.target.value || null)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   >
-                    <option value="">Sin compañía</option>
+                    <option value="">No company</option>
                     {companiesOptions.map(company => (
                       <option key={company.value} value={company.value}>
                         {company.label}
@@ -528,13 +528,13 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                 )}
               </div>
 
-              {/* Compañía Alojada */}
+              {/* Hosted Company */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Compañía Alojada
+                  Hosted Company
                 </label>
                 {loading ? (
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Cargando compañías...</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Loading companies...</div>
                 ) : (
                   <select
                     value={companiaAlojada || ''}
@@ -545,7 +545,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                     }}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   >
-                    <option value="">Sin compañía</option>
+                    <option value="">No company</option>
                     {companiesOptions.map(company => (
                       <option key={company.value} value={company.value}>
                         {company.label}
@@ -555,10 +555,10 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                 )}
               </div>
 
-              {/* Fecha de Alojamiento */}
+              {/* Hosting Date */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Fecha de Alojamiento
+                  Hosting Date
                 </label>
                 <input
                   type="date"
@@ -579,7 +579,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                   <span className="transform transition-transform" style={{ display: 'inline-block', transform: showSAPField ? 'rotate(90deg)' : 'rotate(0deg)' }}>
                     ▶
                   </span>
-                  <span>Nr. Inv. SAP (opcional)</span>
+                  <span>Nr. Inv. SAP (optional)</span>
                 </button>
                 
                 {showSAPField && (
@@ -587,14 +587,14 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                     type="text"
                     value={nrInventarioSAP}
                     onChange={(e) => setNrInventarioSAP(e.target.value)}
-                    placeholder="Ej: SAP-12345"
+                    placeholder="E.g.: SAP-12345"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   />
                 )}
               </div>
             </div>
 
-            {/* Tabs de Planta Baja */}
+            {/* Ground Floor Tabs */}
             <div className="mt-4">
               <div className="flex border-b border-gray-200 dark:border-gray-700 mb-3">
                 <button
@@ -607,7 +607,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                       : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                   )}
                 >
-                  📦 Inventario
+                  📦 Inventory
                 </button>
                 <button
                   type="button"
@@ -619,7 +619,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                       : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                   )}
                 >
-                  📷 Fotos
+                  📷 Photos
                 </button>
                 <button
                   type="button"
@@ -631,28 +631,28 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                       : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                   )}
                 >
-                  📄 Documentos
+                  📄 Documents
                 </button>
               </div>
 
-              {/* Tab Content - Inventario */}
+              {/* Tab Content - Inventory */}
               {plantaBajaTab === 'inventario' && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-xs text-gray-700 dark:text-gray-300">
-                      Inventario de Planta Baja
+                      Ground Floor Inventory
                     </label>
                     <button
                       type="button"
                       className="text-xs px-2 py-1 rounded bg-green-600 hover:bg-green-700 text-white"
                       onClick={() => setInventarioPlantaBaja([...inventarioPlantaBaja, { objeto: '', cantidad: 1, unidad: '' }])}
                     >
-                      + Agregar ítem
+                      + Add item
                     </button>
                   </div>
                   
                   {inventarioPlantaBaja.length === 0 ? (
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Sin ítems. Usa "Agregar ítem".</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">No items. Use "Add item".</div></div>
                   ) : (
                     <div className="space-y-2">
                       {inventarioPlantaBaja.map((row, idx) => (
@@ -668,7 +668,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                               }}
                               disabled={loading}
                             >
-                              <option value="">Seleccione objeto…</option>
+                              <option value="">Select object...</option>
                               {objectsOptions.map((o) => (
                                 <option key={o.id} value={o.id}>
                                   {o.name} {o.categoria ? `· ${o.categoria}` : ''}
@@ -695,8 +695,8 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                               onClick={() => {
                                 setInventarioPlantaBaja(inventarioPlantaBaja.filter((_, i) => i !== idx))
                               }}
-                              title="Quitar"
-                              aria-label="Quitar"
+                              title="Remove"
+                              aria-label="Remove"
                             >
                               ✕
                             </button>
@@ -712,7 +712,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
               {plantaBajaTab === 'fotos' && (
                 <div>
                   <label className="block text-xs text-gray-700 dark:text-gray-300 mb-2">
-                    Fotos de Planta Baja
+                    Ground Floor Photos
                   </label>
                   <PhotoUpload
                     pointId="temp-planta-baja"
@@ -726,7 +726,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
               {plantaBajaTab === 'documentos' && (
                 <div>
                   <label className="block text-xs text-gray-700 dark:text-gray-300 mb-2">
-                    Documentos de Planta Baja
+                    Ground Floor Documents
                   </label>
                   <DocumentUpload
                     pointId="temp-planta-baja"
@@ -746,7 +746,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
             >
               <span className="text-sm font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2">
                 <Building className="w-5 h-5" />
-                <span>Agregar Pisos Adicionales</span>
+                <span>Add Additional Floors</span>
                 {pisosAdicionales.length > 0 && (
                   <span className="ml-2 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
                     {pisosAdicionales.length}
@@ -768,13 +768,13 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                     className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
                   >
                     <Plus className="w-4 h-4" />
-                    Agregar Piso
+                    Add Floor
                   </button>
                 </div>
 
                 {pisosAdicionales.length === 0 ? (
                   <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400">
-                    No hay pisos adicionales. Usa "Agregar Piso" para crear uno.
+                    No additional floors. Use "Add Floor" to create one.
                   </div>
                 ) : (
                   <div>
@@ -787,15 +787,15 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                         className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm"
                       >
                         <ChevronUp className="w-4 h-4" />
-                        Anterior
+                        Previous
                       </button>
 
                       <div className="text-center">
                         <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                          {currentPiso?.nombre_piso || `Piso ${pisoActual + 1}`}
+                          {currentPiso?.nombre_piso || `Floor ${pisoActual + 1}`}
                         </p>
                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                          Piso {pisoActual + 1} de {pisosAdicionales.length}
+                          Floor {pisoActual + 1} of {pisosAdicionales.length}
                         </p>
                       </div>
 
@@ -805,7 +805,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                         disabled={pisoActual === pisosAdicionales.length - 1}
                         className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm"
                       >
-                        Siguiente
+                        Next
                         <ChevronDown className="w-4 h-4" />
                       </button>
                     </div>
@@ -815,7 +815,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                       {/* Header con Mijloc Fix */}
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                          {currentPiso?.nombre_piso || `Piso ${pisoActual + 1}`}
+                          {currentPiso?.nombre_piso || `Floor ${pisoActual + 1}`}
                         </h4>
                         
                         <div className="flex items-center gap-2">
@@ -828,7 +828,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                                 ? 'bg-yellow-500 text-white shadow-lg'
                                 : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                             )}
-                            title="Marcar como Mijloc Fix"
+                            title="Mark as Mijloc Fix"
                           >
                             <span className="text-base">{currentPiso?.mijloc_fix ? '⭐' : '☆'}</span>
                             <span>Mijloc Fix</span>
@@ -840,7 +840,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                             className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 text-sm"
                           >
                             <Trash2 className="w-4 h-4" />
-                            Eliminar
+                            Delete
                           </button>
                         </div>
                       </div>
@@ -850,14 +850,14 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                         {/* Nombre Punto */}
                         <div>
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Nombre del Punto
-                            <span className="text-gray-500 ml-2">(para búsqueda)</span>
+                            Point Name
+                            <span className="text-gray-500 ml-2">(for search)</span>
                           </label>
                           <input
                             type="text"
                             value={currentPiso?.nombre_punto || ''}
                             onChange={(e) => updatePisoActual('nombre_punto', e.target.value)}
-                            placeholder={`Ej: 234567 - etj ${currentPiso?.numero || pisoActual + 1}`}
+                            placeholder={`E.g.: 234567 - floor ${currentPiso?.numero || pisoActual + 1}`}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                           />
                         </div>
@@ -865,14 +865,14 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                         {/* Nombre Piso */}
                         <div>
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Nombre del Piso
-                            <span className="text-gray-500 ml-2">(descriptivo)</span>
+                            Floor Name
+                            <span className="text-gray-500 ml-2">(descriptive)</span>
                           </label>
                           <input
                             type="text"
                             value={currentPiso?.nombre_piso || ''}
                             onChange={(e) => updatePisoActual('nombre_piso', e.target.value)}
-                            placeholder={`Etajul ${currentPiso?.numero || pisoActual + 1}`}
+                            placeholder={`Floor ${currentPiso?.numero || pisoActual + 1}`}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                           />
                         </div>
@@ -880,13 +880,13 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                         {/* Categoría */}
                         <div>
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Categoría
+                            Category
                           </label>
                           <input
                             type="text"
                             value={currentPiso?.categoria || ''}
                             onChange={(e) => updatePisoActual('categoria', e.target.value)}
-                            placeholder="Ej: Container tip magaize"
+                            placeholder="E.g.: Container storage type"
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                           />
                         </div>
@@ -894,17 +894,17 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                         {/* Compañía Propietaria */}
                         <div>
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Compañía Propietaria
+                            Owner Company
                           </label>
                           {loading ? (
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Cargando compañías...</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Loading companies...</div>
                           ) : (
                             <select
                               value={currentPiso?.compania_propietaria || ''}
                               onChange={(e) => updatePisoActual('compania_propietaria', e.target.value || null)}
                               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                             >
-                              <option value="">Sin compañía</option>
+                              <option value="">No company</option>
                               {companiesOptions.map(company => (
                                 <option key={company.value} value={company.value}>
                                   {company.label}
@@ -917,10 +917,10 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                         {/* Compañía Alojada */}
                         <div>
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Compañía Alojada
+                            Hosted Company
                           </label>
                           {loading ? (
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Cargando compañías...</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Loading companies...</div>
                           ) : (
                             <select
                               value={currentPiso?.compania_alojada || ''}
@@ -931,7 +931,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                               }}
                               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                             >
-                              <option value="">Sin compañía</option>
+                              <option value="">No company</option>
                               {companiesOptions.map(company => (
                                 <option key={company.value} value={company.value}>
                                   {company.label}
@@ -944,7 +944,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                         {/* Fecha de Alojamiento */}
                         <div>
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Fecha de Alojamiento
+                            Hosting Date
                           </label>
                           <input
                             type="date"
@@ -969,7 +969,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                             )}
                           >
-                            📦 Inventario
+                            📦 Inventory
                           </button>
                           <button
                             type="button"
@@ -981,7 +981,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                             )}
                           >
-                            📷 Fotos
+                            📷 Photos
                           </button>
                           <button
                             type="button"
@@ -993,7 +993,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                             )}
                           >
-                            📄 Documentos
+                            📄 Documents
                           </button>
                         </div>
 
@@ -1002,7 +1002,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                           <div>
                             <div className="flex items-center justify-between mb-2">
                               <label className="block text-xs text-gray-700 dark:text-gray-300">
-                                Inventario de {currentPiso?.nombre_piso || `Piso ${pisoActual + 1}`}
+                                Inventory of {currentPiso?.nombre_piso || `Floor ${pisoActual + 1}`}
                               </label>
                               <button
                                 type="button"
@@ -1014,12 +1014,12 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                                   ])
                                 }}
                               >
-                                + Agregar ítem
+                                + Add item
                               </button>
                             </div>
                             
                             {(!currentPiso?.inventario || currentPiso.inventario.length === 0) ? (
-                              <div className="text-xs text-gray-500 dark:text-gray-400">Sin ítems. Usa "Agregar ítem".</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">No items. Use "Add item".</div>
                             ) : (
                               <div className="space-y-2">
                                 {currentPiso.inventario.map((row, idx) => (
@@ -1035,7 +1035,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                                         }}
                                         disabled={loading}
                                       >
-                                        <option value="">Seleccione objeto…</option>
+                                        <option value="">Select object...</option>
                                         {objectsOptions.map((o) => (
                                           <option key={o.id} value={o.id}>
                                             {o.name} {o.categoria ? `· ${o.categoria}` : ''}
@@ -1063,8 +1063,8 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                                           const newInv = (currentPiso.inventario || []).filter((_, i) => i !== idx)
                                           updatePisoActual('inventario', newInv)
                                         }}
-                                        title="Quitar"
-                                        aria-label="Quitar"
+                                        title="Remove"
+                                        aria-label="Remove"
                                       >
                                         ✕
                                       </button>
@@ -1080,7 +1080,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                         {pisoTab === 'fotos' && (
                           <div>
                             <label className="block text-xs text-gray-700 dark:text-gray-300 mb-2">
-                              Fotos de {currentPiso?.nombre_piso || `Piso ${pisoActual + 1}`}
+                              Photos of {currentPiso?.nombre_piso || `Floor ${pisoActual + 1}`}
                             </label>
                             <PhotoUpload
                               pointId={`temp-piso-${pisoActual}`}
@@ -1094,7 +1094,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
                         {pisoTab === 'documentos' && (
                           <div>
                             <label className="block text-xs text-gray-700 dark:text-gray-300 mb-2">
-                              Documentos de {currentPiso?.nombre_piso || `Piso ${pisoActual + 1}`}
+                              Documents of {currentPiso?.nombre_piso || `Floor ${pisoActual + 1}`}
                             </label>
                             <DocumentUpload
                               pointId={`temp-piso-${pisoActual}`}
@@ -1114,7 +1114,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
 
         <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-2">
           <button className="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100" onClick={onCancel}>
-            Cancelar
+            Cancel
           </button>
           <button
             className={cx(
@@ -1124,7 +1124,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
             disabled={!canSave}
             onClick={submit}
           >
-            Crear
+            Create
           </button>
         </div>
       </div>

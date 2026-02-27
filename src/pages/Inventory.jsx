@@ -1,20 +1,17 @@
 /**
  * Inventory.jsx
  *
- * Página de inventario para gestionar objetos y puntos de inventario.
- * Permite listar, buscar, crear, editar y eliminar objetos, así como asociarlos a puntos.
- * Incluye paginación, formularios y utiliza servicios de API y componentes de UI personalizados.
+ * Inventory page for managing objects and inventory points.
+ * List, search, create, edit and delete objects, as well as associate them with points.
+ * Includes pagination, forms and uses API services and custom UI components.
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { Search, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { pointService, objectService } from '../services/api'
 import Button from '../components/UI/Button.jsx'
 import Input from '../components/UI/Input.jsx'
-import { useTranslation } from 'react-i18next'
-import '../i18n'
 
 export default function Inventory() {
-  const { t } = useTranslation()
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState('items') // 'items' | 'companies'
@@ -93,7 +90,7 @@ export default function Inventory() {
       const c = p?.compañia
       if (!c || !(c._id || c.id)) continue
       const cId = c._id || c.id
-      if (!cmap.has(cId)) cmap.set(cId, { id: cId, name: c.nombre || 'Sin nombre', items: new Map() })
+      if (!cmap.has(cId)) cmap.set(cId, { id: cId, name: c.nombre || 'No name', items: new Map() })
       const inv = Array.isArray(p?.inventario) ? p.inventario : []
       for (const it of inv) {
         const name = it?.objeto?.nombre || '—'
@@ -131,31 +128,31 @@ export default function Inventory() {
       {/* Top bar with search and mode toggle */}
       <div className="px-4 pt-4 md:px-6 md:pt-5 select-none">
         <div className="flex items-center gap-3 md:gap-4">
-          <div className="flex items-center flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-surface-raised/80 backdrop-blur px-3 py-2 shadow-lg" role="search" aria-label="Buscar inventario">
+          <div className="flex items-center flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-surface-raised/80 backdrop-blur px-3 py-2 shadow-lg" role="search" aria-label="Search inventory">
             <Search size={16} className="text-gray-500 dark:text-gray-400 mr-2" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={mode === 'items' ? t('search.object') : t('search.placeholder')}
+              placeholder={mode === 'items' ? 'Search object' : 'Search...'}
               className="w-full bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
-              aria-label={t('inventory.title')}
+              aria-label="Inventory"
             />
           </div>
-          <Button onClick={() => { setEditing(null); setOpen(true) }} className="gap-2 whitespace-nowrap"><Plus size={16} /> {t('inventory.addObject')}</Button>
+          <Button onClick={() => { setEditing(null); setOpen(true) }} className="gap-2 whitespace-nowrap"><Plus size={16} /> Add Object</Button>
           <div className="flex items-center rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
             <button
               type="button"
               onClick={() => setMode('items')}
               className={`px-3 py-2 text-sm ${mode==='items' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-surface-raised/60 text-gray-700 dark:text-gray-200'}`}
               aria-pressed={mode==='items'}
-            >Por objeto</button>
+            >By Object</button>
             <button
               type="button"
               onClick={() => setMode('companies')}
               className={`px-3 py-2 text-sm border-l border-gray-200 dark:border-gray-700 ${mode==='companies' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-surface-raised/60 text-gray-700 dark:text-gray-200'}`}
               aria-pressed={mode==='companies'}
-            >Por compañía</button>
+            >By Company</button>
           </div>
         </div>
       </div>
@@ -185,7 +182,7 @@ export default function Inventory() {
                   </div>
                 ))}
                 {filteredItems.length === 0 && (
-                  <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-8">No hay resultados</div>
+                  <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-8">No results</div>
                 )}
               </div>
             )}
@@ -209,7 +206,7 @@ export default function Inventory() {
                   </div>
                 ))}
                 {filteredCompanies.length === 0 && (
-                  <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-8">No hay resultados</div>
+                  <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-8">No results</div>
                 )}
               </div>
             )}
@@ -220,7 +217,7 @@ export default function Inventory() {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-surface-raised/80 backdrop-blur px-3 py-2 shadow-sm">
                     <Search size={16} className="text-gray-500 dark:text-gray-400 mr-2" />
-                    <input value={objQuery} onChange={(e)=>{ setObjPage(1); setObjQuery(e.target.value) }} placeholder={t('search.object')} className="w-full bg-transparent text-sm" />
+                    <input value={objQuery} onChange={(e)=>{ setObjPage(1); setObjQuery(e.target.value) }} placeholder="Search object" className="w-full bg-transparent text-sm" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -239,9 +236,9 @@ export default function Inventory() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" className="gap-1" onClick={() => { setEditing(o); setForm({ nombre: o.nombre||'', categoria: o.categoria||'', numeroInventario: o.numeroInventario||'', nickname: o.nickname||'', descripcion: o.descripcion||'', icono: o.icono||'📦', imagen: null }); setOpen(true) }}><Pencil size={14} /> Editar</Button>
+                          <Button variant="ghost" size="sm" className="gap-1" onClick={() => { setEditing(o); setForm({ nombre: o.nombre||'', categoria: o.categoria||'', numeroInventario: o.numeroInventario||'', nickname: o.nickname||'', descripcion: o.descripcion||'', icono: o.icono||'📦', imagen: null }); setOpen(true) }}><Pencil size={14} /> Edit</Button>
                           <Button variant="outline" size="sm" className="gap-1" onClick={async ()=>{
-                            const ok = window.confirm(`¿Borrar el objeto "${o.nombre}"? Esta acción no se puede deshacer.`)
+                            const ok = window.confirm(`Delete object "${o.nombre}"? This action cannot be undone.`)
                             if (!ok) return
                             try { await objectService.deleteObject(o._id || o.id) } catch {}
                             // refresh
@@ -251,18 +248,18 @@ export default function Inventory() {
                               const list = Array.isArray(data) ? data : (data.objects || [])
                               setObjects(list.filter(Boolean))
                             } catch {}
-                          }}><Trash2 size={14} /> Borrar</Button>
+                          }}><Trash2 size={14} /> Delete</Button>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className="flex items-center justify-between mt-3">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{objTotal>0 ? `Mostrando ${(objPage-1)*objLimit+1}–${Math.min(objPage*objLimit, objTotal)} de ${objTotal}` : 'Sin resultados'}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{objTotal>0 ? `Showing ${(objPage-1)*objLimit+1}–${Math.min(objPage*objLimit, objTotal)} of ${objTotal}` : 'No results'}</div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={()=> setObjPage(p=> Math.max(1,p-1))} disabled={objPage<=1} className="gap-1"><ChevronLeft size={14} /> Anterior</Button>
+                    <Button variant="outline" size="sm" onClick={()=> setObjPage(p=> Math.max(1,p-1))} disabled={objPage<=1} className="gap-1"><ChevronLeft size={14} /> Previous</Button>
                     <span className="text-xs">{objPage} / {Math.max(objPages,1)}</span>
-                    <Button variant="outline" size="sm" onClick={()=> setObjPage(p=> Math.min(objPages, p+1))} disabled={objPage>=objPages} className="gap-1">Siguiente <ChevronRight size={14} /></Button>
+                    <Button variant="outline" size="sm" onClick={()=> setObjPage(p=> Math.min(objPages, p+1))} disabled={objPage>=objPages} className="gap-1">Next <ChevronRight size={14} /></Button>
                   </div>
                 </div>
               </div>
@@ -273,7 +270,7 @@ export default function Inventory() {
 
       {/* Toggle for Catalog mode (anchored inside Inventory) */}
       <div className="absolute bottom-4 left-4 z-30">
-        <Button variant={catalogMode? 'solid' : 'outline'} onClick={()=> setCatalogMode(v=>!v)}>{catalogMode ? 'Ocultar catálogo' : 'Mostrar catálogo'}</Button>
+        <Button variant={catalogMode? 'solid' : 'outline'} onClick={()=> setCatalogMode(v=>!v)}>{catalogMode ? 'Hide catalog' : 'Show catalog'}</Button>
       </div>
 
       {open && (
@@ -281,7 +278,7 @@ export default function Inventory() {
           <div className="absolute inset-0 bg-black/50" onClick={() => { setOpen(false); setEditing(null) }} />
           <div className="relative w-full max-w-md rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{editing ? 'Editar objeto' : 'Crear objeto'}</h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{editing ? 'Edit object' : 'Create object'}</h3>
               <button onClick={()=> { setOpen(false); setEditing(null) }} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"><X size={16} /></button>
             </div>
             <form
@@ -307,7 +304,7 @@ export default function Inventory() {
                   setOpen(false)
                   setEditing(null)
                   setForm({ nombre: '', categoria: '', numeroInventario: '', nickname: '', descripcion: '', icono: '📦', imagen: null })
-                  setSuccess('Objeto guardado correctamente')
+                  setSuccess('Object saved successfully')
                   setTimeout(() => setSuccess(''), 2500)
                   // Refresh catalog so new/updated object appears
                   try {
@@ -317,7 +314,7 @@ export default function Inventory() {
                     setObjects(list.filter(Boolean))
                   } catch {}
                 } catch (err) {
-                  setError(err?.response?.data?.message || 'No se pudo guardar el objeto')
+                  setError(err?.response?.data?.message || 'Could not save the object')
                 } finally {
                   setSubmitting(false)
                 }
@@ -325,39 +322,39 @@ export default function Inventory() {
               className="space-y-3"
             >
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nombre</label>
-                <Input value={form.nombre} onChange={e=>setForm(f=>({...f, nombre: e.target.value }))} placeholder="Nombre del objeto" required />
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Name</label>
+                <Input value={form.nombre} onChange={e=>setForm(f=>({...f, nombre: e.target.value }))} placeholder="Object name" required />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Categoría</label>
-                <Input value={form.categoria} onChange={e=>setForm(f=>({...f, categoria: e.target.value }))} placeholder="Categoría (ej. silla, mesa)" required />
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Category</label>
+                <Input value={form.categoria} onChange={e=>setForm(f=>({...f, categoria: e.target.value }))} placeholder="Category (e.g. chair, table)" required />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Número de inventario</label>
-                <Input value={form.numeroInventario} onChange={e=>setForm(f=>({...f, numeroInventario: e.target.value }))} placeholder="Código/Número único" required />
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Inventory number</label>
+                <Input value={form.numeroInventario} onChange={e=>setForm(f=>({...f, numeroInventario: e.target.value }))} placeholder="Unique code/number" required />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Apodo</label>
-                  <Input value={form.nickname} onChange={e=>setForm(f=>({...f, nickname: e.target.value }))} placeholder="Opcional" />
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nickname</label>
+                  <Input value={form.nickname} onChange={e=>setForm(f=>({...f, nickname: e.target.value }))} placeholder="Optional" />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Icono</label>
-                  <Input value={form.icono} onChange={e=>setForm(f=>({...f, icono: e.target.value }))} placeholder="Ej. 📦" />
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Icon</label>
+                  <Input value={form.icono} onChange={e=>setForm(f=>({...f, icono: e.target.value }))} placeholder="E.g. 📦" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Descripción</label>
-                <Input value={form.descripcion} onChange={e=>setForm(f=>({...f, descripcion: e.target.value }))} placeholder="Breve descripción" />
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Description</label>
+                <Input value={form.descripcion} onChange={e=>setForm(f=>({...f, descripcion: e.target.value }))} placeholder="Brief description" />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Imagen</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Image</label>
                 <input type="file" accept="image/*" onChange={e=> setForm(f=> ({...f, imagen: e.target.files?.[0] || null }))} />
               </div>
               {error && <div className="text-xs text-danger-500">{error}</div>}
               <div className="flex items-center justify-end gap-2 pt-2">
-                <Button type="button" variant="ghost" onClick={()=> { setOpen(false); setEditing(null) }}>Cancelar</Button>
-                <Button type="submit" disabled={submitting}>{submitting ? 'Guardando…' : (editing ? 'Actualizar' : 'Crear')}</Button>
+                <Button type="button" variant="ghost" onClick={()=> { setOpen(false); setEditing(null) }}>Cancel</Button>
+                <Button type="submit" disabled={submitting}>{submitting ? 'Saving...' : (editing ? 'Update' : 'Create')}</Button>
               </div>
             </form>
           </div>

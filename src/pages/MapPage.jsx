@@ -282,7 +282,7 @@ export default function MapPage() {
                     })
                   }}
                   className="inline-flex items-center justify-center min-w-[44px] h-12 px-4 rounded-xl border bg-white dark:bg-surface border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
-                  aria-label="Abrir búsqueda"
+                  aria-label="Open search"
                   aria-expanded={searchPanelOpen}
                   aria-haspopup="dialog"
                 >
@@ -290,7 +290,7 @@ export default function MapPage() {
                 </button>
 
                 {searchPanelOpen && (
-                  <div className="absolute left-0 mt-2 w-[min(32rem,calc(100vw-2rem))] md:w-[36rem] bg-white/95 dark:bg-surface/95 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4" role="dialog" aria-label="Buscar puntos, objetos o compañías">
+                  <div className="absolute left-0 mt-2 w-[min(32rem,calc(100vw-2rem))] md:w-[36rem] bg-white/95 dark:bg-surface/95 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4" role="dialog" aria-label="Search points, objects or companies">
                     <div className="flex items-center h-12 rounded-xl border border-gray-300/80 dark:border-gray-600 bg-white dark:bg-surface px-4 transition-colors focus-within:border-primary-500/80 focus-within:ring-2 focus-within:ring-primary-500/20">
                       <Search size={18} className="text-gray-500 dark:text-gray-400 mr-3" />
                       <input
@@ -313,35 +313,35 @@ export default function MapPage() {
                           }
                           else if (e.key === 'Escape') { setOpen?.(false); setSearchPanelOpen(false) }
                         }}
-                        placeholder="Escribir para buscar"
+                        placeholder="Type to search"
                         className="w-full bg-transparent text-base text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:outline-none"
                         aria-expanded={isComboboxOpen}
                         aria-controls={searchListId}
                         aria-autocomplete="list"
                         aria-activedescendant={isComboboxOpen && activeIndex >= 0 ? `search-opt-${activeIndex}` : undefined}
-                        aria-label="Buscar puntos, objetos o compañías"
+                        aria-label="Search points, objects or companies"
                       />
                       {(query || '').length > 0 && (
                         <button
                           onClick={() => { setQuery?.(''); triggerEnter?.(''); setOpen?.(false) }}
                           className="ml-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xs px-2.5 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          aria-label="Limpiar búsqueda"
+                          aria-label="Clear search"
                         >
-                          Limpiar
+                          Clear
                         </button>
                       )}
                     </div>
 
                     <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400" aria-live="polite">
                       {searchLoading
-                        ? 'Cargando resultados…'
+                        ? 'Loading results...'
                         : searchError
-                        ? 'Error al cargar resultados'
-                        : `${flatList.length} resultados · Enter para buscar`}
+                        ? 'Error loading results'
+                        : `${flatList.length} results · Enter to search`}
                     </div>
 
                     {isComboboxOpen && (
-                      <div id={searchListId} className="mt-2 bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden transition-colors" role="listbox" aria-label="Resultados de búsqueda">
+                      <div id={searchListId} className="mt-2 bg-white dark:bg-surface-raised border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden transition-colors" role="listbox" aria-label="Search results">
                         <div className="max-h-72 overflow-auto divide-y divide-gray-200 dark:divide-gray-700">
                           {flatList.map((row, idx) => (
                             <button
@@ -464,7 +464,7 @@ function MapWithPanels({ points, mapContainerRef, fetchPoints }) {
           await fetchPoints()
           const p = res.data?.point || res.data
           if (p) openPanel?.(p)
-          push({ type: 'success', title: 'Punto movido', message: `${p?.nombre || 'Punto'} a (${nx}, ${ny})` })
+          push({ type: 'success', title: 'Point moved', message: `${p?.nombre || 'Point'} to (${nx}, ${ny})` })
         } catch (err) {
           console.error('move failed', err)
           push({ type: 'error', title: 'No se pudo mover', message: err?.response?.data?.message || err?.message })
@@ -628,29 +628,29 @@ function FiltersInline({ filters, setFilters, companies, categories }) {
           role="dialog"
           aria-label="Filtros"
         >
-          <div className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Filtros</div>
+          <div className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Filters</div>
           <div className="space-y-4 max-h-80 overflow-auto pr-1 custom-scroll">
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Compañía (propietaria o alojada)</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Company (owner or hosted)</label>
               <select
                 value={filters.companyId}
                 onChange={(e) => setField('companyId', e.target.value)}
                 className="w-full px-3 py-2 rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
-                <option value="">Todas</option>
+                <option value="">All</option>
                 {companies.map(c => (
                   <option key={c.id} value={c.id}>{c.nombre}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Categoría</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Category</label>
               <select
                 value={filters.category}
                 onChange={(e) => setField('category', e.target.value)}
                 className="w-full px-3 py-2 rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
-                <option value="">Todas</option>
+                <option value="">All</option>
                 {categories.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -658,8 +658,8 @@ function FiltersInline({ filters, setFilters, companies, categories }) {
             </div>
           </div>
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <button onClick={clear} className="px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400">Limpiar</button>
-            <button onClick={() => setOpen(false)} className="px-3 py-1.5 text-xs rounded-md bg-primary-600 hover:bg-primary-500 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400">Cerrar</button>
+            <button onClick={clear} className="px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400">Clear</button>
+            <button onClick={() => setOpen(false)} className="px-3 py-1.5 text-xs rounded-md bg-primary-600 hover:bg-primary-500 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400">Close</button>
           </div>
         </div>
       )}

@@ -65,20 +65,20 @@ const FloatingFilters = ({ companies = [], categories = [], value, onChange }) =
         <div role="dialog" aria-label="Filtros de búsqueda" className="absolute right-0 mt-2 w-80 bg-white/95 dark:bg-surface/95 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4 text-sm text-gray-700 dark:text-gray-200 transition-colors duration-300">
           <div className="flex items-center justify-between mb-2">
             <div className="font-semibold text-gray-800 dark:text-gray-200">Filtros</div>
-            <button className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400" onClick={() => setOpen(false)} aria-label="Cerrar filtros">
+            <button className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400" onClick={() => setOpen(false)} aria-label="Close filters">
               <X size={16} />
             </button>
           </div>
 
           <div className="space-y-3">
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">Compañía</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">Company</label>
               <select
                 value={value?.companyId || ''}
                 onChange={(e) => setField('companyId', e.target.value)}
                 className="w-full px-3 py-2 rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
-                <option value="">Todas</option>
+                <option value="">All</option>
                 {companies.map((c) => (
                   <option key={c._id || c.id || c.nombre} value={c._id || c.id || ''}>{c.nombre}</option>
                 ))}
@@ -86,13 +86,13 @@ const FloatingFilters = ({ companies = [], categories = [], value, onChange }) =
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">Categoría</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">Category</label>
               <select
                 value={value?.category || ''}
                 onChange={(e) => setField('category', e.target.value)}
                 className="w-full px-3 py-2 rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
-                <option value="">Todas</option>
+                <option value="">All</option>
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -105,14 +105,14 @@ const FloatingFilters = ({ companies = [], categories = [], value, onChange }) =
                 onClick={clear}
                 className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                Limpiar
+                Clear
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="px-3 py-1.5 rounded-md bg-primary-600 hover:bg-primary-500 text-white transition-colors"
               >
-                Listo
+                Done
               </button>
             </div>
           </div>

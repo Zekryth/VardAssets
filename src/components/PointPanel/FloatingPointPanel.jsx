@@ -40,7 +40,7 @@ function LoadingSkeleton() {
         {/* Spinner overlay */}
         <div className="flex items-center justify-center py-4">
           <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-          <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Cargando datos...</span>
+          <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading data...</span>
         </div>
       </div>
     </div>
@@ -158,7 +158,7 @@ export default function FloatingPointPanel({ panel }) {
           <button data-panel-action aria-pressed={minimized} onClick={() => toggleMinimize(id)} className="h-8 w-8 grid place-items-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" title="Minimizar">
             <Minus size={16} />
           </button>
-          <button data-panel-action onClick={() => closePanel(id)} className="h-8 w-8 grid place-items-center rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600" title="Cerrar">
+          <button data-panel-action onClick={() => closePanel(id)} className="h-8 w-8 grid place-items-center rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600" title="Close">
             <X size={16} />
           </button>
         </div>

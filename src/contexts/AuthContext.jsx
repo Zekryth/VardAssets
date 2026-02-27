@@ -28,37 +28,37 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const verifyToken = async () => {
-    console.log('🔍 Verificando token almacenado...')
+    console.log('🔍 Verifying stored token...')
     
     const token = localStorage.getItem('token')
     
     if (!token) {
-      console.log('⚠️ No hay token almacenado')
+      console.log('⚠️ No stored token')
       setLoading(false)
       setIsAuthenticated(false)
       return
     }
 
     try {
-      console.log('📡 Verificando token con backend...')
+      console.log('📡 Verifying token with backend...')
       const response = await api.get('/auth/verify')
       
       if (response.data.valid) {
-        console.log('✅ Token válido:', response.data.user.email)
+        console.log('✅ Valid token:', response.data.user.email)
         setUser(response.data.user)
         setIsAuthenticated(true)
       } else {
-        console.warn('⚠️ Token inválido')
+        console.warn('⚠️ Invalid token')
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         setIsAuthenticated(false)
       }
     } catch (error) {
-      console.error('❌ Error verificando token:', error.response?.status, error.message)
+      console.error('❌ Error verifying token:', error.response?.status, error.message)
       
-      // Solo limpiar si es 401 (no autorizado)
+      // Only clear if 401 (unauthorized)
       if (error.response?.status === 401) {
-        console.log('🗑️ Limpiando token inválido/expirado')
+        console.log('🗑️ Clearing invalid/expired token')
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         setIsAuthenticated(false)
@@ -70,12 +70,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      console.log('🔐 Intentando login:', email)
+      console.log('🔐 Attempting login:', email)
       const response = await api.post('/auth', { email, password })
       
       const { token, user } = response.data
       
-      console.log('✅ Login exitoso, guardando token...')
+      console.log('✅ Login successful, saving token...')
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
       
@@ -84,17 +84,17 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true }
     } catch (error) {
-      console.error('❌ Error en login:', error.response?.data || error.message)
+      console.error('❌ Login error:', error.response?.data || error.message)
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Error al iniciar sesión',
-        message: error.response?.data?.error || 'Error al iniciar sesión'
+        error: error.response?.data?.error || 'Login failed',
+        message: error.response?.data?.error || 'Login failed'
       }
     }
   }
 
   const logout = () => {
-    console.log('🚪 Cerrando sesión...')
+    console.log('🚪 Logging out...')
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setUser(null)

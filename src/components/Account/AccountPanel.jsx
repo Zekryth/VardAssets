@@ -1,13 +1,10 @@
 /**
  * AccountPanel.jsx
  *
- * Componente de panel de cuenta de usuario.
- * Muestra información del usuario autenticado, avatar, y opciones de cierre de sesión.
- * Utiliza AuthContext e i18n para internacionalización.
+ * User account panel component.
+ * Displays authenticated user information, avatar, and logout options.
  */
 import React, { useState, useRef } from 'react'
-import { useTranslation } from 'react-i18next';
-import '../../i18n';
 import { useAuth } from '../../contexts/AuthContext'
 
 const Avatar = ({ name }) => {
@@ -24,75 +21,13 @@ const Avatar = ({ name }) => {
   )
 }
 
-
-const LANGS = [
-  { code: 'en', label: 'EN', name: 'English', flag: '🇬🇧' },
-  { code: 'es', label: 'ES', name: 'Español', flag: '🇪🇸' },
-  { code: 'ro', label: 'RO', name: 'Română', flag: '🇷🇴' },
-];
-
 const AccountPanel = () => {
-
   const { user, logout } = useAuth();
-  const { i18n, t } = useTranslation();
-  const [langMenu, setLangMenu] = useState(false);
-  const langBtnRef = useRef();
   if (!user) return null;
-
-  // Idioma actual (default to 'en' if not set)
-  const currentLang = i18n.language || 'en';
-  const current = LANGS.find(l => l.code === currentLang) || LANGS[0];
-
-  // Cierra el menú si se hace click fuera
-  React.useEffect(() => {
-    if (!langMenu) return;
-    function handle(e) {
-      if (langBtnRef.current && !langBtnRef.current.contains(e.target)) setLangMenu(false);
-    }
-    document.addEventListener('mousedown', handle);
-    return () => document.removeEventListener('mousedown', handle);
-  }, [langMenu]);
-
-  // Cambia idioma global y guarda en localStorage
-  const handleLang = (code) => {
-    i18n.changeLanguage(code);
-    localStorage.setItem('language', code);
-    setLangMenu(false);
-  };
 
   return (
     <div className="bg-white/90 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-200 backdrop-blur transition-colors relative">
-      <div className="flex justify-between items-start mb-2">
-        <div />
-        {/* Botón idioma */}
-        <div ref={langBtnRef}>
-          <button
-            type="button"
-            aria-label="Seleccionar idioma"
-            className="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-xs font-semibold shadow-sm border border-gray-200 dark:border-gray-700 focus:outline-none"
-            onClick={() => setLangMenu(v => !v)}
-            style={{marginLeft:'auto'}}>
-            <span role="img" aria-label="Idioma" style={{fontSize:'1.1em'}}>🌐</span>
-            <span>{current.label}</span>
-          </button>
-          {langMenu && (
-            <div className="absolute right-3 mt-2 w-28 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-10 animate-fadeIn" style={{minWidth:80}}>
-              {LANGS.map(l => (
-                <button
-                  key={l.code}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-gray-100 dark:hover:bg-gray-800 ${l.code===currentLang?'font-bold text-blue-600 dark:text-blue-400':''}`}
-                  onClick={() => handleLang(l.code)}
-                  tabIndex={0}
-                >
-                  <span>{l.flag}</span>
-                  <span>{l.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-      {/* ...existing code... */}
+      {/* User info */}
       <div className="flex items-start gap-3">
         <div className="shrink-0">
           <Avatar name={user?.nombre} />
@@ -103,7 +38,7 @@ const AccountPanel = () => {
           <div className="flex items-center gap-2 mt-1">
             <span className="w-2 h-2 rounded-full bg-green-500"></span>
             <span className="text-gray-600 dark:text-gray-300 text-xs capitalize">
-              {user?.rol === 'admin' ? t('common.role') + ': Admin' : t('common.role') + ': User'}
+              {user?.rol === 'admin' ? 'Role: Admin' : 'Role: User'}
             </span>
           </div>
         </div>
@@ -112,10 +47,10 @@ const AccountPanel = () => {
         <button
           type="button"
           onClick={logout}
-          aria-label={t('nav.logout')}
+          aria-label="Log out"
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/20 dark:text-red-300 dark:hover:bg-red-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
         >
-          {t('nav.logout')}
+          Log out
         </button>
       </div>
     </div>

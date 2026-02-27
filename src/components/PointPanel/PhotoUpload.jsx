@@ -40,11 +40,11 @@ export default function PhotoUpload({ pointId, photos = [], onPhotosChange }) {
       // Actualizar lista de fotos
       onPhotosChange([...photos, ...uploadedUrls]);
 
-      console.log(`🎉 ${uploadedUrls.length} fotos subidas exitosamente`);
+      console.log(`🎉 ${uploadedUrls.length} photos uploaded successfully`);
       
     } catch (error) {
-      console.error('❌ Error subiendo fotos:', error);
-      alert('Error al subir fotos: ' + (error.response?.data?.error || error.message));
+      console.error('❌ Error uploading photos:', error);
+      alert('Error uploading photos: ' + (error.response?.data?.error || error.message));
     } finally {
       setUploading(false);
       setProgress(0);
@@ -52,15 +52,15 @@ export default function PhotoUpload({ pointId, photos = [], onPhotosChange }) {
   };
 
   const handleDelete = async (photoUrl) => {
-    if (!confirm('¿Eliminar esta foto?')) return;
+    if (!confirm('Delete this photo?')) return;
 
     try {
       await api.delete('/upload', { data: { url: photoUrl } });
       onPhotosChange(photos.filter(url => url !== photoUrl));
-      console.log('✅ Foto eliminada');
+      console.log('✅ Photo deleted');
     } catch (error) {
-      console.error('❌ Error eliminando foto:', error);
-      alert('Error al eliminar foto');
+      console.error('❌ Error deleting photo:', error);
+      alert('Error deleting photo');
     }
   };
 
@@ -68,7 +68,7 @@ export default function PhotoUpload({ pointId, photos = [], onPhotosChange }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Fotos ({photos.length})
+          Photos ({photos.length})
         </h3>
         
         <label className="cursor-pointer">
@@ -83,7 +83,7 @@ export default function PhotoUpload({ pointId, photos = [], onPhotosChange }) {
           <div className={`flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
             <Upload size={16} />
             <span className="text-sm font-medium">
-              {uploading ? `Subiendo ${progress}%` : 'Subir Fotos'}
+              {uploading ? `Uploading ${progress}%` : 'Upload Photos'}
             </span>
           </div>
         </label>
@@ -114,7 +114,7 @@ export default function PhotoUpload({ pointId, photos = [], onPhotosChange }) {
             <button
               onClick={() => handleDelete(photoUrl)}
               className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-              title="Eliminar foto"
+              title="Delete photo"
             >
               <Trash2 size={14} />
             </button>
@@ -125,7 +125,7 @@ export default function PhotoUpload({ pointId, photos = [], onPhotosChange }) {
       {photos.length === 0 && !uploading && (
         <div className="text-center py-8 text-gray-400">
           <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No hay fotos. Click en "Subir Fotos" para agregar.</p>
+          <p className="text-sm">No photos. Click "Upload Photos" to add.</p>
         </div>
       )}
     </div>

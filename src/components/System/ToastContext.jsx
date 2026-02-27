@@ -54,7 +54,7 @@ function ToastViewport({ toasts, onClose }) {
             {t.action ? (
               <button className="text-xs text-primary-600 hover:underline" onClick={() => { t.action?.(); onClose(t.id) }}>Deshacer</button>
             ) : <span />}
-            <button className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onClick={() => onClose(t.id)}>Cerrar</button>
+            <button className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onClick={() => onClose(t.id)}>Close</button>
           </div>
         </div>
       ))}

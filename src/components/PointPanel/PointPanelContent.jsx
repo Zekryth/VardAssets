@@ -1,8 +1,8 @@
 /**
  * PointPanelContent.jsx
  *
- * Contenido reutilizable para paneles de punto (flotante o lateral).
- * Dashboard profesional con grid layout, segmented control y iconos Lucide.
+ * Reusable content for point panels (floating or sidebar).
+ * Professional dashboard with grid layout, segmented control and Lucide icons.
  */
 import { useState, useEffect } from 'react';
 import { 
@@ -51,7 +51,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
   if (!point) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500 dark:text-gray-400">No hay punto seleccionado</p>
+        <p className="text-gray-500 dark:text-gray-400">No point selected</p>
       </div>
     );
   }
@@ -124,19 +124,19 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
 
   const tabs = [
     { id: 'info', name: 'Info', icon: Info },
-    { id: 'inventory', name: 'Inventario', icon: Package, badge: inventario.length },
-    { id: 'photos', name: 'Fotos', icon: ImageIcon, badge: fotos.length },
+    { id: 'inventory', name: 'Inventory', icon: Package, badge: inventario.length },
+    { id: 'photos', name: 'Photos', icon: ImageIcon, badge: fotos.length },
     { id: 'documents', name: 'Docs', icon: FileText, badge: documentos.length }
   ];
 
   const handleDelete = async () => {
-    if (confirm(`¿Estás seguro de eliminar el punto "${point.nombre}"?`)) {
+    if (confirm(`Are you sure you want to delete the point "${point.nombre}"?`)) {
       setLoading(true);
       try {
         await onDelete(point.id || point._id);
       } catch (error) {
-        console.error('Error eliminando punto:', error);
-        alert('Error al eliminar el punto');
+        console.error('Error deleting point:', error);
+        alert('Error deleting point');
       } finally {
         setLoading(false);
       }
@@ -239,7 +239,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
             )}
           >
             <ChevronUp size={16} />
-            <span className="hidden sm:inline">Anterior</span>
+            <span className="hidden sm:inline">Previous</span>
           </button>
 
           <div className="flex items-center gap-2">
@@ -275,7 +275,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                 : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm hover:shadow border border-gray-200 dark:border-gray-600'
             )}
           >
-            <span className="hidden sm:inline">Siguiente</span>
+            <span className="hidden sm:inline">Next</span>
             <ChevronDown size={16} />
           </button>
         </div>
@@ -315,7 +315,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                       )}
                     </div>
                     <div className="text-xs text-gray-400 dark:text-gray-500">
-                      Piso {pisoActual + 1}/{pisos.length}
+                      Floor {pisoActual + 1}/{pisos.length}
                     </div>
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                       <Building2 size={18} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      Propietario
+                      Owner
                     </span>
                   </div>
                   <p className={cx(
@@ -336,7 +336,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                       ? 'text-gray-900 dark:text-white'
                       : 'text-gray-400 dark:text-gray-500 italic'
                   )}>
-                    {currentFloor.compania_propietaria_nombre || currentFloor.compania_propietaria || 'Sin compañía propietaria'}
+                    {currentFloor.compania_propietaria_nombre || currentFloor.compania_propietaria || 'No owner company'}
                   </p>
                 </div>
 
@@ -347,7 +347,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                       <Users size={18} className="text-violet-600 dark:text-violet-400" />
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      Alojado
+                      Hosted
                     </span>
                   </div>
                   <p className={cx(
@@ -356,12 +356,12 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                       ? 'text-gray-900 dark:text-white'
                       : 'text-gray-400 dark:text-gray-500 italic'
                   )}>
-                    {currentFloor.compania_alojada_nombre || currentFloor.compania_alojada || 'Sin compañía alojada'}
+                    {currentFloor.compania_alojada_nombre || currentFloor.compania_alojada || 'No hosted company'}
                   </p>
                   {currentFloor.compania_alojada_fecha && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
                       <Clock size={12} />
-                      Desde {formatHostedDate(currentFloor.compania_alojada_fecha)}
+                      Since {formatHostedDate(currentFloor.compania_alojada_fecha)}
                     </p>
                   )}
                 </div>
@@ -376,7 +376,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                       <MapPin size={18} className="text-orange-600 dark:text-orange-400" />
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      Ubicación
+                      Location
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -419,20 +419,20 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                       <Calendar size={18} className="text-sky-600 dark:text-sky-400" />
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      Alojamiento
+                      Hosting
                     </span>
                   </div>
                   <div className="space-y-2">
                     {currentFloor.compania_alojada_fecha ? (
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">Desde</span>
+                        <span className="text-gray-500 dark:text-gray-400">Since</span>
                         <span className="font-medium text-gray-900 dark:text-white">
                           {formatHostedDate(currentFloor.compania_alojada_fecha)}
                         </span>
                       </div>
                     ) : (
                       <p className="text-sm text-gray-400 dark:text-gray-500 italic">
-                        Sin fecha registrada
+                        No date recorded
                       </p>
                     )}
                   </div>
@@ -460,7 +460,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                         className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow"
                       >
                         <Pencil size={16} />
-                        Editar
+                        Edit
                       </button>
                     )}
                     {onDelete && (
@@ -470,7 +470,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                         className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl text-sm font-medium transition-all border border-red-200 dark:border-red-800"
                       >
                         <Trash2 size={16} />
-                        {loading ? '...' : 'Eliminar'}
+                        {loading ? '...' : 'Delete'}
                       </button>
                     )}
                   </div>
@@ -490,7 +490,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     <Package size={18} className="text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Inventario</h4>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Inventory</h4>
                     <p className="text-xs text-gray-500">{currentFloor.nombre} - {inventario.length} items</p>
                   </div>
                 </div>
@@ -499,7 +499,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     onClick={() => onEdit(point)}
                     className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
                   >
-                    Editar
+                    Edit
                   </button>
                 )}
               </div>
@@ -508,10 +508,10 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                 {inventario.length === 0 ? (
                   <EmptyState
                     icon={Package}
-                    title="Sin inventario"
-                    subtitle="No hay objetos registrados en este piso"
+                    title="No inventory"
+                    subtitle="No objects recorded on this floor"
                     onAction={onEdit ? () => onEdit(point) : null}
-                    actionLabel="Agregar objetos"
+                    actionLabel="Add objects"
                   />
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -522,7 +522,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {item.objeto_nombre || item.objeto?.nombre || item.nombre || 'Sin nombre'}
+                            {item.objeto_nombre || item.objeto?.nombre || item.nombre || 'No name'}
                           </p>
                           {(item.descripcion || item.objeto?.descripcion) && (
                             <p className="text-xs text-gray-500 truncate mt-0.5">
@@ -557,8 +557,8 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     <ImageIcon size={18} className="text-pink-600 dark:text-pink-400" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Fotos</h4>
-                    <p className="text-xs text-gray-500">{currentFloor.nombre} - {fotos.length} fotos</p>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Photos</h4>
+                    <p className="text-xs text-gray-500">{currentFloor.nombre} - {fotos.length} photos</p>
                   </div>
                 </div>
                 {onEdit && fotos.length > 0 && (
@@ -566,7 +566,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     onClick={() => onEdit(point)}
                     className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
                   >
-                    Gestionar
+                    Manage
                   </button>
                 )}
               </div>
@@ -575,10 +575,10 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                 {fotos.length === 0 ? (
                   <EmptyState
                     icon={ImageIcon}
-                    title="Sin fotos"
-                    subtitle="No hay imágenes en este piso"
+                    title="No photos"
+                    subtitle="No images on this floor"
                     onAction={onEdit ? () => onEdit(point) : null}
-                    actionLabel="Subir fotos"
+                    actionLabel="Upload photos"
                   />
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -618,8 +618,8 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     <FileText size={18} className="text-cyan-600 dark:text-cyan-400" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Documentos</h4>
-                    <p className="text-xs text-gray-500">{currentFloor.nombre} - {documentos.length} archivos</p>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Documents</h4>
+                    <p className="text-xs text-gray-500">{currentFloor.nombre} - {documentos.length} files</p>
                   </div>
                 </div>
                 {onEdit && documentos.length > 0 && (
@@ -627,7 +627,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     onClick={() => onEdit(point)}
                     className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
                   >
-                    Gestionar
+                    Manage
                   </button>
                 )}
               </div>
@@ -636,10 +636,10 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                 {documentos.length === 0 ? (
                   <EmptyState
                     icon={FileText}
-                    title="Sin documentos"
-                    subtitle="No hay archivos en este piso"
+                    title="No documents"
+                    subtitle="No files on this floor"
                     onAction={onEdit ? () => onEdit(point) : null}
-                    actionLabel="Subir documentos"
+                    actionLabel="Upload documents"
                   />
                 ) : (
                   <div className="space-y-2">
@@ -655,7 +655,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                              {doc.filename || `Documento ${index + 1}`}
+                              {doc.filename || `Document ${index + 1}`}
                             </p>
                             <p className="text-xs text-gray-500">
                               {formatFileSize(doc.size)}
@@ -670,7 +670,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Download size={14} />
-                            <span className="hidden sm:inline">Descargar</span>
+                            <span className="hidden sm:inline">Download</span>
                           </a>
                         </div>
                       );

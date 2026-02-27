@@ -40,26 +40,26 @@ export default function DocumentUpload({ pointId, documents = [], onDocumentsCha
 
       onDocumentsChange([...documents, ...uploadedDocs]);
 
-      console.log(`🎉 ${uploadedDocs.length} documentos subidos`);
+      console.log(`🎉 ${uploadedDocs.length} documents uploaded`);
       
     } catch (error) {
-      console.error('❌ Error subiendo documentos:', error);
-      alert('Error al subir documentos: ' + (error.response?.data?.error || error.message));
+      console.error('❌ Error uploading documents:', error);
+      alert('Error uploading documents: ' + (error.response?.data?.error || error.message));
     } finally {
       setUploading(false);
     }
   };
 
   const handleDelete = async (docUrl) => {
-    if (!confirm('¿Eliminar este documento?')) return;
+    if (!confirm('Delete this document?')) return;
 
     try {
       await api.delete('/upload', { data: { url: docUrl } });
       onDocumentsChange(documents.filter(doc => doc.url !== docUrl));
-      console.log('✅ Documento eliminado');
+      console.log('✅ Document deleted');
     } catch (error) {
-      console.error('❌ Error eliminando documento:', error);
-      alert('Error al eliminar documento');
+      console.error('❌ Error deleting document:', error);
+      alert('Error deleting document');
     }
   };
 
@@ -80,7 +80,7 @@ export default function DocumentUpload({ pointId, documents = [], onDocumentsCha
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Documentos ({documents.length})
+          Documents ({documents.length})
         </h3>
         
         <label className="cursor-pointer">
@@ -95,7 +95,7 @@ export default function DocumentUpload({ pointId, documents = [], onDocumentsCha
           <div className={`flex items-center gap-2 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
             <Upload size={16} />
             <span className="text-sm font-medium">
-              {uploading ? 'Subiendo...' : 'Subir Documentos'}
+              {uploading ? 'Uploading...' : 'Upload Documents'}
             </span>
           </div>
         </label>
@@ -127,14 +127,14 @@ export default function DocumentUpload({ pointId, documents = [], onDocumentsCha
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors"
-                title="Descargar"
+                title="Download"
               >
                 <Download size={18} />
               </a>
               <button
                 onClick={() => handleDelete(doc.url)}
                 className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors"
-                title="Eliminar"
+                title="Delete"
               >
                 <Trash2 size={18} />
               </button>
@@ -146,7 +146,7 @@ export default function DocumentUpload({ pointId, documents = [], onDocumentsCha
       {documents.length === 0 && !uploading && (
         <div className="text-center py-8 text-gray-400">
           <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No hay documentos. Click en "Subir Documentos" para agregar.</p>
+          <p className="text-sm">No documents. Click "Upload Documents" to add.</p>
         </div>
       )}
     </div>

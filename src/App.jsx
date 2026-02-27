@@ -1,8 +1,6 @@
 // App.jsx
-// Componente raíz de la aplicación. Define rutas, proveedores de contexto y el layout general de la app.
+// Root component of the application. Defines routes, context providers and the general layout.
 import React, { Suspense, lazy } from 'react'
-import { I18nextProvider } from 'react-i18next';
-import i18n from './i18n';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -12,63 +10,63 @@ const Inventory = lazy(() => import('./pages/Inventory'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Companies = lazy(() => import('./pages/Companies'))
 // Inventory page now implemented
-const Users = () => <div className="p-8">Usuarios (próximamente)</div>
-const Settings = () => <div className="p-8">Configuración (próximamente)</div>
-const Help = () => <div className="p-8">Ayuda & Soporte (próximamente)</div>
+const Users = () => <div className="p-8">Users (coming soon)</div>
+const Settings = () => <div className="p-8">Settings (coming soon)</div>
+const Help = () => <div className="p-8">Help & Support (coming soon)</div>
 import Layout from './components/Layout/Layout'
 import ErrorBoundary from './components/System/ErrorBoundary'
 import TopProgressBar from './components/System/TopProgressBar'
 
 const RouteLoading = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-900">
-    <div className="text-white">Cargando...</div>
+    <div className="text-white">Loading...</div>
   </div>
 )
 
-// Componente para rutas protegidas
+// Component for protected routes
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
 
-  // Mientras verifica el token, mostrar loading
+  // While verifying token, show loading
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-white text-xl">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          Verificando sesión...
+          Verifying session...
         </div>
       </div>
     )
   }
 
-  // Si no está autenticado, redirigir a login
+  // If not authenticated, redirect to login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 
-  // Si está autenticado, mostrar contenido
+  // If authenticated, show content
   return children
 }
 
-// Componente para ruta de login (solo accesible si NO está autenticado)
+// Component for login route (only accessible if NOT authenticated)
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
 
-  // Mientras verifica, mostrar loading
+  // While verifying, show loading
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-white">Cargando...</div>
+        <div className="text-white">Loading...</div>
       </div>
     )
   }
 
-  // Si ya está autenticado, redirigir a dashboard
+  // If already authenticated, redirect to dashboard
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />
   }
 
-  // Si no está autenticado, mostrar login
+  // If not authenticated, show login
   return children
 }
 
@@ -83,38 +81,36 @@ const ProtectedLayoutRoute = () => (
 
 function App() {
   return (
-    <I18nextProvider i18n={i18n}>
-      <AuthProvider>
-        <ThemeProvider>
-          <div className="App">
-            <TopProgressBar />
-            <ErrorBoundary>
-              <Suspense fallback={<RouteLoading />}>
-                <Routes>
-                  <Route path="/login" element={
-                    <PublicRoute>
-                      <Login />
-                    </PublicRoute>
-                  } />
+    <AuthProvider>
+      <ThemeProvider>
+        <div className="App">
+          <TopProgressBar />
+          <ErrorBoundary>
+            <Suspense fallback={<RouteLoading />}>
+              <Routes>
+                <Route path="/login" element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                } />
 
-                  <Route element={<ProtectedLayoutRoute />}>
-                    <Route index element={<MapPage />} />
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="companies" element={<Companies />} />
-                    <Route path="inventory" element={<Inventory />} />
-                    <Route path="users" element={<Users />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="help" element={<Help />} />
-                  </Route>
+                <Route element={<ProtectedLayoutRoute />}>
+                  <Route index element={<MapPage />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="companies" element={<Companies />} />
+                  <Route path="inventory" element={<Inventory />} />
+                  <Route path="users" element={<Users />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="help" element={<Help />} />
+                </Route>
 
-                  <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
-              </Suspense>
-            </ErrorBoundary>
-          </div>
-        </ThemeProvider>
-      </AuthProvider>
-    </I18nextProvider>
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </div>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 

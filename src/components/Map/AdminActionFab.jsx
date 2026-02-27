@@ -7,10 +7,10 @@ import Button from '../UI/Button'
 const cx = (...classes) => classes.filter(Boolean).join(' ')
 
 const ACTIONS = [
-  { key: 'adding', label: 'Agregar punto', icon: Plus },
-  { key: 'moving', label: 'Mover punto', icon: Move },
-  { key: 'deleting', label: 'Borrar punto', icon: Trash2 },
-  { key: 'tiling', label: 'Editar mosaicos', icon: LayoutGrid }
+  { key: 'adding', label: 'Add point', icon: Plus },
+  { key: 'moving', label: 'Move point', icon: Move },
+  { key: 'deleting', label: 'Delete point', icon: Trash2 },
+  { key: 'tiling', label: 'Edit tiles', icon: LayoutGrid }
 ]
 
 /**

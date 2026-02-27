@@ -55,7 +55,7 @@ export function PointPanelsProvider({ children, getBounds }) {
 
   const openPanel = useCallback(async (point) => {
     const pointId = point._id || point.id
-    const title = point.nombre || 'Punto'
+    const title = point.nombre || 'Point'
     if (!pointId) return
 
     // Check if panel already exists
@@ -117,7 +117,7 @@ export function PointPanelsProvider({ children, getBounds }) {
           p.id === id ? { 
             ...p, 
             point: fullPoint, 
-            title: fullPoint.nombre || 'Punto',
+            title: fullPoint.nombre || 'Point',
             loading: false 
           } : p
         ))
@@ -173,7 +173,7 @@ export function PointPanelsProvider({ children, getBounds }) {
       
       if (updatedPoint) {
         setPanels(prev => prev.map(p => 
-          p.id === id ? { ...p, point: updatedPoint, title: updatedPoint.nombre || 'Punto' } : p
+          p.id === id ? { ...p, point: updatedPoint, title: updatedPoint.nombre || 'Point' } : p
         ))
       }
     } catch (err) {
