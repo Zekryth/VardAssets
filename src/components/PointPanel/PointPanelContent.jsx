@@ -81,7 +81,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
     const documentosAntiguos = point.documentos || [];
     
     pisos = [{
-      numero: 1,
+      numero: 0,
       nombre: point.nombre || 'Planta Baja',
       categoria: point.categoria || '',
       compania_propietaria: point.compania_propietaria || point.compañia || point.company_id || null,
@@ -89,6 +89,7 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
       compania_alojada_fecha: point.compania_alojada_fecha || null,
       compania_propietaria_nombre: point.compania_propietaria_nombre || point.company_name || null,
       compania_alojada_nombre: point.compania_alojada_nombre || null,
+      mijloc_fix: point.mijloc_fix || false,
       inventario: Array.isArray(inventarioAntiguo) ? inventarioAntiguo : 
                   (typeof inventarioAntiguo === 'string' ? JSON.parse(inventarioAntiguo) : []),
       fotos: Array.isArray(fotosAntiguas) ? fotosAntiguas :
@@ -99,13 +100,14 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
   } else {
     pisos = pisos.map((piso, index) => ({
       numero: piso.numero || index + 1,
-      nombre: piso.nombre || `Piso ${index + 1}`,
+      nombre: piso.nombre || piso.nombre_piso || `Piso ${index + 1}`,
       categoria: piso.categoria || point.categoria || '',
       compania_propietaria: piso.compania_propietaria || piso.compañia || point.compania_propietaria || null,
       compania_alojada: piso.compania_alojada || point.compania_alojada || null,
       compania_alojada_fecha: piso.compania_alojada_fecha || point.compania_alojada_fecha || null,
       compania_propietaria_nombre: piso.compania_propietaria_nombre || point.compania_propietaria_nombre || point.company_name || null,
       compania_alojada_nombre: piso.compania_alojada_nombre || point.compania_alojada_nombre || null,
+      mijloc_fix: piso.mijloc_fix || false,
       inventario: Array.isArray(piso.inventario) ? piso.inventario : [],
       fotos: Array.isArray(piso.fotos) ? piso.fotos : [],
       documentos: Array.isArray(piso.documentos) ? piso.documentos : []
@@ -358,45 +360,55 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
                     <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-2 text-center">
                       <span className="text-xs text-gray-500">X</span>
                       <p className="text-lg font-mono font-bold text-gray-900 dark:text-white">
-                        {coords?.x || 0}
+                        {Math.round(coords?.x || 0)}
                       </p>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-2 text-center">
                       <span className="text-xs text-gray-500">Y</span>
                       <p className="text-lg font-mono font-bold text-gray-900 dark:text-white">
-                        {coords?.y || 0}
+                        {Math.round(coords?.y || 0)}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Fechas */}
+                {/* Fecha de Alojamiento */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center">
                       <Calendar size={18} className="text-sky-600 dark:text-sky-400" />
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      Fechas
+                      Alojamiento
                     </span>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Creado</span>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {formatDateTime(point.created_at)}
-                      </span>
-                    </div>
-                    {point.updated_at && point.updated_at !== point.created_at && (
+                    {currentFloor.compania_alojada_fecha ? (
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">Actualizado</span>
+                        <span className="text-gray-500 dark:text-gray-400">Desde</span>
                         <span className="font-medium text-gray-900 dark:text-white">
-                          {formatDateTime(point.updated_at)}
+                          {formatHostedDate(currentFloor.compania_alojada_fecha)}
                         </span>
                       </div>
+                    ) : (
+                      <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+                        Sin fecha registrada
+                      </p>
                     )}
                   </div>
                 </div>
+
+                {/* Mijloc Fix indicator */}
+                {currentFloor.mijloc_fix && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-700 shadow-sm p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">⭐</span>
+                      <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                        Mijloc Fix
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Actions */}
                 {(onEdit || onDelete) && (

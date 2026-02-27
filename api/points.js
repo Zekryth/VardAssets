@@ -75,40 +75,49 @@ export default async function handler(req, res) {
           pointData.pisos = [];
         }
 
-        // Backward compatibility: migrar datos viejos
-        if (pointData.pisos.length === 0) {
-          console.log('📦 [GET POINT] Migrando datos viejos al formato de pisos');
-          
-          let inventario = pointData.inventario || [];
-          let fotos = pointData.fotos || [];
-          let documentos = pointData.documentos || [];
+        // SIEMPRE crear Planta Baja desde los datos principales del punto
+        console.log('📦 [GET POINT] Construyendo estructura de pisos');
+        
+        let inventario = pointData.inventario || [];
+        let fotos = pointData.fotos || [];
+        let documentos = pointData.documentos || [];
 
-          // Parsear si son strings
-          if (typeof inventario === 'string') {
-            try { inventario = JSON.parse(inventario); } catch (e) { inventario = []; }
-          }
-          if (typeof fotos === 'string') {
-            try { fotos = JSON.parse(fotos); } catch (e) { fotos = []; }
-          }
-          if (typeof documentos === 'string') {
-            try { documentos = JSON.parse(documentos); } catch (e) { documentos = []; }
-          }
-
-          pointData.pisos = [{
-            numero: 1,
-            nombre: pointData.nombre || 'Planta Baja',
-            categoria: pointData.categoria || '',
-            compañia: pointData.compania_propietaria || pointData.compañia || null,
-            compania_propietaria: pointData.compania_propietaria || pointData.compañia || null,
-            compania_alojada: pointData.compania_alojada || null,
-            compania_alojada_fecha: normalizeDate(pointData.compania_alojada_fecha),
-            compania_propietaria_nombre: pointData.compania_propietaria_nombre || pointData.company_name || null,
-            compania_alojada_nombre: pointData.compania_alojada_nombre || null,
-            inventario,
-            fotos,
-            documentos
-          }];
+        // Parsear si son strings
+        if (typeof inventario === 'string') {
+          try { inventario = JSON.parse(inventario); } catch (e) { inventario = []; }
         }
+        if (typeof fotos === 'string') {
+          try { fotos = JSON.parse(fotos); } catch (e) { fotos = []; }
+        }
+        if (typeof documentos === 'string') {
+          try { documentos = JSON.parse(documentos); } catch (e) { documentos = []; }
+        }
+
+        // Planta Baja (piso 0) siempre viene de los datos principales del punto
+        const plantaBaja = {
+          numero: 0,
+          nombre: pointData.nombre || 'Planta Baja',
+          categoria: pointData.categoria || '',
+          compañia: pointData.compania_propietaria || pointData.compañia || null,
+          compania_propietaria: pointData.compania_propietaria || pointData.compañia || null,
+          compania_alojada: pointData.compania_alojada || null,
+          compania_alojada_fecha: normalizeDate(pointData.compania_alojada_fecha),
+          compania_propietaria_nombre: pointData.compania_propietaria_nombre || pointData.company_name || null,
+          compania_alojada_nombre: pointData.compania_alojada_nombre || null,
+          mijloc_fix: pointData.mijloc_fix || false,
+          inventario,
+          fotos,
+          documentos
+        };
+
+        // Combinar Planta Baja + Pisos Adicionales
+        const pisosAdicionales = pointData.pisos || [];
+        pointData.pisos = [plantaBaja, ...pisosAdicionales.map((piso, idx) => ({
+          ...piso,
+          numero: idx + 1
+        }))];
+        
+        console.log(`🏢 [GET POINT] Planta Baja + ${pisosAdicionales.length} pisos adicionales = ${pointData.pisos.length} pisos totales`);
 
         // Asegurar que cada piso tenga categoria y compañia
         pointData.pisos = pointData.pisos.map((piso, index) => {
@@ -173,46 +182,50 @@ export default async function handler(req, res) {
           pointData.pisos = [];
         }
 
-        // Backward compatibility
-        if (pointData.pisos.length === 0) {
-          let inventario = pointData.inventario || [];
-          let fotos = pointData.fotos || [];
-          let documentos = pointData.documentos || [];
+        // SIEMPRE crear Planta Baja desde los datos principales del punto
+        let inventario = pointData.inventario || [];
+        let fotos = pointData.fotos || [];
+        let documentos = pointData.documentos || [];
 
-          if (typeof inventario === 'string') {
-            try { inventario = JSON.parse(inventario); } catch (e) { inventario = []; }
-          }
-          if (typeof fotos === 'string') {
-            try { fotos = JSON.parse(fotos); } catch (e) { fotos = []; }
-          }
-          if (typeof documentos === 'string') {
-            try { documentos = JSON.parse(documentos); } catch (e) { documentos = []; }
-          }
-
-          pointData.pisos = [{
-            numero: 1,
-            nombre: pointData.nombre || 'Planta Baja',
-            categoria: pointData.categoria || '',
-            compañia: pointData.compania_propietaria || pointData.compañia || null,
-            compania_propietaria: pointData.compania_propietaria || pointData.compañia || null,
-            compania_alojada: pointData.compania_alojada || null,
-            compania_alojada_fecha: normalizeDate(pointData.compania_alojada_fecha),
-            compania_propietaria_nombre: pointData.compania_propietaria_nombre || pointData.company_name || null,
-            compania_alojada_nombre: pointData.compania_alojada_nombre || null,
-            inventario,
-            fotos,
-            documentos
-          }];
+        if (typeof inventario === 'string') {
+          try { inventario = JSON.parse(inventario); } catch (e) { inventario = []; }
+        }
+        if (typeof fotos === 'string') {
+          try { fotos = JSON.parse(fotos); } catch (e) { fotos = []; }
+        }
+        if (typeof documentos === 'string') {
+          try { documentos = JSON.parse(documentos); } catch (e) { documentos = []; }
         }
 
-        pointData.pisos = pointData.pisos.map((piso) => ({
+        // Planta Baja (piso 0) siempre viene de los datos principales
+        const plantaBaja = {
+          numero: 0,
+          nombre: pointData.nombre || 'Planta Baja',
+          categoria: pointData.categoria || '',
+          compañia: pointData.compania_propietaria || pointData.compañia || null,
+          compania_propietaria: pointData.compania_propietaria || pointData.compañia || null,
+          compania_alojada: pointData.compania_alojada || null,
+          compania_alojada_fecha: normalizeDate(pointData.compania_alojada_fecha),
+          compania_propietaria_nombre: pointData.compania_propietaria_nombre || pointData.company_name || null,
+          compania_alojada_nombre: pointData.compania_alojada_nombre || null,
+          mijloc_fix: pointData.mijloc_fix || false,
+          inventario,
+          fotos,
+          documentos
+        };
+
+        // Combinar Planta Baja + Pisos Adicionales
+        const pisosAdicionales = pointData.pisos || [];
+        pointData.pisos = [plantaBaja, ...pisosAdicionales.map((piso, idx) => ({
           ...piso,
-          compania_propietaria: piso.compania_propietaria || piso.compañia || pointData.compania_propietaria || pointData.compañia || null,
-          compania_alojada: piso.compania_alojada || pointData.compania_alojada || null,
-          compania_alojada_fecha: normalizeDate(piso.compania_alojada_fecha || pointData.compania_alojada_fecha),
-          compania_propietaria_nombre: piso.compania_propietaria_nombre || pointData.compania_propietaria_nombre || pointData.company_name || null,
-          compania_alojada_nombre: piso.compania_alojada_nombre || pointData.compania_alojada_nombre || null
-        }));
+          numero: idx + 1,
+          compania_propietaria: piso.compania_propietaria || piso.compañia || null,
+          compania_alojada: piso.compania_alojada || null,
+          compania_alojada_fecha: normalizeDate(piso.compania_alojada_fecha),
+          compania_propietaria_nombre: piso.compania_propietaria_nombre || null,
+          compania_alojada_nombre: piso.compania_alojada_nombre || null,
+          mijloc_fix: piso.mijloc_fix || false
+        }))];
 
         return pointData;
       });

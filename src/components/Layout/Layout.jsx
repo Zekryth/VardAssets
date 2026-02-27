@@ -5,7 +5,7 @@
  * Gestiona la navegación, el tema (claro/oscuro), y el acceso a rutas según el rol del usuario (admin/usuario).
  * Incluye el panel de cuenta y controles de UI responsivos.
  */
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -24,21 +24,21 @@ const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const { isAdmin } = useAuth()
+  const isUserAdmin = isAdmin()
   const navigate = useNavigate()
   const location = useLocation()
   const { theme, toggleTheme } = useTheme()
-  const profileRef = useRef(null)
   const { t } = useTranslation()
 
   const routes = [
     { to: '/', label: t('nav.map'), icon: MapPin },
-    ...(isAdmin() ? [{ to: '/dashboard', label: t('nav.dashboard'), icon: BarChart3 }] : []),
-    ...(isAdmin() ? [
+    ...(isUserAdmin ? [{ to: '/dashboard', label: t('nav.dashboard'), icon: BarChart3 }] : []),
+    ...(isUserAdmin ? [
       { to: '/companies', label: t('nav.companies'), icon: Building2 },
       { to: '/inventory', label: t('nav.inventory'), icon: Package },
     ] : []),
     // Solo el admin ve el enlace de usuarios
-    ...(isAdmin() ? [{ to: '/users', label: t('nav.users'), icon: Users }] : []),
+    ...(isUserAdmin ? [{ to: '/users', label: t('nav.users'), icon: Users }] : []),
     { to: '/settings', label: 'Configuración', icon: Settings },
     { to: '/help', label: 'Ayuda & Soporte', icon: HelpCircle }
   ]
@@ -54,14 +54,6 @@ const Layout = ({ children }) => {
   }
   const currentTitle = titleMap[location.pathname] || t('nav.map')
   const CurrentIcon = (routes.find(r => r.to === location.pathname)?.icon) || MapPin
-
-  useEffect(() => {
-    const handler = e => {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {}
-    }
-    document.addEventListener('click', handler)
-    return () => document.removeEventListener('click', handler)
-  }, [])
 
   const NavItem = ({ to, label, icon: Icon }) => {
     const active = location.pathname === to

@@ -414,7 +414,7 @@ export default function CreatePointDialog({ open, coords, onCancel, onConfirm })
           <div>
             <h3 id="cpd-title" className="font-semibold text-lg">Crear Punto</h3>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              📍 Coordenadas: X: {coords?.x ?? '-'} px · Y: {coords?.y ?? '-'} px
+              📍 Coordenadas: X: {coords?.x != null ? Math.round(coords.x) : '-'} px · Y: {coords?.y != null ? Math.round(coords.y) : '-'} px
             </div>
             {(typeof coords?.centeredX === 'number' && typeof coords?.centeredY === 'number') && (
               <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
