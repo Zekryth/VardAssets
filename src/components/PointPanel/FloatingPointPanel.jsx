@@ -5,14 +5,50 @@
  * Permite mover, minimizar, cerrar y cambiar el tamaño del panel.
  */
 import React, { useCallback, useEffect, useRef } from 'react'
-import { Minus, X, GripVertical } from 'lucide-react'
+import { Minus, X, GripVertical, Loader2 } from 'lucide-react'
 import PointPanelContent from './PointPanelContent'
 import { usePointPanels } from '../../contexts/PointPanelsContext'
 
 const cx = (...p) => p.filter(Boolean).join(' ')
 
+// Loading skeleton component
+function LoadingSkeleton() {
+  return (
+    <div className="h-full flex flex-col p-4 space-y-4 animate-pulse">
+      {/* Tabs skeleton */}
+      <div className="flex gap-2">
+        <div className="h-9 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+        <div className="h-9 w-20 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+        <div className="h-9 w-20 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+        <div className="h-9 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+      </div>
+      
+      {/* Content skeleton */}
+      <div className="flex-1 space-y-4">
+        {/* Main card */}
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 space-y-3">
+          <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+          </div>
+          <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+          <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+        </div>
+        
+        {/* Spinner overlay */}
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+          <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Cargando datos...</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function FloatingPointPanel({ panel }) {
-  const { id, x, y, w, h, minimized, title, z, point } = panel
+  const { id, x, y, w, h, minimized, title, z, point, loading } = panel
   const { movePanel, resizePanel, toggleMinimize, closePanel, bringToFront, refreshPanel } = usePointPanels()
   const panelRef = useRef(null)
   const dragRef = useRef({ active: false, sx: 0, sy: 0, ox: 0, oy: 0 })
@@ -130,19 +166,23 @@ export default function FloatingPointPanel({ panel }) {
 
       {/* Body */}
       <div className="h-[calc(100%-2.5rem)] flex flex-col bg-white/60 dark:bg-gray-900/60">
-        <PointPanelContent 
-          point={point}
-          onEdit={(pt) => {
-            console.log('TODO: Implementar edición de punto desde panel flotante', pt);
-            // Aquí iría la lógica para abrir un diálogo de edición
-          }}
-          onDelete={async (pointId) => {
-            console.log('TODO: Implementar eliminación de punto desde panel flotante', pointId);
-            // Aquí iría la lógica para eliminar el punto
-            // Por ahora solo cerramos el panel
-            closePanel(id);
-          }}
-        />
+        {loading ? (
+          <LoadingSkeleton />
+        ) : (
+          <PointPanelContent 
+            point={point}
+            onEdit={(pt) => {
+              console.log('TODO: Implementar edición de punto desde panel flotante', pt);
+              // Aquí iría la lógica para abrir un diálogo de edición
+            }}
+            onDelete={async (pointId) => {
+              console.log('TODO: Implementar eliminación de punto desde panel flotante', pointId);
+              // Aquí iría la lógica para eliminar el punto
+              // Por ahora solo cerramos el panel
+              closePanel(id);
+            }}
+          />
+        )}
       </div>
 
       {/* Resize handle */}

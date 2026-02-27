@@ -2,10 +2,32 @@
  * PointPanelContent.jsx
  *
  * Contenido reutilizable para paneles de punto (flotante o lateral).
- * Muestra tabs con información, inventario, fotos y documentos POR PISO.
+ * Dashboard profesional con grid layout, segmented control y iconos Lucide.
  */
 import { useState, useEffect } from 'react';
-import { Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { 
+  Pencil, 
+  Trash2, 
+  ChevronUp, 
+  ChevronDown,
+  Building2,
+  MapPin,
+  Calendar,
+  Package,
+  Image as ImageIcon,
+  FileText,
+  FileSpreadsheet,
+  File,
+  Expand,
+  Info,
+  Clock,
+  Tag,
+  Users,
+  Download
+} from 'lucide-react';
+import SegmentedControl from './SegmentedControl';
+
+const cx = (...classes) => classes.filter(Boolean).join(' ');
 
 export default function PointPanelContent({ point, onEdit, onDelete }) {
   const [activeTab, setActiveTab] = useState('info');
@@ -17,11 +39,9 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
     console.log('   ID:', point?.id || point?._id);
     console.log('   Nombre:', point?.nombre);
     console.log('   Categoría (global):', point?.categoria);
-    console.log('   Compañía (global):', point?.compañia_nombre || point?.compañia?.nombre);
-    console.log('   Pisos raw:', point?.pisos);
-    console.log('   Pisos tipo:', typeof point?.pisos);
-    console.log('   Pisos isArray:', Array.isArray(point?.pisos));
-    // Resetear piso actual cuando cambia el punto
+    console.log('   Compañía propietaria nombre:', point?.compania_propietaria_nombre);
+    console.log('   Compañía alojada nombre:', point?.compania_alojada_nombre);
+    console.log('   Pisos:', point?.pisos);
     setPisoActual(0);
   }, [point]);
 
@@ -46,24 +66,16 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
 
   // Parsear pisos si vienen como string
   let pisos = point.pisos || [];
-  console.log('📊 [PointPanelContent] === PARSEO DE PISOS ===');
-  console.log('   pisos inicial:', pisos);
-  console.log('   typeof:', typeof pisos);
-  
   if (typeof pisos === 'string') {
     try {
       pisos = JSON.parse(pisos);
-      console.log('✅ [PointPanelContent] Pisos parseados desde string:', pisos);
     } catch (e) {
-      console.error('❌ [PointPanelContent] Error parseando pisos:', e);
       pisos = [];
     }
   }
   
   if (!Array.isArray(pisos) || pisos.length === 0) {
-    console.log('🔄 [PointPanelContent] No hay pisos válidos, migrando formato antiguo');
-    
-    // Fallback: si no hay pisos, crear uno con datos antiguos si existen
+    // Fallback: crear piso con datos antiguos
     const inventarioAntiguo = point.inventario || [];
     const fotosAntiguas = point.fotos || [];
     const documentosAntiguos = point.documentos || [];
@@ -72,7 +84,6 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
       numero: 1,
       nombre: point.nombre || 'Planta Baja',
       categoria: point.categoria || '',
-      compañia: point.compania_propietaria || point.compañia || point.company_id || null,
       compania_propietaria: point.compania_propietaria || point.compañia || point.company_id || null,
       compania_alojada: point.compania_alojada || null,
       compania_alojada_fecha: point.compania_alojada_fecha || null,
@@ -85,43 +96,32 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
       documentos: Array.isArray(documentosAntiguos) ? documentosAntiguos :
                   (typeof documentosAntiguos === 'string' ? JSON.parse(documentosAntiguos) : [])
     }];
-    console.log('✅ [PointPanelContent] Piso migrado:', pisos[0]);
   } else {
-    // Asegurar que todos los pisos tengan categoria y compañia
-    pisos = pisos.map((piso, index) => {
-      const pisoCompleto = {
-        numero: piso.numero || index + 1,
-        nombre: piso.nombre || `Piso ${index + 1}`,
-        categoria: piso.categoria || point.categoria || '',
-        compañia: piso.compañia || piso.compania_propietaria || point.compania_propietaria || point.compañia || point.company_id || null,
-        compania_propietaria: piso.compania_propietaria || piso.compañia || point.compania_propietaria || point.compañia || point.company_id || null,
-        compania_alojada: piso.compania_alojada || point.compania_alojada || null,
-        compania_alojada_fecha: piso.compania_alojada_fecha || point.compania_alojada_fecha || null,
-        compania_propietaria_nombre: piso.compania_propietaria_nombre || point.compania_propietaria_nombre || point.company_name || null,
-        compania_alojada_nombre: piso.compania_alojada_nombre || point.compania_alojada_nombre || null,
-        inventario: Array.isArray(piso.inventario) ? piso.inventario : [],
-        fotos: Array.isArray(piso.fotos) ? piso.fotos : [],
-        documentos: Array.isArray(piso.documentos) ? piso.documentos : []
-      };
-      console.log(`📋 [PointPanelContent] Piso ${index + 1} procesado:`, pisoCompleto);
-      return pisoCompleto;
-    });
+    pisos = pisos.map((piso, index) => ({
+      numero: piso.numero || index + 1,
+      nombre: piso.nombre || `Piso ${index + 1}`,
+      categoria: piso.categoria || point.categoria || '',
+      compania_propietaria: piso.compania_propietaria || piso.compañia || point.compania_propietaria || null,
+      compania_alojada: piso.compania_alojada || point.compania_alojada || null,
+      compania_alojada_fecha: piso.compania_alojada_fecha || point.compania_alojada_fecha || null,
+      compania_propietaria_nombre: piso.compania_propietaria_nombre || point.compania_propietaria_nombre || point.company_name || null,
+      compania_alojada_nombre: piso.compania_alojada_nombre || point.compania_alojada_nombre || null,
+      inventario: Array.isArray(piso.inventario) ? piso.inventario : [],
+      fotos: Array.isArray(piso.fotos) ? piso.fotos : [],
+      documentos: Array.isArray(piso.documentos) ? piso.documentos : []
+    }));
   }
-  
-  console.log(`🏢 [PointPanelContent] Total pisos procesados: ${pisos.length}`);
-  console.log(`🏢 [PointPanelContent] ¿Mostrar navegación? ${pisos.length > 1}`);
 
-  // Asegurar que pisoActual está en rango
   const currentFloor = pisos[Math.min(pisoActual, pisos.length - 1)] || pisos[0];
   const inventario = currentFloor.inventario || [];
   const fotos = currentFloor.fotos || [];
   const documentos = currentFloor.documentos || [];
 
   const tabs = [
-    { id: 'info', name: 'Información', icon: '📋' },
-    { id: 'inventory', name: 'Inventario', icon: '📦', badge: inventario.length },
-    { id: 'photos', name: 'Fotos', icon: '📷', badge: fotos.length },
-    { id: 'documents', name: 'Documentos', icon: '📄', badge: documentos.length }
+    { id: 'info', name: 'Info', icon: Info },
+    { id: 'inventory', name: 'Inventario', icon: Package, badge: inventario.length },
+    { id: 'photos', name: 'Fotos', icon: ImageIcon, badge: fotos.length },
+    { id: 'documents', name: 'Docs', icon: FileText, badge: documentos.length }
   ];
 
   const handleDelete = async () => {
@@ -139,19 +139,19 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
   };
 
   const getFileIcon = (contentType) => {
-    if (!contentType) return '📄';
-    if (contentType.includes('pdf')) return '📕';
-    if (contentType.includes('word') || contentType.includes('document')) return '📘';
-    if (contentType.includes('excel') || contentType.includes('spreadsheet')) return '📗';
-    if (contentType.includes('image')) return '🖼️';
-    return '📄';
+    if (!contentType) return File;
+    if (contentType.includes('pdf')) return FileText;
+    if (contentType.includes('word') || contentType.includes('document')) return FileText;
+    if (contentType.includes('excel') || contentType.includes('spreadsheet')) return FileSpreadsheet;
+    if (contentType.includes('image')) return ImageIcon;
+    return File;
   };
 
   const formatFileSize = (bytes) => {
     if (!bytes) return 'N/A';
     if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   const formatHostedDate = (value) => {
@@ -161,281 +161,336 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
     return date.toLocaleDateString('es-ES');
   };
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Navegación de Pisos */}
-      {pisos.length > 1 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setPisoActual(Math.max(0, pisoActual - 1))}
-              disabled={pisoActual === 0}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded text-sm font-medium"
-            >
-              <ChevronUp className="w-4 h-4" />
-              Anterior
-            </button>
+  const formatDateTime = (value) => {
+    if (!value) return 'N/A';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
-            <div className="text-center">
-              <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                {currentFloor.nombre}
-              </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Piso {pisoActual + 1} de {pisos.length}
-              </p>
-            </div>
+  // Floor navigation component
+  const FloorNavigation = () => {
+    if (pisos.length <= 1) return null;
+    
+    return (
+      <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-b border-gray-200 dark:border-gray-700">
+        <button
+          onClick={() => setPisoActual(Math.max(0, pisoActual - 1))}
+          disabled={pisoActual === 0}
+          className={cx(
+            'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all',
+            pisoActual === 0
+              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+              : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm hover:shadow border border-gray-200 dark:border-gray-600'
+          )}
+        >
+          <ChevronUp size={16} />
+          <span className="hidden sm:inline">Anterior</span>
+        </button>
 
-            <button
-              onClick={() => setPisoActual(Math.min(pisos.length - 1, pisoActual + 1))}
-              disabled={pisoActual === pisos.length - 1}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded text-sm font-medium"
-            >
-              Siguiente
-              <ChevronDown className="w-4 h-4" />
-            </button>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+            {currentFloor.nombre}
+          </span>
+          <div className="flex items-center gap-1">
+            {pisos.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setPisoActual(idx)}
+                className={cx(
+                  'w-2 h-2 rounded-full transition-all',
+                  idx === pisoActual 
+                    ? 'bg-blue-600 dark:bg-blue-400 scale-125' 
+                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
+                )}
+                title={pisos[idx].nombre}
+              />
+            ))}
           </div>
         </div>
-      )}
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-        <nav className="flex -mb-px overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`
-                relative px-4 py-2.5 text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap
-                ${activeTab === tab.id
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-white dark:bg-gray-800'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }
-              `}
-            >
-              <span>{tab.icon}</span>
-              <span>{tab.name}</span>
-              {tab.badge !== undefined && tab.badge > 0 && (
-                <span className="ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                  {tab.badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </nav>
+        <button
+          onClick={() => setPisoActual(Math.min(pisos.length - 1, pisoActual + 1))}
+          disabled={pisoActual === pisos.length - 1}
+          className={cx(
+            'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all',
+            pisoActual === pisos.length - 1
+              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+              : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm hover:shadow border border-gray-200 dark:border-gray-600'
+          )}
+        >
+          <span className="hidden sm:inline">Siguiente</span>
+          <ChevronDown size={16} />
+        </button>
+      </div>
+    );
+  };
+
+  // Empty state component
+  const EmptyState = ({ icon: Icon, title, subtitle, onAction, actionLabel }) => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+        <Icon size={32} className="text-gray-400" />
+      </div>
+      <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{title}</h4>
+      {subtitle && <p className="text-xs text-gray-400 mb-4">{subtitle}</p>}
+      {onAction && actionLabel && (
+        <button
+          onClick={onAction}
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Floor Navigation */}
+      <FloorNavigation />
+
+      {/* Segmented Control Tabs */}
+      <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+        <SegmentedControl
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          size="small"
+        />
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {/* TAB: Información */}
         {activeTab === 'info' && (
-          <div className="p-4 space-y-4">
-            {/* Información Básica */}
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-3">
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                📋 Información del Piso
-              </h3>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Nombre del Piso
-                  </label>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {currentFloor.nombre}
-                  </p>
+          <div className="p-4">
+            {/* Grid Layout - 2 columns */}
+            <div className="grid grid-cols-5 gap-4">
+              {/* Columna Izquierda - Info Principal (3 cols) */}
+              <div className="col-span-5 lg:col-span-3 space-y-4">
+                {/* Header Card */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                        {currentFloor.nombre}
+                      </h3>
+                      {currentFloor.categoria && (
+                        <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+                          <Tag size={12} />
+                          {currentFloor.categoria}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">
+                      Piso {pisoActual + 1}/{pisos.length}
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Categoría
-                  </label>
-                  <p className="text-sm text-gray-900 dark:text-white">
-                    {currentFloor.categoria || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">Sin categoría</span>
-                    )}
-                  </p>
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Compañía Propietaria
-                  </label>
-                  <p className="text-sm text-gray-900 dark:text-white">
-                    {currentFloor.compania_propietaria_nombre || currentFloor.compania_propietaria || currentFloor.compañia || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía propietaria</span>
-                    )}
-                  </p>
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Compañía Alojada
-                  </label>
-                  <p className="text-sm text-gray-900 dark:text-white">
-                    {currentFloor.compania_alojada_nombre || currentFloor.compania_alojada || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">Sin compañía</span>
-                    )}
-                  </p>
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Fecha de Alojamiento
-                  </label>
-                  <p className="text-sm text-gray-900 dark:text-white">
-                    {formatHostedDate(currentFloor.compania_alojada_fecha) || (
-                      <span className="text-gray-400 dark:text-gray-500 italic">Sin fecha registrada</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Coordenadas */}
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-2">
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                📍 Ubicación
-              </h3>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-2.5 border border-gray-200 dark:border-gray-700">
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">
-                    X
-                  </label>
-                  <p className="text-base font-mono font-bold text-blue-600 dark:text-blue-400">
-                    {coords?.x || 0} <span className="text-xs text-gray-400">px</span>
-                  </p>
-                </div>
-
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-2.5 border border-gray-200 dark:border-gray-700">
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">
-                    Y
-                  </label>
-                  <p className="text-base font-mono font-bold text-blue-600 dark:text-blue-400">
-                    {coords?.y || 0} <span className="text-xs text-gray-400">px</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Fechas */}
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-2">
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                🕐 Fechas
-              </h3>
-              
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Creado:</span>
-                  <span className="text-xs font-medium text-gray-900 dark:text-white">
-                    {point.created_at ? new Date(point.created_at).toLocaleString('es-ES') : 'N/A'}
-                  </span>
-                </div>
-                
-                {point.updated_at && point.updated_at !== point.created_at && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Actualizado:</span>
-                    <span className="text-xs font-medium text-gray-900 dark:text-white">
-                      {new Date(point.updated_at).toLocaleString('es-ES')}
+                {/* Compañía Propietaria */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                      <Building2 size={18} className="text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Propietario
                     </span>
+                  </div>
+                  <p className={cx(
+                    'text-base font-semibold',
+                    currentFloor.compania_propietaria_nombre || currentFloor.compania_propietaria
+                      ? 'text-gray-900 dark:text-white'
+                      : 'text-gray-400 dark:text-gray-500 italic'
+                  )}>
+                    {currentFloor.compania_propietaria_nombre || currentFloor.compania_propietaria || 'Sin compañía propietaria'}
+                  </p>
+                </div>
+
+                {/* Compañía Alojada */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                      <Users size={18} className="text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Alojado
+                    </span>
+                  </div>
+                  <p className={cx(
+                    'text-base font-semibold',
+                    currentFloor.compania_alojada_nombre || currentFloor.compania_alojada
+                      ? 'text-gray-900 dark:text-white'
+                      : 'text-gray-400 dark:text-gray-500 italic'
+                  )}>
+                    {currentFloor.compania_alojada_nombre || currentFloor.compania_alojada || 'Sin compañía alojada'}
+                  </p>
+                  {currentFloor.compania_alojada_fecha && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+                      <Clock size={12} />
+                      Desde {formatHostedDate(currentFloor.compania_alojada_fecha)}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Columna Derecha - Meta & Actions (2 cols) */}
+              <div className="col-span-5 lg:col-span-2 space-y-4">
+                {/* Ubicación */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                      <MapPin size={18} className="text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Ubicación
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-2 text-center">
+                      <span className="text-xs text-gray-500">X</span>
+                      <p className="text-lg font-mono font-bold text-gray-900 dark:text-white">
+                        {coords?.x || 0}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-2 text-center">
+                      <span className="text-xs text-gray-500">Y</span>
+                      <p className="text-lg font-mono font-bold text-gray-900 dark:text-white">
+                        {coords?.y || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fechas */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center">
+                      <Calendar size={18} className="text-sky-600 dark:text-sky-400" />
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Fechas
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">Creado</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {formatDateTime(point.created_at)}
+                      </span>
+                    </div>
+                    {point.updated_at && point.updated_at !== point.created_at && (
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">Actualizado</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {formatDateTime(point.updated_at)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                {(onEdit || onDelete) && (
+                  <div className="flex gap-2">
+                    {onEdit && (
+                      <button
+                        onClick={() => onEdit(point)}
+                        disabled={loading}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow"
+                      >
+                        <Pencil size={16} />
+                        Editar
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        onClick={handleDelete}
+                        disabled={loading}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl text-sm font-medium transition-all border border-red-200 dark:border-red-800"
+                      >
+                        <Trash2 size={16} />
+                        {loading ? '...' : 'Eliminar'}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Action Buttons */}
-            {(onEdit || onDelete) && (
-              <div className="flex gap-2 pt-2">
-                {onEdit && (
-                  <button
-                    onClick={() => onEdit(point)}
-                    disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    <Pencil className="w-4 h-4" />
-                    Editar
-                  </button>
-                )}
-                
-                {onDelete && (
-                  <button
-                    onClick={handleDelete}
-                    disabled={loading}
-                    className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    {loading ? 'Eliminando...' : 'Eliminar'}
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         )}
 
         {/* TAB: Inventario */}
         {activeTab === 'inventory' && (
           <div className="p-4">
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                  📦 Inventario - {currentFloor.nombre} ({inventario.length})
-                </h3>
-                {onEdit && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                    <Package size={18} className="text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Inventario</h4>
+                    <p className="text-xs text-gray-500">{currentFloor.nombre} - {inventario.length} items</p>
+                  </div>
+                </div>
+                {onEdit && inventario.length > 0 && (
                   <button
                     onClick={() => onEdit(point)}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
                   >
                     Editar
                   </button>
                 )}
               </div>
 
-              {inventario.length === 0 ? (
-                <div className="text-center py-10">
-                  <div className="text-5xl mb-3">📦</div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No hay objetos
-                  </p>
-                  {onEdit && (
-                    <button
-                      onClick={() => onEdit(point)}
-                      className="mt-3 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      Agregar objetos
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {inventario.map((item, index) => (
-                    <div
-                      key={index}
-                      className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <div className="p-4">
+                {inventario.length === 0 ? (
+                  <EmptyState
+                    icon={Package}
+                    title="Sin inventario"
+                    subtitle="No hay objetos registrados en este piso"
+                    onAction={onEdit ? () => onEdit(point) : null}
+                    actionLabel="Agregar objetos"
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {inventario.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {item.objeto_nombre || item.objeto?.nombre || item.nombre || 'Sin nombre'}
                           </p>
                           {(item.descripcion || item.objeto?.descripcion) && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            <p className="text-xs text-gray-500 truncate mt-0.5">
                               {item.descripcion || item.objeto?.descripcion}
                             </p>
                           )}
                         </div>
-                        <div className="text-right ml-3">
-                          <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                        <div className="ml-3 text-right flex-shrink-0">
+                          <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
                             {item.cantidad || 0}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          </span>
+                          <p className="text-xs text-gray-400">
                             {item.unidad || item.objeto?.unidad || 'uds'}
                           </p>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -443,60 +498,60 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
         {/* TAB: Fotos */}
         {activeTab === 'photos' && (
           <div className="p-4">
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                  📷 Fotos - {currentFloor.nombre} ({fotos.length})
-                </h3>
-                {onEdit && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
+                    <ImageIcon size={18} className="text-pink-600 dark:text-pink-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Fotos</h4>
+                    <p className="text-xs text-gray-500">{currentFloor.nombre} - {fotos.length} fotos</p>
+                  </div>
+                </div>
+                {onEdit && fotos.length > 0 && (
                   <button
                     onClick={() => onEdit(point)}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
                   >
                     Gestionar
                   </button>
                 )}
               </div>
 
-              {fotos.length === 0 ? (
-                <div className="text-center py-10">
-                  <div className="text-5xl mb-3">📷</div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No hay fotos
-                  </p>
-                  {onEdit && (
-                    <button
-                      onClick={() => onEdit(point)}
-                      className="mt-3 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      Subir fotos
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  {fotos.map((foto, index) => (
-                    <div
-                      key={index}
-                      className="relative aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden group cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-                      onClick={() => window.open(foto, '_blank')}
-                    >
-                      <img
-                        src={foto}
-                        alt={`Foto ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          console.error('Error cargando foto:', foto);
-                          e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3E❌%3C/text%3E%3C/svg%3E';
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-white text-xs font-medium">Ver imagen</span>
+              <div className="p-4">
+                {fotos.length === 0 ? (
+                  <EmptyState
+                    icon={ImageIcon}
+                    title="Sin fotos"
+                    subtitle="No hay imágenes en este piso"
+                    onAction={onEdit ? () => onEdit(point) : null}
+                    actionLabel="Subir fotos"
+                  />
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {fotos.map((foto, index) => (
+                      <div
+                        key={index}
+                        className="relative group aspect-square bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden cursor-pointer"
+                        onClick={() => window.open(foto, '_blank')}
+                      >
+                        <img
+                          src={foto}
+                          alt={`Foto ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23e5e7eb" width="100" height="100"/%3E%3Ctext fill="%239ca3af" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="24"%3E?%3C/text%3E%3C/svg%3E';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Expand size={24} className="text-white" />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -504,69 +559,73 @@ export default function PointPanelContent({ point, onEdit, onDelete }) {
         {/* TAB: Documentos */}
         {activeTab === 'documents' && (
           <div className="p-4">
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                  📄 Documentos - {currentFloor.nombre} ({documentos.length})
-                </h3>
-                {onEdit && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
+                    <FileText size={18} className="text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Documentos</h4>
+                    <p className="text-xs text-gray-500">{currentFloor.nombre} - {documentos.length} archivos</p>
+                  </div>
+                </div>
+                {onEdit && documentos.length > 0 && (
                   <button
                     onClick={() => onEdit(point)}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
                   >
                     Gestionar
                   </button>
                 )}
               </div>
 
-              {documentos.length === 0 ? (
-                <div className="text-center py-10">
-                  <div className="text-5xl mb-3">📄</div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No hay documentos
-                  </p>
-                  {onEdit && (
-                    <button
-                      onClick={() => onEdit(point)}
-                      className="mt-3 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      Subir documentos
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {documentos.map((doc, index) => (
-                    <div
-                      key={index}
-                      className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="text-2xl">
-                          {getFileIcon(doc.contentType)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {doc.filename || `Documento ${index + 1}`}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatFileSize(doc.size)}
-                          </p>
-                        </div>
-                        <a
-                          href={doc.url || doc.downloadUrl}
-                          download
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-2.5 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+              <div className="p-4">
+                {documentos.length === 0 ? (
+                  <EmptyState
+                    icon={FileText}
+                    title="Sin documentos"
+                    subtitle="No hay archivos en este piso"
+                    onAction={onEdit ? () => onEdit(point) : null}
+                    actionLabel="Subir documentos"
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    {documentos.map((doc, index) => {
+                      const FileIcon = getFileIcon(doc.contentType);
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                         >
-                          Descargar
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                          <div className="w-10 h-10 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
+                            <FileIcon size={20} className="text-gray-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {doc.filename || `Documento ${index + 1}`}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(doc.size)}
+                            </p>
+                          </div>
+                          <a
+                            href={doc.url || doc.downloadUrl}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Download size={14} />
+                            <span className="hidden sm:inline">Descargar</span>
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

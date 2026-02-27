@@ -53,28 +53,89 @@ export function PointPanelsProvider({ children, getBounds }) {
 
   const focusPanel = bringToFront
 
-  const openPanel = useCallback((point) => {
+  const openPanel = useCallback(async (point) => {
     const pointId = point._id || point.id
     const title = point.nombre || 'Punto'
     if (!pointId) return
-    setPanels(prev => {
-      const existing = prev.find(p => p.pointId === pointId)
-      if (existing) {
-        // focus existing
-        return prev.map(p => p.pointId === pointId ? { ...p, minimized: false, z: ++zRef.current } : p)
+
+    // Check if panel already exists
+    const existingPanel = panels.find(p => p.pointId === pointId)
+    if (existingPanel) {
+      // Focus existing panel
+      setPanels(prev => prev.map(p => 
+        p.pointId === pointId ? { ...p, minimized: false, z: ++zRef.current } : p
+      ))
+      return
+    }
+
+    // Create panel with loading state initially
+    const top = ++zRef.current
+    const count = panels.length
+    const w = 400
+    const h = 480
+    const baseX = 24 + (count * 24) % 96
+    const baseY = 24 + (count * 24) % 96
+    const clamped = clampPanel({ x: baseX, y: baseY, w, h }, bounds)
+    const id = `${pointId}-${Date.now()}`
+
+    // Add panel with loading state
+    setPanels(prev => [...prev, { 
+      id, 
+      pointId, 
+      title, 
+      ...clamped, 
+      minimized: false, 
+      z: top, 
+      point, 
+      loading: true 
+    }])
+
+    // Fetch full point data with company names resolved
+    try {
+      console.log('📡 [PointPanels] Fetching full point data for:', pointId)
+      const res = await pointService.getPoints({ id: pointId })
+      
+      // Handle different response formats
+      let fullPoint = null
+      if (res.data?.id || res.data?._id) {
+        fullPoint = res.data
+      } else if (Array.isArray(res.data)) {
+        fullPoint = res.data.find(p => (p.id || p._id) === pointId)
+      } else if (res.data?.points) {
+        fullPoint = res.data.points.find(p => (p.id || p._id) === pointId)
       }
-      const top = ++zRef.current
-      // Default size and position (cascade)
-      const count = prev.length
-      const w = 360
-      const h = 420
-      const baseX = 24 + (count * 24) % 96
-      const baseY = 24 + (count * 24) % 96
-      const clamped = clampPanel({ x: baseX, y: baseY, w, h }, bounds)
-      const id = `${pointId}-${Date.now()}`
-      return [...prev, { id, pointId, title, ...clamped, minimized: false, z: top, point }]
-    })
-  }, [bounds])
+
+      if (fullPoint) {
+        console.log('✅ [PointPanels] Full point loaded:', {
+          id: fullPoint.id,
+          nombre: fullPoint.nombre,
+          compania_propietaria_nombre: fullPoint.compania_propietaria_nombre,
+          compania_alojada_nombre: fullPoint.compania_alojada_nombre
+        })
+        
+        setPanels(prev => prev.map(p => 
+          p.id === id ? { 
+            ...p, 
+            point: fullPoint, 
+            title: fullPoint.nombre || 'Punto',
+            loading: false 
+          } : p
+        ))
+      } else {
+        // Use original point if fetch didn't return better data
+        console.warn('⚠️ [PointPanels] Could not find full point, using original')
+        setPanels(prev => prev.map(p => 
+          p.id === id ? { ...p, loading: false } : p
+        ))
+      }
+    } catch (err) {
+      console.error('❌ [PointPanels] Failed to fetch point:', err)
+      // Keep panel open with original data
+      setPanels(prev => prev.map(p => 
+        p.id === id ? { ...p, loading: false } : p
+      ))
+    }
+  }, [bounds, panels])
 
   const movePanel = useCallback((id, { x, y }) => {
     setPanels(prev => prev.map(p => {
