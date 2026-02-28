@@ -1,4 +1,4 @@
-import { put, list, del } from '@vercel/blob';
+import { uploadToR2, deleteFromR2ByUrl, listFilesInR2 } from './_lib/r2.js';
 import { handleCors } from './_lib/cors.js';
 import { getPool } from './_lib/db.js';
 import { authenticateToken } from './_lib/auth.js';
@@ -94,21 +94,24 @@ export default async function handler(req, res) {
         ? `vard-assets/map-tiles/${tileX}-${tileY}-z${zoomLevel}-${timestamp}.${extension}`
         : `vard-assets/${type}/${pointId}/${timestamp}-${randomString}-${sanitizedName}`;
 
-      console.log('💾 [UPLOAD] Subiendo a Vercel Blob:', filename);
+      console.log('💾 [UPLOAD] Uploading to Cloudflare R2:', filename);
 
-      // Subir a Vercel Blob
-      const blob = await put(filename, file.buffer, {
-        access: 'public',
-        contentType: file.type,
-        addRandomSuffix: false,
+      // Upload to Cloudflare R2
+      const result = await uploadToR2(filename, file.buffer, file.type);
+
+      console.log('✅ [UPLOAD] File uploaded successfully:', {
+        url: result.url,
+        key: result.key,
+        size: file.size
       });
 
-      console.log('✅ [UPLOAD] Archivo subido exitosamente:', {
-        url: blob.url,
-        pathname: blob.pathname,
-        size: blob.size,
-        downloadUrl: blob.downloadUrl
-      });
+      // Create blob-compatible response for backward compatibility
+      const blob = {
+        url: result.url,
+        pathname: result.key,
+        size: file.size,
+        downloadUrl: result.url
+      };
 
       // Si es un tile, guardar en base de datos
       if (tileX !== null && tileY !== null) {
@@ -165,19 +168,19 @@ export default async function handler(req, res) {
         ? `vard-assets/${type}/${pointId}/`
         : `vard-assets/${pointId}/`;
 
-      const { blobs } = await list({ prefix });
+      const files = await listFilesInR2(prefix);
 
-      console.log(`✅ [UPLOAD] Archivos encontrados: ${blobs.length}`);
+      console.log(`✅ [UPLOAD] Files found: ${files.length}`);
 
       return res.status(200).json({
-        files: blobs.map(blob => ({
-          url: blob.url,
-          pathname: blob.pathname,
-          size: blob.size,
-          uploadedAt: blob.uploadedAt,
-          downloadUrl: blob.downloadUrl
+        files: files.map(file => ({
+          url: file.url,
+          pathname: file.key,
+          size: file.size,
+          uploadedAt: file.lastModified,
+          downloadUrl: file.url
         })),
-        total: blobs.length
+        total: files.length
       });
     }
 
@@ -191,11 +194,11 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'URL del archivo es requerida' });
       }
 
-      console.log('🗑️ [UPLOAD] Eliminando archivo:', url);
+      console.log('🗑️ [UPLOAD] Deleting file:', url);
 
-      await del(url);
+      await deleteFromR2ByUrl(url);
 
-      console.log('✅ [UPLOAD] Archivo eliminado exitosamente');
+      console.log('✅ [UPLOAD] File deleted successfully');
 
       return res.status(200).json({ 
         message: 'Archivo eliminado exitosamente',

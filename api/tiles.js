@@ -14,7 +14,7 @@ import { authenticateToken } from './_lib/auth.js'
 import { handleCors } from './_lib/cors.js'
 import { handleError } from './_lib/errors.js'
 import { initializeDatabase } from './_lib/init.js'
-import { put } from '@vercel/blob'
+import { uploadToR2 } from './_lib/r2.js'
 import busboy from 'busboy'
 
 export const config = {
@@ -72,10 +72,11 @@ export default async function handler(req, res) {
           sampleTiles: tiles
         },
         environment: {
-          hasBlobToken: !!process.env.BLOB_READ_WRITE_TOKEN,
-          blobTokenLength: process.env.BLOB_READ_WRITE_TOKEN?.length || 0,
+          hasR2Credentials: !!process.env.R2_ACCESS_KEY_ID && !!process.env.R2_SECRET_ACCESS_KEY,
+          r2Bucket: process.env.R2_BUCKET_NAME || 'vardassets-files',
+          r2PublicUrl: process.env.R2_PUBLIC_URL ? 'configured' : 'missing',
           nodeEnv: process.env.NODE_ENV,
-          databaseUrl: process.env.DATABASE_URL ? 'configured' : 'missing'
+          databaseUrl: process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL ? 'configured' : 'missing'
         },
         timestamp: new Date().toISOString()
       })
@@ -165,17 +166,14 @@ export default async function handler(req, res) {
         const extension = file.name.split('.').pop()
         const filename = `vard-assets/map-tiles/${tileX}-${tileY}-z${zoom}-${timestamp}.${extension}`
 
-        console.log('📤 Uploading tile to Vercel Blob:', filename)
+        console.log('📤 Uploading tile to Cloudflare R2:', filename)
 
-        const blob = await put(filename, file.buffer, {
-          access: 'public',
-          contentType: file.type
-        })
+        const result = await uploadToR2(filename, file.buffer, file.type)
 
-        imageUrl = blob.url
+        imageUrl = result.url
         imageFilename = file.name
 
-        console.log('✅ Tile uploaded:', blob.url)
+        console.log('✅ Tile uploaded:', result.url)
       }
 
       // Insertar o actualizar
