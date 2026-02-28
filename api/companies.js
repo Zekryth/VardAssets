@@ -85,12 +85,12 @@ export default async function handler(req, res) {
       `);
 
       if (columns.length === 0) {
-        console.error('❌ [COMPANIES] Columna "nombre" NO existe en la tabla');
-        console.error('   Ejecuta este SQL en Neon:');
+        console.error('❌ [COMPANIES] Column "nombre" does not exist in table');
+        console.error('   Run this SQL in Supabase:');
         console.error('   ALTER TABLE companies RENAME COLUMN name TO nombre;');
         return res.status(500).json({
-          error: 'Error de configuración de base de datos',
-          details: 'La columna "nombre" no existe. Contacta al administrador.'
+          error: 'Database configuration error',
+          details: 'Column "nombre" does not exist. Contact administrator.'
         });
       }
 
