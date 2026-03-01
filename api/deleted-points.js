@@ -1,4 +1,4 @@
-import { getPool } from './_lib/db.js';
+﻿import { getPool } from './_lib/db.js';
 import { authenticateToken, requireAdmin } from './_lib/auth.js';
 import { handleCors } from './_lib/cors.js';
 import { handleError } from './_lib/errors.js';
@@ -16,9 +16,9 @@ export default async function handler(req, res) {
     // GET /api/deleted-points - Listar puntos eliminados
     if (req.method === 'GET') {
       const { rows } = await pool.query(
-        `SELECT dp.*, c.nombre as compañia_nombre
+        `SELECT dp.*, c.nombre as compania_nombre
          FROM deleted_points dp
-         LEFT JOIN companies c ON dp.compañia = c.id
+         LEFT JOIN companies c ON dp.compania = c.id
          ORDER BY dp.deleted_at DESC`
       );
 
@@ -50,12 +50,12 @@ export default async function handler(req, res) {
 
       // Restaurar a la tabla points
       await pool.query(
-        `INSERT INTO points (id, nombre, compañia, coordenadas, inventario, fotos, documentos, created_at, updated_at)
+        `INSERT INTO points (id, nombre, compania, coordenadas, inventario, fotos, documentos, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
         [
           point.original_id,
           point.nombre,
-          point.compañia,
+          point.compania,
           point.coordenadas,
           point.inventario,
           point.fotos,

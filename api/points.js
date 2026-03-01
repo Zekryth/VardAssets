@@ -1,4 +1,4 @@
-import { getPool } from './_lib/db.js';
+﻿import { getPool } from './_lib/db.js';
 import { authenticateToken } from './_lib/auth.js';
 import { handleCors } from './_lib/cors.js';
 import { handleError } from './_lib/errors.js';
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
            FROM points p
            LEFT JOIN companies cp ON p.compania_propietaria = cp.id
            LEFT JOIN companies ca ON p.compania_alojada = ca.id
-           LEFT JOIN companies legacy ON p.compañia = legacy.id
+           LEFT JOIN companies legacy ON p.compania = legacy.id
            WHERE p.id = $1`,
           [id]
         );
@@ -98,8 +98,8 @@ export default async function handler(req, res) {
           numero: 0,
           nombre: pointData.nombre || 'Planta Baja',
           categoria: pointData.categoria || '',
-          compañia: pointData.compania_propietaria || pointData.compañia || null,
-          compania_propietaria: pointData.compania_propietaria || pointData.compañia || null,
+          compania: pointData.compania_propietaria || pointData.compania || null,
+          compania_propietaria: pointData.compania_propietaria || pointData.compania || null,
           compania_alojada: pointData.compania_alojada || null,
           compania_alojada_fecha: normalizeDate(pointData.compania_alojada_fecha),
           compania_propietaria_nombre: pointData.compania_propietaria_nombre || pointData.company_name || null,
@@ -119,20 +119,20 @@ export default async function handler(req, res) {
         
         console.log(`🏢 [GET POINT] Planta Baja + ${pisosAdicionales.length} pisos adicionales = ${pointData.pisos.length} pisos totales`);
 
-        // Asegurar que cada piso tenga categoria y compañia
+        // Asegurar que cada piso tenga categoria y compania
         pointData.pisos = pointData.pisos.map((piso, index) => {
           console.log(`📋 [GET POINT] Procesando piso ${index + 1}:`, {
             nombre: piso.nombre,
             categoria: piso.categoria,
-            compañia: piso.compañia,
+            compania: piso.compania,
             inventario_count: piso.inventario?.length || 0
           });
 
           return {
             ...piso,
             categoria: piso.categoria || pointData.categoria || '',
-            compañia: piso.compañia || piso.compania_propietaria || pointData.compania_propietaria || pointData.compañia || null,
-            compania_propietaria: piso.compania_propietaria || piso.compañia || pointData.compania_propietaria || pointData.compañia || null,
+            compania: piso.compania || piso.compania_propietaria || pointData.compania_propietaria || pointData.compania || null,
+            compania_propietaria: piso.compania_propietaria || piso.compania || pointData.compania_propietaria || pointData.compania || null,
             compania_alojada: piso.compania_alojada || pointData.compania_alojada || null,
             compania_alojada_fecha: normalizeDate(piso.compania_alojada_fecha || pointData.compania_alojada_fecha),
             compania_propietaria_nombre: piso.compania_propietaria_nombre || pointData.compania_propietaria_nombre || pointData.company_name || null,
@@ -157,7 +157,7 @@ export default async function handler(req, res) {
          FROM points p
         LEFT JOIN companies cp ON p.compania_propietaria = cp.id
         LEFT JOIN companies ca ON p.compania_alojada = ca.id
-        LEFT JOIN companies legacy ON p.compañia = legacy.id
+        LEFT JOIN companies legacy ON p.compania = legacy.id
          ORDER BY p.created_at DESC`
       );
 
@@ -202,8 +202,8 @@ export default async function handler(req, res) {
           numero: 0,
           nombre: pointData.nombre || 'Planta Baja',
           categoria: pointData.categoria || '',
-          compañia: pointData.compania_propietaria || pointData.compañia || null,
-          compania_propietaria: pointData.compania_propietaria || pointData.compañia || null,
+          compania: pointData.compania_propietaria || pointData.compania || null,
+          compania_propietaria: pointData.compania_propietaria || pointData.compania || null,
           compania_alojada: pointData.compania_alojada || null,
           compania_alojada_fecha: normalizeDate(pointData.compania_alojada_fecha),
           compania_propietaria_nombre: pointData.compania_propietaria_nombre || pointData.company_name || null,
@@ -219,7 +219,7 @@ export default async function handler(req, res) {
         pointData.pisos = [plantaBaja, ...pisosAdicionales.map((piso, idx) => ({
           ...piso,
           numero: idx + 1,
-          compania_propietaria: piso.compania_propietaria || piso.compañia || null,
+          compania_propietaria: piso.compania_propietaria || piso.compania || null,
           compania_alojada: piso.compania_alojada || null,
           compania_alojada_fecha: normalizeDate(piso.compania_alojada_fecha),
           compania_propietaria_nombre: piso.compania_propietaria_nombre || null,
@@ -239,7 +239,7 @@ export default async function handler(req, res) {
             pisos_tipo: typeof point.pisos,
             pisos_length: Array.isArray(point.pisos) ? point.pisos.length : 'N/A',
             tiene_categoria_global: !!point.categoria,
-            tiene_compañia_global: !!point.compañia
+            tiene_compania_global: !!point.compania
           });
           
           // Si tiene pisos, mostrar el primero
@@ -247,7 +247,7 @@ export default async function handler(req, res) {
             console.log(`   Piso 1:`, {
               nombre: point.pisos[0].nombre,
               categoria: point.pisos[0].categoria,
-              compañia: point.pisos[0].compañia
+              compania: point.pisos[0].compania
             });
           }
         });
@@ -272,7 +272,7 @@ export default async function handler(req, res) {
         fotos,
         documentos,
         // Backward compatibility
-        compañia,
+        compania,
         pisos
       } = req.body;
       
@@ -307,10 +307,10 @@ export default async function handler(req, res) {
         });
       }
 
-      console.log('✅ [POINTS] Columna "compañia" verificada');
+      console.log('✅ [POINTS] Columna "compania" verificada');
 
       // Si hay compañía, verificar que existe
-      const ownerCompanyId = companiaPropietaria || compañia || null;
+      const ownerCompanyId = companiaPropietaria || compania || null;
       const hostedCompanyId = companiaAlojada || null;
       const companyIdsToValidate = [ownerCompanyId, hostedCompanyId].filter(Boolean);
 
@@ -328,14 +328,14 @@ export default async function handler(req, res) {
       }
 
       console.log('💾 [POINTS] Insertando en base de datos...');
-      console.log('📦 [POINTS] Payload recibido:', { nombre, categoria, compañia, coordenadas, pisos_count: pisos?.length });
+      console.log('📦 [POINTS] Payload recibido:', { nombre, categoria, compania, coordenadas, pisos_count: pisos?.length });
 
       // Si viene 'pisos', usar nuevo formato; si no, crear piso único con datos antiguos
       console.log('💾 [POINTS] Insertando en base de datos...');
       console.log('📊 [POINTS] Datos finales:', {
         nombre: nombre.trim(),
         categoria: categoria?.trim() || null,
-        compania_propietaria: companiaPropietaria || compañia || null,
+        compania_propietaria: companiaPropietaria || compania || null,
         compania_alojada: companiaAlojada || null,
         compania_alojada_fecha: normalizeDate(companiaAlojadaFecha),
         nr_inventario_sap: nrInventarioSAP?.trim() || null,
@@ -370,7 +370,7 @@ export default async function handler(req, res) {
         [
           nombre.trim(),
           categoria?.trim() || null,
-          companiaPropietaria || compañia || null,  // Backward compatibility
+          companiaPropietaria || compania || null,  // Backward compatibility
           companiaAlojada || null,
           normalizeDate(companiaAlojadaFecha),
           nrInventarioSAP?.trim() || null,
@@ -426,7 +426,7 @@ export default async function handler(req, res) {
         fotos,
         documentos,
         // Backward compatibility
-        compañia,
+        compania,
         pisos
       } = req.body;
 
@@ -480,7 +480,7 @@ export default async function handler(req, res) {
         [
           nombre?.trim() || null,
           categoria?.trim() || null,
-          companiaPropietaria || compañia || null,  // Backward compatibility
+          companiaPropietaria || compania || null,  // Backward compatibility
           companiaAlojada || null,
           normalizeDate(companiaAlojadaFecha),
           nrInventarioSAP?.trim() || null,
@@ -511,7 +511,7 @@ export default async function handler(req, res) {
         FROM points p
         LEFT JOIN companies cp ON p.compania_propietaria = cp.id
         LEFT JOIN companies ca ON p.compania_alojada = ca.id
-        LEFT JOIN companies legacy ON p.compañia = legacy.id
+        LEFT JOIN companies legacy ON p.compania = legacy.id
         WHERE p.id = $1
       `, [rows[0].id]);
 
@@ -535,12 +535,12 @@ export default async function handler(req, res) {
       }
 
       await pool.query(
-        `INSERT INTO deleted_points (original_id, nombre, compañia, coordenadas, inventario, fotos, documentos, deleted_by, deleted_at)
+        `INSERT INTO deleted_points (original_id, nombre, compania, coordenadas, inventario, fotos, documentos, deleted_by, deleted_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
         [
           point[0].id,
           point[0].nombre,
-          point[0].compañia,
+          point[0].compania,
           point[0].coordenadas,
           point[0].inventario,
           point[0].fotos,
