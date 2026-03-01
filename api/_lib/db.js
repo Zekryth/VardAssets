@@ -20,14 +20,14 @@ export function getPool() {
     }
 
     // Detect if using Supabase
-    const isSupabase = connectionString.includes('supabase');
+    const isSupabase = connectionString.includes('supabase') || connectionString.includes('pooler');
     
     pool = new Pool({
       connectionString,
-      ssl: { rejectUnauthorized: false },
+      ssl: isSupabase ? { rejectUnauthorized: false } : false,
       max: isSupabase ? 5 : 10, // Supabase free tier has connection limits
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: isSupabase ? 5000 : 2000,
+      connectionTimeoutMillis: isSupabase ? 10000 : 2000,
     });
 
     pool.on('error', (err) => {
