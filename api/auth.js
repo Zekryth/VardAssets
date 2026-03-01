@@ -25,11 +25,17 @@ export default async function handler(req, res) {
 
   const pool = getPool();
 
+  // Parse query string
+  const urlParts = req.url?.split('?') || [];
+  const queryString = urlParts[1] || '';
+  const params = new URLSearchParams(queryString);
+  const action = params.get('action');
+
   try {
     // ========================================
-    // POST /api/auth/reset-admin - Reset admin password
+    // POST /api/auth?action=reset-admin - Reset admin password
     // ========================================
-    if (req.method === 'POST' && req.url?.includes('/reset-admin')) {
+    if (req.method === 'POST' && action === 'reset-admin') {
       const newPassword = '1234';
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
