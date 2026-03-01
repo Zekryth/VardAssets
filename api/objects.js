@@ -41,6 +41,8 @@ export default async function handler(req, res) {
       // Accept both frontend naming (numeroInventario) and backend (nr_inventario)
       const { nombre, categoria, numeroInventario, nr_inventario, nick, icono, descripcion, imagen, unidad, precio } = req.body;
       const inventoryNumber = numeroInventario || nr_inventario;
+      // Handle imagen - can be string URL, object, or empty
+      const imagenUrl = typeof imagen === 'string' && imagen.trim() ? imagen.trim() : null;
       
       if (!nombre || nombre.trim() === '') {
         return res.status(400).json({ error: 'El nombre es obligatorio' });
@@ -57,7 +59,7 @@ export default async function handler(req, res) {
           nick?.trim() || null,
           icono?.trim() || '📦',
           descripcion?.trim() || null,
-          imagen?.trim() || null,
+          imagenUrl,
           unidad?.trim() || 'unidad',
           precio || 0
         ]
@@ -72,6 +74,7 @@ export default async function handler(req, res) {
       const { id } = req.query;
       const { nombre, categoria, numeroInventario, nr_inventario, nick, icono, descripcion, imagen, unidad, precio } = req.body;
       const inventoryNumber = numeroInventario || nr_inventario;
+      const imagenUrl = typeof imagen === 'string' && imagen.trim() ? imagen.trim() : null;
 
       if (!id) {
         return res.status(400).json({ error: 'ID de objeto requerido' });
@@ -91,7 +94,7 @@ export default async function handler(req, res) {
              updated_at = NOW()
          WHERE id = $10
          RETURNING *`,
-        [nombre?.trim(), categoria?.trim(), inventoryNumber?.trim(), nick?.trim(), icono?.trim(), descripcion?.trim(), imagen?.trim(), unidad?.trim(), precio, id]
+        [nombre?.trim(), categoria?.trim(), inventoryNumber?.trim(), nick?.trim(), icono?.trim(), descripcion?.trim(), imagenUrl, unidad?.trim(), precio, id]
       );
 
       if (rows.length === 0) {
