@@ -38,7 +38,9 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       console.log('📥 POST /api/objects - Body:', req.body);
       
-      const { nombre, categoria, nr_inventario, nick, icono, descripcion, imagen, unidad, precio } = req.body;
+      // Accept both frontend naming (numeroInventario) and backend (nr_inventario)
+      const { nombre, categoria, numeroInventario, nr_inventario, nick, icono, descripcion, imagen, unidad, precio } = req.body;
+      const inventoryNumber = numeroInventario || nr_inventario;
       
       if (!nombre || nombre.trim() === '') {
         return res.status(400).json({ error: 'El nombre es obligatorio' });
@@ -51,7 +53,7 @@ export default async function handler(req, res) {
         [
           nombre.trim(),
           categoria?.trim() || 'General',
-          nr_inventario?.trim() || null,
+          inventoryNumber?.trim() || null,
           nick?.trim() || null,
           icono?.trim() || '📦',
           descripcion?.trim() || null,
@@ -68,7 +70,8 @@ export default async function handler(req, res) {
     // PUT /api/objects?id=xxx - Actualizar objeto
     if (req.method === 'PUT') {
       const { id } = req.query;
-      const { nombre, categoria, nr_inventario, nick, icono, descripcion, imagen, unidad, precio } = req.body;
+      const { nombre, categoria, numeroInventario, nr_inventario, nick, icono, descripcion, imagen, unidad, precio } = req.body;
+      const inventoryNumber = numeroInventario || nr_inventario;
 
       if (!id) {
         return res.status(400).json({ error: 'ID de objeto requerido' });
@@ -88,7 +91,7 @@ export default async function handler(req, res) {
              updated_at = NOW()
          WHERE id = $10
          RETURNING *`,
-        [nombre?.trim(), categoria?.trim(), nr_inventario?.trim(), nick?.trim(), icono?.trim(), descripcion?.trim(), imagen?.trim(), unidad?.trim(), precio, id]
+        [nombre?.trim(), categoria?.trim(), inventoryNumber?.trim(), nick?.trim(), icono?.trim(), descripcion?.trim(), imagen?.trim(), unidad?.trim(), precio, id]
       );
 
       if (rows.length === 0) {
