@@ -27,6 +27,33 @@ export default async function handler(req, res) {
 
   try {
     // ========================================
+    // POST /api/auth/reset-admin - Reset admin password
+    // ========================================
+    if (req.method === 'POST' && req.url?.includes('/reset-admin')) {
+      const newPassword = '1234';
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      const result = await pool.query(
+        `UPDATE users SET password = $1, updated_at = NOW()
+         WHERE email = 'admin@vardassets.com'
+         RETURNING id, email, username, role`,
+        [hashedPassword]
+      );
+
+      if (result.rows.length === 0) {
+        const insertResult = await pool.query(
+          `INSERT INTO users (email, password, username, role, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, NOW(), NOW())
+           RETURNING id, email, username, role`,
+          ['admin@vardassets.com', hashedPassword, 'admin', 'admin']
+        );
+        return res.status(200).json({ status: 'CREATED', user: insertResult.rows[0], password: newPassword });
+      }
+
+      return res.status(200).json({ status: 'RESET', user: result.rows[0], password: newPassword });
+    }
+
+    // ========================================
     // POST /api/auth - Login
     // ========================================
     if (req.method === 'POST' && !req.url?.includes('/register')) {
@@ -171,31 +198,6 @@ export default async function handler(req, res) {
           error: 'Token inválido' 
         });
       }
-    }
-
-    // POST /api/auth/reset-admin - Reset admin password (internal use)
-    if (req.method === 'POST' && req.url?.includes('/reset-admin')) {
-      const newPassword = '1234';
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-      const result = await pool.query(
-        `UPDATE users SET password = $1, updated_at = NOW()
-         WHERE email = 'admin@vardassets.com'
-         RETURNING id, email, username, role`,
-        [hashedPassword]
-      );
-
-      if (result.rows.length === 0) {
-        const insertResult = await pool.query(
-          `INSERT INTO users (email, password, username, role, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, NOW(), NOW())
-           RETURNING id, email, username, role`,
-          ['admin@vardassets.com', hashedPassword, 'admin', 'admin']
-        );
-        return res.status(200).json({ status: 'CREATED', user: insertResult.rows[0] });
-      }
-
-      return res.status(200).json({ status: 'RESET', user: result.rows[0] });
     }
 
     return res.status(405).json({ error: 'Método no permitido' });
