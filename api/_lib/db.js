@@ -1,48 +1,37 @@
 import pg from 'pg';
 const { Pool } = pg;
 
-// Disable SSL certificate validation for Supabase pooler
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
 let pool;
 
+/**
+ * Get PostgreSQL connection pool
+ * Uses DATABASE_URL environment variable
+ */
 export function getPool() {
   if (!pool) {
-    // Priority: Manual DATABASE_URL > Supabase Integration > Legacy
-    const connectionString = 
-      process.env.DATABASE_URL ||
-      process.env.SUPABASE_POSTGRES_URL ||
-      process.env.POSTGRES_URL;
-    
-    console.log('🔗 Using database URL starting with:', connectionString?.substring(0, 40) + '...');
+    const connectionString = process.env.DATABASE_URL;
 
     if (!connectionString) {
-      const error = new Error('DATABASE_URL not configured. Set SUPABASE_DATABASE_URL, DATABASE_URL, or POSTGRES_URL');
+      const error = new Error('DATABASE_URL environment variable is not configured');
       error.code = 'DB_URL_MISSING';
       throw error;
     }
 
-    // Detect if using Supabase
-    const isSupabase = connectionString.includes('supabase') || connectionString.includes('pooler');
-    
-    // For Supabase pooler, we need to handle SSL properly
-    const sslConfig = isSupabase 
-      ? { rejectUnauthorized: false, require: true }
-      : false;
+    console.log('🔗 Connecting to database...');
     
     pool = new Pool({
       connectionString,
-      ssl: sslConfig,
-      max: isSupabase ? 5 : 10,
+      ssl: { rejectUnauthorized: false },
+      max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
     });
 
     pool.on('error', (err) => {
-      console.error('❌ Unexpected PostgreSQL pool error:', err);
+      console.error('❌ PostgreSQL pool error:', err.message);
     });
 
-    console.log(`📦 Database pool initialized (${isSupabase ? 'Supabase' : 'PostgreSQL'})`);
+    console.log('📦 Database pool initialized');
   }
   return pool;
 }
