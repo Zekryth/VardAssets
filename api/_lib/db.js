@@ -8,13 +8,13 @@ let pool;
 
 export function getPool() {
   if (!pool) {
-    // Priority: Supabase Integration > Manual > Legacy
+    // Priority: Manual DATABASE_URL > Supabase Integration > Legacy
     const connectionString = 
+      process.env.DATABASE_URL ||
       process.env.SUPABASE_POSTGRES_URL ||
-      process.env.DATABASE_URL || 
       process.env.POSTGRES_URL;
     
-    console.log('🔗 Using database URL starting with:', connectionString?.substring(0, 50) + '...');
+    console.log('🔗 Using database URL starting with:', connectionString?.substring(0, 40) + '...');
 
     if (!connectionString) {
       const error = new Error('DATABASE_URL not configured. Set SUPABASE_DATABASE_URL, DATABASE_URL, or POSTGRES_URL');
