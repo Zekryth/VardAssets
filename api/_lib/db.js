@@ -1,6 +1,9 @@
 import pg from 'pg';
 const { Pool } = pg;
 
+// Disable SSL certificate validation for Supabase pooler
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 let pool;
 
 export function getPool() {
@@ -22,12 +25,17 @@ export function getPool() {
     // Detect if using Supabase
     const isSupabase = connectionString.includes('supabase') || connectionString.includes('pooler');
     
+    // For Supabase pooler, we need to handle SSL properly
+    const sslConfig = isSupabase 
+      ? { rejectUnauthorized: false, require: true }
+      : false;
+    
     pool = new Pool({
       connectionString,
-      ssl: isSupabase ? { rejectUnauthorized: false } : false,
-      max: isSupabase ? 5 : 10, // Supabase free tier has connection limits
+      ssl: sslConfig,
+      max: isSupabase ? 5 : 10,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: isSupabase ? 10000 : 2000,
+      connectionTimeoutMillis: 10000,
     });
 
     pool.on('error', (err) => {
