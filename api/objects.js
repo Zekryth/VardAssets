@@ -38,21 +38,25 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       console.log('📥 POST /api/objects - Body:', req.body);
       
-      const { nombre, categoria, unidad, descripcion, precio } = req.body;
+      const { nombre, categoria, nr_inventario, nick, icono, descripcion, imagen, unidad, precio } = req.body;
       
       if (!nombre || nombre.trim() === '') {
         return res.status(400).json({ error: 'El nombre es obligatorio' });
       }
 
       const { rows } = await pool.query(
-        `INSERT INTO objects (id, nombre, categoria, unidad, descripcion, precio, created_at, updated_at)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW())
+        `INSERT INTO objects (id, nombre, categoria, nr_inventario, nick, icono, descripcion, imagen, unidad, precio, created_at, updated_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
          RETURNING *`,
         [
           nombre.trim(),
           categoria?.trim() || 'General',
+          nr_inventario?.trim() || null,
+          nick?.trim() || null,
+          icono?.trim() || '📦',
+          descripcion?.trim() || null,
+          imagen?.trim() || null,
           unidad?.trim() || 'unidad',
-          descripcion?.trim(),
           precio || 0
         ]
       );
@@ -64,7 +68,7 @@ export default async function handler(req, res) {
     // PUT /api/objects?id=xxx - Actualizar objeto
     if (req.method === 'PUT') {
       const { id } = req.query;
-      const { nombre, categoria, unidad, descripcion, precio } = req.body;
+      const { nombre, categoria, nr_inventario, nick, icono, descripcion, imagen, unidad, precio } = req.body;
 
       if (!id) {
         return res.status(400).json({ error: 'ID de objeto requerido' });
@@ -74,13 +78,17 @@ export default async function handler(req, res) {
         `UPDATE objects 
          SET nombre = COALESCE($1, nombre),
              categoria = COALESCE($2, categoria),
-             unidad = COALESCE($3, unidad),
-             descripcion = COALESCE($4, descripcion),
-             precio = COALESCE($5, precio),
+             nr_inventario = COALESCE($3, nr_inventario),
+             nick = COALESCE($4, nick),
+             icono = COALESCE($5, icono),
+             descripcion = COALESCE($6, descripcion),
+             imagen = COALESCE($7, imagen),
+             unidad = COALESCE($8, unidad),
+             precio = COALESCE($9, precio),
              updated_at = NOW()
-         WHERE id = $6
+         WHERE id = $10
          RETURNING *`,
-        [nombre?.trim(), categoria?.trim(), unidad?.trim(), descripcion?.trim(), precio, id]
+        [nombre?.trim(), categoria?.trim(), nr_inventario?.trim(), nick?.trim(), icono?.trim(), descripcion?.trim(), imagen?.trim(), unidad?.trim(), precio, id]
       );
 
       if (rows.length === 0) {
